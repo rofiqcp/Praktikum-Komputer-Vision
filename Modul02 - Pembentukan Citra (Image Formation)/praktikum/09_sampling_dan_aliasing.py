@@ -84,7 +84,7 @@ print("  GaussianBlur(7,7) → resize 100×100 (anti-aliased)")
 # ============================================================
 print("\n--- 4. Pyramid vs Direct ---")
 
-img_real = cv2.imread(os.path.join(IMAGE_DIR, "grid.png"))
+img_real = cv2.imread(os.path.join(IMAGE_DIR, "gedung.jpg"))
 if img_real is None:
     img_real = cv2.cvtColor(sinus, cv2.COLOR_GRAY2BGR)
 img_real = cv2.resize(img_real, (400, 400))

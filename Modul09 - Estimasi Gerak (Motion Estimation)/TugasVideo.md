@@ -3,7 +3,7 @@
 ---
 
 ## Deskripsi Tugas
-Buat video laporan yang mendemonstrasikan seluruh materi, 10 percobaan, dan project motion estimation. Fokus pada demo real-time dan visualisasi yang jelas.
+Buat video laporan yang mendemonstrasikan seluruh materi, 20 percobaan, dan project motion estimation. Fokus pada demo real-time dan visualisasi yang jelas.
 
 ---
 
@@ -22,22 +22,32 @@ Buat video laporan yang mendemonstrasikan seluruh materi, 10 percobaan, dan proj
 - MHI, video stabilization, frame interpolation.
 - **Wajib**: Diagram optical flow equation + pipeline stabilization.
 
-### 3. Demo 10 Percobaan (30–40 menit)
+### 3. Demo 20 Percobaan (40–60 menit)
 
 | No | Percobaan | Poin Penting |
 |----|-----------|--------------|
 | 1 | Sparse Optical Flow (LK) | Trail tracking, re-detection |
 | 2 | Dense Optical Flow (Farnebäck) | HSV visualization, flow arrows |
-| 3 | Background Subtraction | MOG2 vs KNN, morphology cleanup |
-| 4 | Single Object Tracking | Tracker comparison table |
-| 5 | Multi-Object Tracking | Trajectory visualization |
-| 6 | Motion History Image | MHI + motion segments |
-| 7 | Video Stabilization | Before/after + trajectory plot |
-| 8 | Phase Correlation | Translational alignment demo |
-| 9 | Frame Interpolation | Linear vs flow-based comparison |
-| 10 | Activity Recognition | Confusion matrix, accuracy |
+| 3 | Visualisasi Optical Flow | Arrow plot, HSV, magnitude |
+| 4 | Background Subtraction MOG2 | Learning rate, shadow detection |
+| 5 | Background Subtraction KNN | Perbandingan dengan MOG2 |
+| 6 | Frame Differencing | Gerakan antar frame, threshold |
+| 7 | Running Average Background | Alpha parameter, adaptasi |
+| 8 | Object Tracking CSRT | ROI selection, accuracy |
+| 9 | Object Tracking KCF | Speed vs accuracy trade-off |
+| 10 | Multi-Object Tracking | Multiple ROI, trajectory |
+| 11 | Motion History Image | MHI temporal, motion segments |
+| 12 | Video Stabilization | Before/after, trajectory smooth |
+| 13 | Frame Interpolation Linear | Blending antar frame |
+| 14 | Frame Interpolation Flow | Optical flow-based warping |
+| 15 | Magnitude & Arah Flow | Analisis kuantitatif flow |
+| 16 | Feature Trajectory | Long-term tracking, trail |
+| 17 | BGS Comparison | MOG2 vs KNN vs frame diff |
+| 18 | Deteksi Gerakan Contour | Contour area, bounding box |
+| 19 | Optical Flow Real-Time | Simulasi interaktif |
+| 20 | Estimasi Kecepatan Objek | Piksel/frame → km/h |
 
-- Demo REAL-TIME dari webcam untuk percobaan 1–6.
+- Demo REAL-TIME dari webcam untuk percobaan 1–10.
 - Tunjukkan gerakan fisik (lambaikan tangan, bergerak) di depan kamera.
 
 ### 4. Demo Project (10–15 menit)
@@ -55,7 +65,7 @@ Buat video laporan yang mendemonstrasikan seluruh materi, 10 percobaan, dan proj
 
 | Aspek | Ketentuan |
 |-------|-----------|
-| Durasi | 60–75 menit |
+| Durasi | 75–100 menit |
 | Resolusi | Minimal 1080p |
 | Recording | Screen recording + webcam |
 | Webcam | Tunjukkan gerakan fisik saat demo optical flow/tracking |
@@ -71,7 +81,7 @@ Buat video laporan yang mendemonstrasikan seluruh materi, 10 percobaan, dan proj
 |----------|-------|------------|
 | Pembukaan | 5% | Profesional |
 | Penjelasan Materi | 15% | Akurat, diagram |
-| Demo 10 Percobaan | 40% | Semua berjalan, real-time demo |
+| Demo 20 Percobaan | 40% | Semua berjalan, real-time demo |
 | Demo Project | 20% | Fitur lengkap |
 | Analisis & Kesimpulan | 10% | Kritis |
 | Kualitas Video | 10% | Resolusi, audio |

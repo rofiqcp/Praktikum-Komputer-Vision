@@ -23,9 +23,11 @@ IMAGE_DIR = os.path.join(SCRIPT_DIR, "image")
 OUTPUT_DIR = os.path.join(SCRIPT_DIR, "output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-biner = cv2.imread(os.path.join(IMAGE_DIR, "biner_noise.png"), cv2.IMREAD_GRAYSCALE)
-if biner is None:
-    print("[ERROR] Jalankan download_image.py!"); exit()
+img_raw = cv2.imread(os.path.join(IMAGE_DIR, "lena.jpg"), cv2.IMREAD_GRAYSCALE)
+if img_raw is None:
+    print("[ERROR] Gambar lena.jpg tidak ditemukan. Jalankan download_image.py!"); exit()
+# Konversi gambar nyata ke biner menggunakan Otsu threshold
+_, biner = cv2.threshold(img_raw, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
 print("=" * 60)
 print("PERCOBAAN 16: MORFOLOGI LANJUT")

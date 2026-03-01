@@ -37,8 +37,8 @@ print("PERCOBAAN 5: OPERASI ARITMATIKA GAMBAR")
 print("=" * 60)
 
 # Membaca dua gambar untuk operasi aritmatika
-img1 = cv2.imread(os.path.join(IMAGE_DIR, "kucing.jpg"))
-img2 = cv2.imread(os.path.join(IMAGE_DIR, "abstrak.jpg"))
+img1 = cv2.imread(os.path.join(IMAGE_DIR, "foto_bunga.jpg"))
+img2 = cv2.imread(os.path.join(IMAGE_DIR, "foto_hewan.jpg"))
 
 if img1 is None or img2 is None:
     print("[ERROR] Jalankan download_image.py terlebih dahulu!")

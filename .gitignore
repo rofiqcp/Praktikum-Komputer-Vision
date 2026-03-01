@@ -114,14 +114,66 @@ dmypy.json
 .pyre/
 
 # Computer Vision specific
-# Uncomment if you want to ignore image files or data
+# Ignore image files
 # *.jpg
 # *.png
 # *.jpeg
 # *.gif
 # *.bmp
-# data/
-# models/
-# checkpoints/
+# *.tiff
+# *.webp
+
+# Ignore common data and model directories
+data/
+models/
+checkpoints/
+dataset/
+datasets/
+
+# Module practical work - ignore images and output/dataset in each module
+Modul01*/praktikum/image/
+Modul02*/praktikum/image/
+Modul03*/praktikum/image/
+Modul04*/praktikum/image/
+Modul05*/praktikum/image/
+Modul06*/praktikum/image/
+Modul07*/praktikum/image/
+Modul08*/praktikum/image/
+Modul09*/praktikum/image/
+Modul10*/praktikum/image/
+Modul11*/praktikum/image/
+Modul12*/praktikum/image/
+
+Modul01*/praktikum/output/
+Modul02*/praktikum/output/
+Modul03*/praktikum/output/
+Modul04*/praktikum/output/
+Modul05*/praktikum/output/
+Modul06*/praktikum/output/
+Modul07*/praktikum/output/
+Modul08*/praktikum/output/
+Modul09*/praktikum/output/
+Modul10*/praktikum/output/
+Modul11*/praktikum/output/
+Modul12*/praktikum/output/
+
+Modul01*/dataset/
+Modul02*/dataset/
+Modul03*/dataset/
+Modul04*/dataset/
+Modul05*/dataset/
+Modul06*/dataset/
+Modul07*/dataset/
+Modul08*/dataset/
+Modul09*/dataset/
+Modul10*/dataset/
+Modul11*/dataset/
+Modul12*/dataset/
+
+# Keep Python files
+!*.py
 
 .ref/
+
+.playwright-mcp/
+review/

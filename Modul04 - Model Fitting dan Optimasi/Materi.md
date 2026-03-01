@@ -7,156 +7,281 @@
 
 ## 4.1 Pendahuluan
 
-Model fitting adalah proses menemukan parameter model matematika yang paling cocok menjelaskan data observasi (misalnya sekumpulan titik, fitur, atau piksel). Optimasi adalah teknik numerik untuk menemukan parameter tersebut secara efisien. Bab ini membahas teknik-teknik yang sangat fundamental dan digunakan di hampir seluruh algoritma computer vision tingkat lanjut.
+Model fitting adalah proses mencocokkan model matematika pada data observasi. Dalam computer vision, ini mencakup fitting garis/lingkaran pada edge points, estimasi homografi dari korespondensi fitur, dan estimasi optical flow antar frame.
+
+Tantangan utama:
+- **Noise**: Data real selalu mengandung noise.
+- **Outlier**: Sebagian data mungkin tidak mengikuti model.
+- **Overfitting**: Model terlalu kompleks → fit noise.
+- **Underfitting**: Model terlalu sederhana → tidak capture pattern.
 
 ---
 
 ## 4.2 Least Squares
 
 ### Ordinary Least Squares (OLS)
-Minimalisasi jumlah kuadrat residual:
-$$\min_{\mathbf{x}} \| \mathbf{A}\mathbf{x} - \mathbf{b} \|^2$$
+Meminimalkan jumlah kuadrat residual vertikal:
+$$\hat{\beta} = \arg\min_{\beta} \|y - X\beta\|^2$$
 
-Solusi: $\mathbf{x} = (\mathbf{A}^T\mathbf{A})^{-1}\mathbf{A}^T\mathbf{b}$
+Solusi (normal equation):
+$$\hat{\beta} = (X^T X)^{-1} X^T y$$
 
-### Weighted Least Squares
-$$\min_{\mathbf{x}} \| \mathbf{W}^{1/2}(\mathbf{A}\mathbf{x} - \mathbf{b}) \|^2$$
+### Weighted Least Squares (WLS)
+Memberikan bobot berbeda pada setiap observasi:
+$$\hat{\beta} = \arg\min_{\beta} \sum_i w_i (y_i - x_i^T \beta)^2$$
 
-Memberikan bobot berbeda pada tiap observasi berdasarkan kepercayaan.
+Solusi:
+$$\hat{\beta} = (X^T W X)^{-1} X^T W y$$
 
-### Total Least Squares
-Meminimalkan jarak orthogonal (tegak lurus) ke model, bukan hanya residual vertikal. Diselesaikan dengan SVD.
+Dimana $W = \text{diag}(w_1, \ldots, w_n)$.
+
+### Total Least Squares (TLS)
+Meminimalkan jarak orthogonal (tegak lurus) ke model — tepat ketika kedua variabel (x dan y) memiliki noise:
+$$\min \sum_i d_{\perp}(\mathbf{p}_i, \text{model})^2$$
+
+Solusi via SVD: eigenvector dari eigenvalue terkecil pada matriks kovarians data.
 
 ---
 
 ## 4.3 RANSAC (Random Sample Consensus)
 
-Algoritma robust untuk model fitting yang tahan terhadap outlier.
-
-### Langkah RANSAC:
-1. Pilih subset minimal titik secara acak (misal 2 titik untuk garis).
-2. Fit model menggunakan subset tersebut.
-3. Hitung jumlah inlier (titik yang jaraknya ke model < threshold ε).
-4. Ulangi N kali, simpan model dengan inlier terbanyak.
-5. Re-fit model menggunakan seluruh inlier dari model terbaik.
+### Algoritma
+1. **Random sampling**: Ambil s titik minimal untuk fit model.
+2. **Model fitting**: Fit model dari s titik.
+3. **Inlier counting**: Hitung titik dengan residual < threshold ε.
+4. **Repeat**: Ulangi N kali, simpan model dengan inlier terbanyak.
+5. **Refine**: Re-fit model menggunakan semua inlier dari model terbaik.
 
 ### Jumlah Iterasi
-$$N = \frac{\log(1 - p)}{\log(1 - w^n)}$$
-- $p$: probabilitas keberhasilan (misal 0.99).
-- $w$: rasio inlier.
-- $n$: jumlah titik minimal.
+Untuk probabilitas $p$ menemukan model bebas outlier dengan rasio inlier $w$:
+$$N = \frac{\log(1 - p)}{\log(1 - w^s)}$$
 
-### Varian RANSAC
-- **MSAC**: Skor berdasarkan distance, bukan hanya count inlier.
-- **PROSAC**: Sampling berdasarkan kualitas match.
-- **LO-RANSAC**: Local optimization setelah menemukan model awal.
+### Implementasi OpenCV
+```python
+# RANSAC untuk homography
+H, mask = cv2.findHomography(srcPts, dstPts, cv2.RANSAC, ransacReprojThreshold=5.0)
+```
 
 ---
 
-## 4.4 Hough Transform
+## 4.4 IRLS (Iteratively Reweighted Least Squares)
 
-### Hough Transform untuk Garis
-Setiap titik $(x, y)$ di image space dipetakan ke kurva di parameter space $(\rho, \theta)$:
+Robust fitting iteratif:
+1. Fit model dengan OLS (iterasi 0).
+2. Hitung residual $r_i$.
+3. Update bobot: $w_i = \psi(r_i)$ (fungsi weight: Huber, Tukey, Cauchy).
+4. Re-fit dengan WLS menggunakan bobot baru.
+5. Repeat hingga konvergen.
+
+Fungsi weight populer:
+- **Huber**: $w_i = \min(1, c/|r_i|)$
+- **Tukey bisquare**: $w_i = (1 - (r_i/c)^2)^2$ jika $|r_i| < c$, else 0.
+
+---
+
+## 4.5 Regularisasi
+
+### Ridge Regression (L2)
+$$\hat{\beta} = \arg\min_{\beta} \|y - X\beta\|^2 + \lambda \|\beta\|^2$$
+
+Efek: Menyusutkan koefisien menuju 0 tetapi tidak pernah tepat 0.
+
+### Lasso Regression (L1)
+$$\hat{\beta} = \arg\min_{\beta} \|y - X\beta\|^2 + \lambda \|\beta\|_1$$
+
+Efek: Membuat beberapa koefisien tepat = 0 → **feature selection** (sparsity).
+
+### Trade-off Bias-Variance
+- $\lambda$ kecil → low bias, high variance (overfit).
+- $\lambda$ besar → high bias, low variance (underfit).
+
+---
+
+## 4.6 Hough Transform
+
+### Hough Line Transform
+Setiap titik $(x, y)$ dalam gambar memiliki banyak kemungkinan garis yang melaluinya. Dalam parameterisasi $(\rho, \theta)$:
 $$\rho = x \cos\theta + y \sin\theta$$
 
-Garis dideteksi sebagai peak di accumulator space.
+Setiap titik memberikan "vote" di Hough space. Puncak akumulator = garis terdeteksi.
 
-### Hough Transform untuk Lingkaran
-Parameter: $(a, b, r)$ — center $(a, b)$ dan radius $r$.
-$$\sqrt{(x-a)^2 + (y-b)^2} = r$$
+```python
+lines = cv2.HoughLines(edges, rho=1, theta=np.pi/180, threshold=100)
+lines_p = cv2.HoughLinesP(edges, rho=1, theta=np.pi/180, threshold=50,
+                           minLineLength=50, maxLineGap=10)
+```
 
-OpenCV: `cv2.HoughCircles()`.
-
-### Generalized Hough Transform
-Mendeteksi bentuk arbitrary menggunakan tabel R (edge direction → displacement ke center).
-
----
-
-## 4.5 Homografi dan Estimasi Model
-
-### Homography Estimation
-Matriks 3×3 yang memetakan titik dari satu bidang ke bidang lain:
-$$\tilde{\mathbf{x'}} = \mathbf{H} \tilde{\mathbf{x}}$$
-
-Memerlukan minimal 4 pasang titik korespondensi. Diselesaikan dengan DLT (Direct Linear Transform).
-
-### Dekomposisi Homografi
-Homografi antar dua view scene planar:
-$$\mathbf{H} = \mathbf{K'} (\mathbf{R} - \frac{\mathbf{t}\mathbf{n}^T}{d}) \mathbf{K}^{-1}$$
+### Hough Circle Transform
+Menggunakan Hough gradient method:
+```python
+circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, dp=1, minDist=50,
+                           param1=100, param2=30, minRadius=10, maxRadius=100)
+```
 
 ---
 
-## 4.6 Iteratively Reweighted Least Squares (IRLS)
+## 4.7 Homography
 
-Robust regression yang iteratif mengurangi bobot outlier:
-1. Mulai dengan OLS.
-2. Hitung residual.
-3. Update weight berdasarkan fungsi robust (Huber, Tukey bisquare).
-4. Ulangi hingga konvergen.
+Homografi adalah transformasi projective 3×3 yang memetakan titik-titik pada satu bidang ke bidang lain:
+$$\begin{pmatrix} x' \\ y' \\ 1 \end{pmatrix} \sim \begin{pmatrix} h_{11} & h_{12} & h_{13} \\ h_{21} & h_{22} & h_{23} \\ h_{31} & h_{32} & h_{33} \end{pmatrix} \begin{pmatrix} x \\ y \\ 1 \end{pmatrix}$$
 
----
+8 DOF → memerlukan minimal 4 pasang titik korespondensi.
 
-## 4.7 Regularisasi
+```python
+H, mask = cv2.findHomography(srcPts, dstPts, cv2.RANSAC, 5.0)
+warped = cv2.warpPerspective(img, H, (w, h))
+```
 
-### Tujuan
-Mencegah overfitting dengan menambahkan term penalti:
-
-$$\min_{\mathbf{x}} \| \mathbf{A}\mathbf{x} - \mathbf{b} \|^2 + \lambda \| \mathbf{x} \|^2$$
-
-### Jenis Regularisasi
-- **L2 (Ridge/Tikhonov)**: $\lambda \|\mathbf{x}\|_2^2$ → solusi smooth.
-- **L1 (Lasso)**: $\lambda \|\mathbf{x}\|_1$ → solusi sparse.
-- **Elastic Net**: Kombinasi L1 + L2.
+### Aplikasi
+- Document scanner (koreksi perspektif)
+- Panorama stitching
+- Augmented reality (overlay pada planar surface)
 
 ---
 
-## 4.8 Markov Random Fields (MRF)
+## 4.8 Fitting Kontur dan Template Matching
 
-### Konsep
-MRF memodelkan hubungan spasial antar piksel menggunakan graph. Energy function:
-$$E(\mathbf{x}) = \sum_i D_i(x_i) + \sum_{(i,j)} V_{ij}(x_i, x_j)$$
+### Fitting Ellips
+```python
+ellipse = cv2.fitEllipse(contour)       # Standard
+ellipse = cv2.fitEllipseAMS(contour)    # Algebraic method
+ellipse = cv2.fitEllipseDirect(contour) # Direct method
+```
 
-- $D_i$: Data term (seberapa cocok label $x_i$ dengan observasi).
-- $V_{ij}$: Smoothness term (penalti jika label tetangga berbeda).
+### Template Matching
+$$R(x,y) = \text{similarity}(I(x:x+w, y:y+h), T)$$
 
-### Optimasi MRF
-- **ICM (Iterated Conditional Modes)**: Greedy, update satu piksel pada satu waktu.
-- **Graph Cut**: Optimal untuk binary labels.
-- **Belief Propagation**: Message passing pada graph.
+```python
+result = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
+min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+```
 
 ---
 
-## 4.9 Optical Flow Estimation
+## 4.9 Graph Cut dan Segmentasi
+
+### GrabCut
+Segmentasi interaktif berbasis graph cut:
+```python
+mask = np.zeros(img.shape[:2], np.uint8)
+bgdModel = np.zeros((1, 65), np.float64)
+fgdModel = np.zeros((1, 65), np.float64)
+cv2.grabCut(img, mask, rect, bgdModel, fgdModel, 5, cv2.GC_INIT_WITH_RECT)
+```
+
+### Watershed
+Segmentasi berbasis topographic surface:
+```python
+markers = cv2.watershed(img, markers)
+```
+
+### MRF Energy Minimization
+Minimasi energi:
+$$E = \sum_i D(x_i, l_i) + \lambda \sum_{(i,j)} V(l_i, l_j)$$
+
+- $D$: Data term (kecocokan label dengan observasi).
+- $V$: Smoothness term (konsistensi antar piksel tetangga).
+
+---
+
+## 4.10 Optical Flow
+
+### Brightness Constancy Assumption
+$$I(x, y, t) = I(x + u, y + v, t + 1)$$
+
+Taylor expansion → **optical flow constraint equation**:
+$$I_x u + I_y v + I_t = 0$$
 
 ### Lucas-Kanade (Sparse)
-Asumsi: brightness constancy dan motion konstan dalam neighborhood kecil.
-$$\mathbf{A}^T\mathbf{A} \mathbf{v} = -\mathbf{A}^T\mathbf{b}$$
+Asumsi: flow konstan dalam window kecil. Sistem overdetermined → least squares:
+```python
+p1, st, err = cv2.calcOpticalFlowPyrLK(prev, next, p0, None,
+                                         winSize=(15,15), maxLevel=3)
+```
 
-### Horn-Schunck (Dense)
-Minimalisasi energy dengan data term + smoothness term:
-$$E = \iint \left[ (I_x u + I_y v + I_t)^2 + \alpha^2(\|\nabla u\|^2 + \|\nabla v\|^2) \right] dx\, dy$$
+### Farneback (Dense)
+Estimasi flow untuk setiap piksel menggunakan polynomial expansion:
+```python
+flow = cv2.calcOpticalFlowFarneback(prev, next, None,
+                                     pyr_scale=0.5, levels=3, winsize=15,
+                                     iterations=3, poly_n=5, poly_sigma=1.2, flags=0)
+```
+
+### Visualisasi Flow (HSV)
+- **Hue**: Arah flow (0–360°).
+- **Saturation**: Magnitude flow.
 
 ---
 
-## 4.10 Ringkasan
+## 4.11 Cross-Validation
+
+### K-Fold Cross-Validation
+1. Bagi data menjadi K fold.
+2. Untuk setiap fold: gunakan sebagai test, sisanya sebagai train.
+3. Rata-rata performance di semua fold.
+
+### Leave-One-Out (LOO)
+K-Fold dengan K = n (jumlah data). Setiap observasi dijadikan test set sekali.
+
+### Model Selection
+- Pilih model/parameter dengan **CV error terendah**.
+- Plot train error vs CV error → deteksi overfitting.
+- Learning curves: evaluasi apakah perlu lebih banyak data.
+
+---
+
+## 4.12 Denoising via Optimasi
+
+### Non-Local Means (NLM)
+Averaging piksel yang mirip (bukan hanya tetangga):
+```python
+denoised = cv2.fastNlMeansDenoising(noisy, None, h=10)
+```
+
+### Total Variation Denoising
+Minimasi energi:
+$$\min_u \|u - f\|^2 + \lambda \|\nabla u\|_1$$
+
+- Data fidelity term: $u$ dekat dengan observasi $f$.
+- Regularity term: gradien kecil (gambar smooth) tetapi edge dipertahankan (L1 norm).
+
+### Bilateral Filter
+Edge-preserving smoothing:
+```python
+denoised = cv2.bilateralFilter(noisy, d=9, sigmaColor=75, sigmaSpace=75)
+```
+
+---
+
+## 4.13 Ringkasan
 
 | Konsep | Penjelasan |
 |--------|------------|
-| Least Squares | Minimalisasi kuadrat error — dasar model fitting |
-| RANSAC | Model fitting robust terhadap outlier |
-| Hough Transform | Deteksi garis dan lingkaran di parameter space |
-| Homography | Transformasi proyektif antar bidang |
-| IRLS | Iterative robust fitting |
-| Regularisasi | Mencegah overfitting (L1, L2) |
-| MRF | Model spasial antar piksel (labeling problem) |
-| Optical Flow | Estimasi gerakan piksel antar frame |
+| OLS | Least squares klasik — minimasi residual vertikal |
+| WLS | Least squares dengan bobot per observasi |
+| TLS | Minimasi jarak orthogonal — noise di x dan y |
+| RANSAC | Estimasi robust: random sampling + voting |
+| IRLS | Robust iteratif: update bobot berdasarkan residual |
+| Ridge (L2) | Regularisasi: susutkan koefisien |
+| Lasso (L1) | Regularisasi: sparsity (koefisien = 0) |
+| Hough Transform | Voting-based detection: garis, lingkaran |
+| Homography | Transformasi projective 3×3, 8 DOF |
+| Fitting Kontur | fitEllipse, minAreaRect, convexHull |
+| Template Matching | Sliding-window correlation |
+| GrabCut/Watershed | Graph cut dan topographic segmentation |
+| Lucas-Kanade | Sparse optical flow (window-based least squares) |
+| Farneback | Dense optical flow (polynomial expansion) |
+| Cross-Validation | Model selection via K-Fold, LOO |
+| NLM / TV Denoising | Denoising berbasis optimasi |
 
 ---
 
 ## Referensi
 
-1. Szeliski, R. (2022). *Computer Vision: Algorithms and Applications*, 2nd Edition, Springer. **Chapter 4: Model Fitting and Optimization** (pp. 189–266).
-2. Fischler, M. A., & Bolles, R. C. (1981). "Random sample consensus: a paradigm for model fitting." *Communications of the ACM*.
-3. Hartley, R., & Zisserman, A. (2004). *Multiple View Geometry in Computer Vision*, 2nd Edition.
-4. Boykov, Y., Veksler, O., & Zabih, R. (2001). "Fast approximate energy minimization via graph cuts." *IEEE TPAMI*.
-5. Lucas, B. D., & Kanade, T. (1981). "An iterative image registration technique with an application to stereo vision." *IJCAI*.
+1. Szeliski, R. (2022). *Computer Vision: Algorithms and Applications*, 2nd Edition, Springer. **Chapter 4: Model Fitting and Optimization** (pp. 189–260).
+2. Fischler, M. A., & Bolles, R. C. (1981). Random Sample Consensus: A Paradigm for Model Fitting. *Communications of the ACM*, 24(6), 381–395.
+3. Duda, R. O., & Hart, P. E. (1972). Use of the Hough Transformation to Detect Lines and Curves in Pictures. *Communications of the ACM*, 15(1), 11–15.
+4. Hartley, R., & Zisserman, A. (2004). *Multiple View Geometry in Computer Vision*, 2nd Edition, Cambridge University Press.
+5. Rudin, L. I., Osher, S., & Fatemi, E. (1992). Nonlinear Total Variation Based Noise Removal Algorithms. *Physica D*, 60, 259–268.
+6. Lucas, B. D., & Kanade, T. (1981). An Iterative Image Registration Technique with an Application to Stereo Vision. *IJCAI*, 674–679.
+7. OpenCV Documentation. https://docs.opencv.org/4.x/

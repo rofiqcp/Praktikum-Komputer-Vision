@@ -29,7 +29,7 @@ print("PERCOBAAN 19: MASKING GAMBAR")
 print("=" * 60)
 
 # Membaca gambar
-img = cv2.imread(os.path.join(IMAGE_DIR, "kucing.jpg"))
+img = cv2.imread(os.path.join(IMAGE_DIR, "foto_orang2.jpg"))
 if img is None:
     print("[ERROR] Jalankan download_image.py terlebih dahulu!")
     exit()

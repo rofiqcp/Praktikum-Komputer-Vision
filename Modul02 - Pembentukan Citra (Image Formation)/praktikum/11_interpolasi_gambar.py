@@ -25,7 +25,7 @@ IMAGE_DIR = os.path.join(SCRIPT_DIR, "image")
 OUTPUT_DIR = os.path.join(SCRIPT_DIR, "output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-img = cv2.imread(os.path.join(IMAGE_DIR, "bintang.png"))
+img = cv2.imread(os.path.join(IMAGE_DIR, "baboon.jpg"))
 if img is None:
     print("[ERROR] Jalankan download_image.py!"); exit()
 img = cv2.resize(img, (400, 400))

@@ -16,6 +16,16 @@ Setelah menyelesaikan praktikum ini, mahasiswa mampu:
 8. Menjalankan deteksi objek real-time dari webcam.
 9. Melakukan semantic segmentation menggunakan model pre-trained.
 10. Melakukan instance segmentation dan export model ke ONNX.
+11. Mengimplementasikan deteksi objek menggunakan HOG (Histogram of Oriented Gradients).
+12. Memahami konsep grid dan prediksi pada arsitektur YOLO.
+13. Mengimplementasikan semantic segmentation secara manual.
+14. Memahami konsep instance segmentation dan perbedaannya dengan semantic segmentation.
+15. Memvisualisasikan dan memahami berbagai loss function (Cross-Entropy, MSE, Dice).
+16. Membandingkan perilaku berbagai optimizer (SGD, Adam, SGDM).
+17. Memahami dan mengimplementasikan Batch Normalization dan Dropout.
+18. Menghitung dan menganalisis metrik evaluasi model (accuracy, precision, recall, F1, mAP, IoU).
+19. Memahami konsep ONNX export dan deployment model.
+20. Membuat proyek klasifikasi bentuk end-to-end sebagai integrasi seluruh konsep.
 
 ---
 
@@ -226,6 +236,186 @@ Setelah menyelesaikan praktikum ini, mahasiswa mampu:
 
 ---
 
+### Percobaan 11: Deteksi Objek dengan HOG
+
+**Tujuan**: Mengimplementasikan deteksi objek menggunakan fitur HOG (Histogram of Oriented Gradients).
+
+**Langkah Kerja**:
+1. Buat file `11_deteksi_objek_hog.py`.
+2. Load gambar dan konversi ke grayscale.
+3. Hitung HOG descriptor menggunakan `cv2.HOGDescriptor()`.
+4. Gunakan detektor bawaan: `hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())`.
+5. Deteksi orang pada gambar: `hog.detectMultiScale()`.
+6. Gambar bounding box pada hasil deteksi.
+7. Visualisasikan fitur HOG (orientasi gradien) pada gambar.
+8. Variasikan parameter: `winStride`, `padding`, `scale`.
+9. Terapkan pada minimal 3 gambar berbeda.
+10. Analisis kelebihan dan kekurangan HOG dibanding deep learning.
+
+---
+
+### Percobaan 12: YOLO Konsep Grid
+
+**Tujuan**: Memahami konsep pembagian grid dan prediksi pada arsitektur YOLO.
+
+**Langkah Kerja**:
+1. Buat file `12_yolo_konsep_grid.py`.
+2. Load gambar dan tentukan ukuran grid (misalnya 7×7 atau 13×13).
+3. Gambar grid overlay pada gambar.
+4. Simulasikan proses prediksi: setiap cell memprediksi bounding box.
+5. Visualisasikan anchor boxes pada beberapa cell.
+6. Implementasikan perhitungan IoU antara predicted box dan ground truth.
+7. Terapkan Non-Maximum Suppression (NMS) secara manual.
+8. Visualisasikan hasil sebelum dan sesudah NMS.
+9. Variasikan jumlah grid dan amati pengaruhnya.
+10. Buat diagram alur pipeline deteksi YOLO.
+
+---
+
+### Percobaan 13: Semantic Segmentation Manual
+
+**Tujuan**: Mengimplementasikan konsep semantic segmentation secara manual tanpa model pre-trained.
+
+**Langkah Kerja**:
+1. Buat file `13_semantic_segmentation_manual.py`.
+2. Load gambar dengan objek yang mudah di-segmentasi.
+3. Terapkan thresholding untuk segmentasi dasar.
+4. Gunakan color-based segmentation (HSV range).
+5. Terapkan operasi morfologi untuk memperbaiki mask.
+6. Beri label kelas pada setiap region yang tersegmentasi.
+7. Buat color-coded segmentation map.
+8. Overlay segmentation map pada gambar asli (semi-transparan).
+9. Hitung persentase area setiap kelas.
+10. Bandingkan hasil segmentasi manual vs model pre-trained.
+
+---
+
+### Percobaan 14: Instance Segmentation (Konsep)
+
+**Tujuan**: Memahami perbedaan dan konsep instance segmentation dibanding semantic segmentation.
+
+**Langkah Kerja**:
+1. Buat file `14_instance_segmentation_konsep.py`.
+2. Load gambar dengan beberapa objek dari kelas yang sama.
+3. Terapkan segmentasi per-instance menggunakan connected components.
+4. Beri warna unik pada setiap instance yang terdeteksi.
+5. Hitung jumlah instance per kelas.
+6. Visualisasikan bounding box + mask per instance.
+7. Implementasikan pemisahan instance yang berdekatan (watershed).
+8. Bandingkan hasil: semantic segmentation vs instance segmentation.
+9. Tampilkan statistik: jumlah instance, area rata-rata, overlap.
+10. Buat visualisasi side-by-side semantic vs instance.
+
+---
+
+### Percobaan 15: Loss Function Visualisasi
+
+**Tujuan**: Memvisualisasikan dan memahami berbagai loss function yang digunakan dalam deep learning.
+
+**Langkah Kerja**:
+1. Buat file `15_loss_function_visualisasi.py`.
+2. Implementasikan Mean Squared Error (MSE) loss secara manual.
+3. Implementasikan Cross-Entropy loss secara manual.
+4. Implementasikan Dice loss secara manual.
+5. Buat plot loss vs predicted value untuk setiap loss function.
+6. Visualisasikan loss landscape dalam 2D/3D.
+7. Bandingkan perilaku loss untuk klasifikasi biner.
+8. Analisis efek class imbalance pada setiap loss function.
+9. Implementasikan Focal Loss dan bandingkan dengan Cross-Entropy.
+10. Buat ringkasan kapan menggunakan loss function yang mana.
+
+---
+
+### Percobaan 16: Optimizer Visualisasi
+
+**Tujuan**: Membandingkan perilaku berbagai optimizer dalam proses training.
+
+**Langkah Kerja**:
+1. Buat file `16_optimizer_visualisasi.py`.
+2. Buat fungsi loss sederhana (Rosenbrock, Rastrigin, atau quadratic).
+3. Implementasikan SGD (Stochastic Gradient Descent) secara manual.
+4. Implementasikan SGD with Momentum (SGDM) secara manual.
+5. Implementasikan Adam optimizer secara manual.
+6. Visualisasikan trajectory optimasi pada contour plot.
+7. Bandingkan kecepatan konvergensi ketiga optimizer.
+8. Variasikan learning rate dan amati pengaruhnya.
+9. Plot loss curve per iterasi untuk setiap optimizer.
+10. Analisis kapan menggunakan optimizer yang mana.
+
+---
+
+### Percobaan 17: Batch Normalization dan Dropout
+
+**Tujuan**: Memahami dan memvisualisasikan efek Batch Normalization dan Dropout pada training.
+
+**Langkah Kerja**:
+1. Buat file `17_batch_normalization_dropout.py`.
+2. Buat dataset sintetis atau load dataset sederhana.
+3. Visualisasikan distribusi aktivasi tanpa Batch Normalization.
+4. Terapkan Batch Normalization dan visualisasikan distribusi setelahnya.
+5. Implementasikan Dropout secara manual (masking random neurons).
+6. Visualisasikan efek Dropout pada arsitektur jaringan.
+7. Bandingkan training: tanpa BN/Dropout vs dengan BN vs dengan Dropout vs keduanya.
+8. Plot training dan validation loss untuk setiap konfigurasi.
+9. Analisis efek regularisasi Dropout terhadap overfitting.
+10. Buat ringkasan best practices penggunaan BN dan Dropout.
+
+---
+
+### Percobaan 18: Model Evaluasi Metrik
+
+**Tujuan**: Menghitung dan memvisualisasikan berbagai metrik evaluasi model deep learning.
+
+**Langkah Kerja**:
+1. Buat file `18_model_evaluasi_metrik.py`.
+2. Buat data prediksi dan ground truth simulasi.
+3. Hitung Accuracy, Precision, Recall, dan F1-Score secara manual.
+4. Buat confusion matrix dan visualisasikan sebagai heatmap.
+5. Hitung IoU (Intersection over Union) untuk segmentasi.
+6. Hitung mAP (mean Average Precision) untuk deteksi objek.
+7. Plot Precision-Recall curve.
+8. Plot ROC curve dan hitung AUC.
+9. Analisis metrik pada dataset yang imbalanced.
+10. Buat dashboard ringkasan semua metrik dalam satu visualisasi.
+
+---
+
+### Percobaan 19: ONNX dan Deployment
+
+**Tujuan**: Memahami konsep export model ke ONNX dan proses deployment.
+
+**Langkah Kerja**:
+1. Buat file `19_onnx_dan_deployment_konsep.py`.
+2. Buat model sederhana (PyTorch atau simulasi).
+3. Export model ke format ONNX.
+4. Visualisasikan graph model ONNX.
+5. Load model ONNX menggunakan ONNX Runtime.
+6. Bandingkan inferensi: model asli vs ONNX Runtime.
+7. Ukur waktu inferensi dan penggunaan memori.
+8. Simulasikan quantization (FP32 → FP16).
+9. Buat diagram pipeline deployment model.
+10. Analisis trade-off akurasi vs kecepatan setelah optimasi.
+
+---
+
+### Percobaan 20: Proyek Klasifikasi Bentuk
+
+**Tujuan**: Membuat proyek klasifikasi bentuk geometris end-to-end sebagai integrasi seluruh konsep.
+
+**Langkah Kerja**:
+1. Buat file `20_proyek_klasifikasi_bentuk.py`.
+2. Generate dataset sintetis bentuk geometris (lingkaran, segitiga, kotak, bintang, dll.).
+3. Terapkan data augmentasi pada dataset.
+4. Bangun arsitektur CNN sederhana untuk klasifikasi.
+5. Train model dengan loss function dan optimizer yang sesuai.
+6. Terapkan Batch Normalization dan Dropout.
+7. Evaluasi dengan semua metrik (accuracy, precision, recall, F1, confusion matrix).
+8. Visualisasikan prediksi pada test set.
+9. Export model ke ONNX dan verifikasi inferensi.
+10. Buat laporan lengkap: arsitektur, training curve, metrik, dan analisis.
+
+---
+
 ## 4. ANALISIS
 
 ### Percobaan 1 — OpenCV DNN
@@ -260,6 +450,46 @@ Setelah menyelesaikan praktikum ini, mahasiswa mampu:
 - Apa perbedaan semantic vs instance segmentation?
 - Apakah ONNX export mempengaruhi akurasi?
 
+### Percobaan 11 — HOG Detection
+- Bagaimana performa HOG dibandingkan deep learning-based detector?
+- Pada kondisi apa HOG masih relevan digunakan?
+
+### Percobaan 12 — YOLO Grid
+- Bagaimana ukuran grid mempengaruhi kemampuan deteksi objek kecil vs besar?
+- Mengapa NMS diperlukan dan bagaimana parameter threshold mempengaruhi hasil?
+
+### Percobaan 13 — Semantic Segmentation Manual
+- Apa keterbatasan segmentasi manual dibanding model deep learning?
+- Pada skenario apa segmentasi berbasis warna masih efektif?
+
+### Percobaan 14 — Instance Segmentation (Konsep)
+- Apa tantangan utama dalam memisahkan instance yang saling berdekatan?
+- Kapan instance segmentation lebih diperlukan dibanding semantic segmentation?
+
+### Percobaan 15 — Loss Function
+- Mengapa pemilihan loss function yang tepat sangat penting?
+- Bagaimana Focal Loss mengatasi masalah class imbalance?
+
+### Percobaan 16 — Optimizer
+- Mengapa Adam lebih cepat konvergen dibanding SGD pada umumnya?
+- Kapan SGD with momentum lebih baik dari Adam?
+
+### Percobaan 17 — Batch Normalization & Dropout
+- Bagaimana Batch Normalization mempercepat training?
+- Apakah Dropout dan Batch Normalization selalu meningkatkan performa?
+
+### Percobaan 18 — Evaluasi Metrik
+- Mengapa accuracy saja tidak cukup untuk mengevaluasi model?
+- Metrik mana yang paling penting untuk task deteksi vs klasifikasi?
+
+### Percobaan 19 — ONNX & Deployment
+- Apa keuntungan utama menggunakan ONNX untuk deployment?
+- Bagaimana quantization mempengaruhi akurasi dan kecepatan?
+
+### Percobaan 20 — Proyek Klasifikasi Bentuk
+- Bagaimana integrasi seluruh konsep (augmentasi, BN, dropout, metrik) meningkatkan performa?
+- Apa langkah-langkah penting untuk memastikan model siap di-deploy?
+
 ---
 
 ## 5. KESIMPULAN
@@ -270,3 +500,8 @@ Buatlah kesimpulan mencakup:
 3. Perbandingan task: klasifikasi vs deteksi vs segmentasi.
 4. Trade-off model (akurasi vs kecepatan vs ukuran).
 5. Pentingnya format ONNX untuk deployment.
+6. Perbandingan metode deteksi klasik (HOG) vs deep learning.
+7. Peran loss function dan optimizer dalam keberhasilan training.
+8. Efektivitas teknik regularisasi (Batch Normalization, Dropout).
+9. Pentingnya metrik evaluasi yang komprehensif (precision, recall, F1, mAP, IoU).
+10. Integrasi konsep end-to-end dari data preparation hingga deployment.

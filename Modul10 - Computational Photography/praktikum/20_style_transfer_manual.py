@@ -66,38 +66,24 @@ img_content = cv2.imread(path_content)
 # Membaca gambar style
 img_style = cv2.imread(path_style)
 
-# Memeriksa apakah gambar content berhasil dimuat
+# Memeriksa apakah gambar berhasil dimuat; jika tidak, download otomatis
+if img_content is None or img_style is None:
+    print("[WARN] Gambar tidak ditemukan. Menjalankan download_image.py otomatis...")
+    import subprocess as _subp, sys as _sys
+    _dl = os.path.join(os.path.dirname(os.path.abspath(__file__)), "download_image.py")
+    _subp.run([_sys.executable, _dl], check=False)
+    img_content = cv2.imread(path_content)
+    img_style   = cv2.imread(path_style)
 if img_content is None:
-    print("[INFO] scene_pemandangan.png tidak ditemukan, membuat content sintetis...")
-    # Membuat gambar content sintetis (pemandangan)
-    img_content = np.zeros((400, 600, 3), dtype=np.uint8)
-    # Langit biru
-    for y in range(200):
-        img_content[y, :] = [180 - y//3, 140 - y//4, 60 + y//4]
-    # Tanah hijau
-    for y in range(200, 400):
-        img_content[y, :] = [40, 120 + (y-200)//4, 50]
-    # Menambahkan variasi
-    noise = np.random.randint(-10, 10, img_content.shape, dtype=np.int16)
-    img_content = np.clip(img_content.astype(np.int16) + noise, 0, 255).astype(np.uint8)
-
-# Memeriksa apakah gambar style berhasil dimuat
+    raise FileNotFoundError(
+        "[ERROR] scene_pemandangan.png tidak tersedia setelah download.\n"
+        "  Jalankan terlebih dahulu: python download_image.py"
+    )
 if img_style is None:
-    print("[INFO] style_reference.png tidak ditemukan, membuat style sintetis...")
-    # Membuat gambar style sintetis (gaya seni dengan warna cerah)
-    img_style = np.zeros((400, 600, 3), dtype=np.uint8)
-    # Membuat pola warna-warni (simulasi lukisan)
-    for y in range(0, 400, 40):
-        for x in range(0, 600, 40):
-            # Warna acak terang untuk tiap blok
-            color = (
-                np.random.randint(50, 255),
-                np.random.randint(50, 255),
-                np.random.randint(50, 255)
-            )
-            cv2.rectangle(img_style, (x, y), (x+40, y+40), color, -1)
-    # Menambahkan blur untuk kesan lukisan
-    img_style = cv2.GaussianBlur(img_style, (15, 15), 5)
+    raise FileNotFoundError(
+        "[ERROR] style_reference.png tidak tersedia setelah download.\n"
+        "  Jalankan terlebih dahulu: python download_image.py"
+    )
 
 # Menyamakan ukuran gambar style agar sama dengan content
 img_style = cv2.resize(img_style, (img_content.shape[1], img_content.shape[0]))

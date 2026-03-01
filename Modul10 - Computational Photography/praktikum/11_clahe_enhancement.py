@@ -68,23 +68,24 @@ img_gelap = cv2.imread(path_gelap)
 # Membaca gambar kontras rendah dalam format BGR
 img_low = cv2.imread(path_low_contrast)
 
-# Memeriksa apakah gambar berhasil dimuat
+# Memeriksa apakah gambar berhasil dimuat; jika tidak, download otomatis
+if img_gelap is None or img_low is None:
+    print("[WARN] Gambar tidak ditemukan. Menjalankan download_image.py otomatis...")
+    import subprocess as _subp, sys as _sys
+    _dl = os.path.join(os.path.dirname(os.path.abspath(__file__)), "download_image.py")
+    _subp.run([_sys.executable, _dl], check=False)
+    img_gelap = cv2.imread(path_gelap)
+    img_low   = cv2.imread(path_low_contrast)
 if img_gelap is None:
-    # Jika gambar gelap tidak ditemukan, buat gambar sintetis gelap
-    print("[INFO] gambar_gelap.png tidak ditemukan, membuat gambar sintetis...")
-    # Membuat gambar gradient gelap berukuran 400x600 piksel
-    img_gelap = np.random.randint(10, 70, (400, 600, 3), dtype=np.uint8)
-    # Menambahkan lingkaran terang di tengah untuk variasi
-    cv2.circle(img_gelap, (300, 200), 100, (50, 60, 80), -1)
-
-# Memeriksa apakah gambar kontras rendah berhasil dimuat
+    raise FileNotFoundError(
+        "[ERROR] gambar_gelap.png tidak tersedia setelah download.\n"
+        "  Jalankan terlebih dahulu: python download_image.py"
+    )
 if img_low is None:
-    # Jika gambar kontras rendah tidak ditemukan, buat gambar sintetis
-    print("[INFO] low_contrast.png tidak ditemukan, membuat gambar sintetis...")
-    # Membuat gambar dengan rentang intensitas sempit (100-155)
-    img_low = np.random.randint(100, 155, (400, 600, 3), dtype=np.uint8)
-    # Menambahkan persegi panjang untuk variasi
-    cv2.rectangle(img_low, (100, 50), (500, 350), (120, 130, 140), -1)
+    raise FileNotFoundError(
+        "[ERROR] low_contrast.png tidak tersedia setelah download.\n"
+        "  Jalankan terlebih dahulu: python download_image.py"
+    )
 
 # Menampilkan informasi dimensi gambar
 print(f"[INFO] Ukuran gambar gelap: {img_gelap.shape}")

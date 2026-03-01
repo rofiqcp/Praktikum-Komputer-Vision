@@ -3,7 +3,7 @@
 ---
 
 ## Deskripsi Tugas
-Buat video laporan praktikum yang mendemonstrasikan seluruh materi, 10 percobaan, dan project recognition. Video harus menunjukkan pemahaman mendalam tentang berbagai teknik recognition: face detection, face recognition, OCR, object classification, gesture recognition, dan evaluation.
+Buat video laporan praktikum yang mendemonstrasikan seluruh materi, 20 percobaan, dan project recognition. Video harus menunjukkan pemahaman mendalam tentang berbagai teknik recognition: face detection, face recognition, OCR, object classification, gesture recognition, tracking, pipeline integration, dan evaluation.
 
 ---
 
@@ -24,20 +24,30 @@ Buat video laporan praktikum yang mendemonstrasikan seluruh materi, 10 percobaan
 - Metrics: accuracy, precision, recall, F1, IoU, mAP, ROC.
 - **Wajib**: Diagram/slide untuk setiap topik utama.
 
-### 3. Demo 10 Percobaan (30–40 menit)
+### 3. Demo 20 Percobaan (60–80 menit)
 
 | No | Percobaan | Poin Penting |
 |----|-----------|--------------|
 | 1 | Face Detection — Haar Cascade | Parameter tuning, side-by-side comparison |
 | 2 | Face Detection — DNN | Confidence threshold, DNN vs Haar comparison |
 | 3 | Face Recognition — LBPH | Training, prediction, confidence score |
-| 4 | Face Recognition — DeepFace | Verifikasi, analisis wajah, model comparison |
-| 5 | Object Classification — BoVW | SIFT → clustering → SVM, confusion matrix |
-| 6 | OCR — Tesseract | Preprocessing comparison, multi-language |
-| 7 | Scene Text Detection — EAST | Detection + OCR pipeline end-to-end |
-| 8 | Pedestrian Detection — HOG | Parameter tuning, HOG vs YOLO |
-| 9 | Hand Gesture Recognition | Landmark visualization, finger counting demo |
-| 10 | Evaluation Metrics | Dashboard metrics, ROC curve, comparison table |
+| 4 | Face Recognition — Eigenfaces | PCA projection, eigenface visualization |
+| 5 | Face Landmark Detection | 68 landmarks, facial feature extraction |
+| 6 | OCR Preprocessing | Binarization, denoising, deskewing comparison |
+| 7 | OCR Tesseract | Tesseract recognition, multi-language |
+| 8 | Scene Text Detection | EAST detection + OCR pipeline end-to-end |
+| 9 | Pedestrian Detection — HOG | Parameter tuning, sliding window demo |
+| 10 | Vehicle Detection | Vehicle detection, counting, classification |
+| 11 | Hand Gesture Recognition | MediaPipe landmarks, finger counting demo |
+| 12 | Object Classification — BoVW | SIFT → KMeans → histogram → SVM pipeline |
+| 13 | Scene Recognition | Spatial pyramid matching, scene classification |
+| 14 | Face Embedding Distance | Euclidean vs Cosine, verification/identification |
+| 15 | Classification Metrics | Accuracy, precision, recall, F1, confusion matrix |
+| 16 | Detection Metrics | IoU, mAP, precision-recall curve |
+| 17 | Recognition ROC Curve | ROC, AUC, EER, threshold tuning |
+| 18 | Multi-Face Tracking | Detection → tracking, ID assignment |
+| 19 | Recognition Pipeline Lengkap | End-to-end: detection + recognition + evaluation |
+| 20 | Proyek Recognition Sistem | Complete recognition system demo |
 
 - Jalankan kode LIVE di IDE / Jupyter Notebook.
 - Jelaskan setiap langkah dan hasilnya.
@@ -61,7 +71,7 @@ Buat video laporan praktikum yang mendemonstrasikan seluruh materi, 10 percobaan
 
 | Aspek | Ketentuan |
 |-------|-----------|
-| Durasi | 60–75 menit |
+| Durasi | 90–120 menit |
 | Resolusi | Minimal 1080p |
 | Recording | Screen recording + webcam (picture-in-picture) |
 | Webcam | Wajah terlihat jelas |
@@ -77,7 +87,7 @@ Buat video laporan praktikum yang mendemonstrasikan seluruh materi, 10 percobaan
 |----------|-------|------------|
 | Pembukaan | 5% | Profesional, lengkap |
 | Penjelasan Materi | 15% | Akurat, mendalam, diagram jelas |
-| Demo 10 Percobaan | 40% | Semua berjalan, penjelasan per langkah |
+| Demo 20 Percobaan | 40% | Semua berjalan, penjelasan per langkah |
 | Demo Project | 20% | Fitur lengkap, berjalan baik |
 | Analisis & Kesimpulan | 10% | Kritis, kuantitatif |
 | Kualitas Video | 10% | Resolusi, audio, editing |
@@ -87,7 +97,7 @@ Buat video laporan praktikum yang mendemonstrasikan seluruh materi, 10 percobaan
 |------|-------|
 | Demo real-time (webcam) untuk ≥3 percobaan | +5 |
 | Perbandingan tabel akurasi lengkap | +5 |
-| Video < 45 menit (tidak lengkap) | -10 |
+| Video < 60 menit (tidak lengkap) | -10 |
 | Tidak ada webcam | -5 |
 | Audio tidak jelas | -5 |
 | Percobaan error tanpa penjelasan | -5 per percobaan |

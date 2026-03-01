@@ -128,13 +128,13 @@ print(f"\n[OUTPUT] Bitwise dasar: {output_path}")
 print("\n--- Aplikasi: Overlay Logo menggunakan Bitwise ---")
 
 # Membaca gambar latar belakang
-img_bg = cv2.imread(os.path.join(IMAGE_DIR, "pemandangan.jpg"))
+img_bg = cv2.imread(os.path.join(IMAGE_DIR, "foto_alam.jpg"))
 if img_bg is None:
-    print("[ERROR] Gambar pemandangan tidak ditemukan!")
+    print("[ERROR] Gambar foto_alam.jpg tidak ditemukan!")
     exit()
 
-# Membaca gambar logo (dibuat sebagai lingkaran dengan teks)
-img_logo = cv2.imread(os.path.join(IMAGE_DIR, "logo_mask.png"))
+# Membaca foto orang sebagai gambar yang akan di-overlay ke background
+img_logo = cv2.imread(os.path.join(IMAGE_DIR, "foto_orang.jpg"))
 
 # Mengubah ukuran logo agar lebih kecil dari background
 # Mengambil 1/4 lebar background sebagai lebar logo

@@ -6,271 +6,412 @@
 ## 1. TUJUAN PRAKTIKUM
 
 Setelah menyelesaikan praktikum ini, mahasiswa mampu:
-1. Mendeteksi fitur (corner, keypoint) pada gambar.
-2. Melakukan feature matching antar dua gambar.
-3. Mengimplementasikan RANSAC untuk estimasi model yang robust.
-4. Mendeteksi garis menggunakan Hough Transform.
-5. Mendeteksi lingkaran menggunakan Hough Circle Transform.
-6. Mengestimasi homografi dari pasangan titik korespondensi.
-7. Melakukan koreksi perspektif menggunakan homografi.
-8. Mengestimasi optical flow (sparse dan dense).
-9. Mengimplementasikan interpolasi scattered data (RBF).
-10. Menerapkan denoising berbasis regularisasi variasional.
+1. Mengimplementasikan Ordinary Least Squares (OLS) untuk fitting model linear.
+2. Menerapkan Weighted Least Squares (WLS) dan Total Least Squares (TLS).
+3. Mengimplementasikan RANSAC untuk estimasi model yang robust terhadap outlier.
+4. Mendeteksi garis dan lingkaran menggunakan Hough Transform.
+5. Mengestimasi homografi dari pasangan titik korespondensi.
+6. Melakukan koreksi perspektif menggunakan homografi.
+7. Menerapkan IRLS (Iteratively Reweighted Least Squares) untuk robust fitting.
+8. Memahami regularisasi Ridge dan Lasso dalam model fitting.
+9. Melakukan fitting ellips dan analisis kontur.
+10. Menerapkan template matching dan graph cut segmentation.
+11. Mengestimasi optical flow (Lucas-Kanade dan dense Farneback).
+12. Melakukan feature matching dengan RANSAC-based homography.
+13. Menerapkan cross-validation untuk model selection.
+14. Menggunakan optimasi untuk denoising gambar.
+15. Membangun pipeline gabungan model fitting end-to-end.
 
 ---
 
 ## 2. ALAT DAN BAHAN
 
-### Perangkat Lunak
-- Python 3.8+, OpenCV, NumPy, Matplotlib, SciPy
+### A. Perangkat Keras
+- Laptop/PC (min. Intel Core i3, RAM 4 GB)
 
-### Dataset
-- Gambar sample (bangunan, jalan, objek geometris, pasangan stereo).
-- Video pendek untuk optical flow.
+### B. Perangkat Lunak
+- Python 3.8+, VS Code
+- Library: `opencv-python`, `numpy`, `matplotlib`, `scipy`, `scikit-learn`
+
+### C. Dataset
+- Jalankan `download_image.py` di folder `praktikum/` untuk menyiapkan gambar sample.
+- Gambar akan tersimpan di folder `praktikum/image/`.
 
 ---
 
-## 3. LANGKAH KERJA
+## 3. PERSIAPAN
 
-### Percobaan 1: Deteksi Fitur (Corner & Keypoint)
+1. Masuk ke folder `praktikum/`.
+2. Jalankan: `python download_image.py`
+3. Pastikan folder `image/` berisi gambar sample yang dibutuhkan.
+4. Folder `output/` akan dibuat otomatis oleh setiap program.
 
-**Tujuan**: Mendeteksi titik-titik fitur penting pada gambar.
+---
+
+## 4. LANGKAH KERJA
+
+### Percobaan 1: Ordinary Least Squares (OLS)
+**File**: `01_ordinary_least_squares.py`
+
+**Tujuan**: Mengimplementasikan fitting model linear menggunakan OLS — meminimalkan jumlah kuadrat residual vertikal.
 
 **Langkah Kerja**:
-1. Buat file `01_feature_detection.py`.
-2. Baca gambar dan konversi ke grayscale.
-3. Terapkan Harris Corner Detection: `cv2.cornerHarris()`.
-4. Terapkan Shi-Tomasi (Good Features to Track): `cv2.goodFeaturesToTrack()`.
-5. Terapkan SIFT: `cv2.SIFT_create()` → `detect()`.
-6. Terapkan ORB: `cv2.ORB_create()` → `detect()`.
-7. Visualisasikan keypoint menggunakan `cv2.drawKeypoints()`.
-8. Bandingkan jumlah dan distribusi keypoint tiap metode.
-9. Variasikan parameter (threshold, nFeatures, dll.).
-10. Simpan visualisasi perbandingan.
+1. Buka dan pelajari file `01_ordinary_least_squares.py`.
+2. Jalankan program: `python 01_ordinary_least_squares.py`.
+3. Amati fitting garis pada data sintetis (tanpa dan dengan noise).
+4. Perhatikan formula normal equation: $\hat{\beta} = (X^TX)^{-1}X^Ty$.
+5. Amati residual plot dan error metrics (MSE, R²).
+6. Periksa output di folder `output/`.
 
 ---
 
-### Percobaan 2: Feature Matching
+### Percobaan 2: Weighted Least Squares (WLS)
+**File**: `02_weighted_least_squares.py`
 
-**Tujuan**: Mencocokkan fitur antar dua gambar.
+**Tujuan**: Menerapkan WLS yang memberikan bobot berbeda pada observasi berdasarkan reliability.
 
 **Langkah Kerja**:
-1. Buat file `02_feature_matching.py`.
-2. Baca dua gambar yang memiliki area overlap.
-3. Deteksi keypoint dan deskriptor (SIFT atau ORB).
-4. Terapkan Brute-Force Matching: `cv2.BFMatcher()`.
-5. Terapkan FLANN-based Matching: `cv2.FlannBasedMatcher()`.
-6. Terapkan ratio test (Lowe's ratio): filter match dengan ratio < 0.75.
-7. Visualisasikan match: `cv2.drawMatches()` dan `cv2.drawMatchesKnn()`.
-8. Bandingkan jumlah dan kualitas match: BF vs FLANN, SIFT vs ORB.
-9. Terapkan cross-check matching.
-10. Simpan hasil visualisasi.
+1. Buka dan pelajari file `02_weighted_least_squares.py`.
+2. Jalankan program: `python 02_weighted_least_squares.py`.
+3. Amati perbedaan fitting OLS vs WLS pada data heteroskedastik.
+4. Perhatikan efek bobot terhadap fitting line.
+5. Amati bagaimana WLS mengurangi pengaruh observasi tidak reliable.
+6. Periksa output di folder `output/`.
 
 ---
 
-### Percobaan 3: RANSAC
+### Percobaan 3: Total Least Squares (TLS)
+**File**: `03_total_least_squares.py`
 
-**Tujuan**: Implementasi RANSAC untuk estimasi model garis yang robust terhadap outlier.
+**Tujuan**: Mengimplementasikan TLS yang meminimalkan jarak orthogonal (tegak lurus) ke model.
 
 **Langkah Kerja**:
-1. Buat file `03_ransac.py`.
-2. Generate data sintetis: titik-titik pada garis + outlier acak.
-3. Implementasikan RANSAC dari scratch:
-   - Random sampling 2 titik → fit garis.
-   - Hitung inlier (jarak < threshold).
-   - Iterasi N kali, simpan model terbaik.
-4. Visualisasikan: titik data, garis RANSAC, inlier vs outlier.
-5. Bandingkan hasil RANSAC vs OLS (least squares tanpa RANSAC).
-6. Variasikan rasio outlier (10%, 30%, 50%, 70%) dan amati robustness.
-7. Variasikan threshold ε dan jumlah iterasi N.
-8. Terapkan RANSAC pada data 2D (fit garis dan lingkaran).
-9. Gunakan `cv2.findHomography(..., cv2.RANSAC)` untuk contoh built-in.
-10. Plot: jumlah iterasi vs akurasi.
+1. Buka dan pelajari file `03_total_least_squares.py`.
+2. Jalankan program: `python 03_total_least_squares.py`.
+3. Amati perbedaan OLS (jarak vertikal) vs TLS (jarak tegak lurus).
+4. Perhatikan penggunaan SVD untuk solusi TLS.
+5. Amati kasus di mana TLS lebih tepat daripada OLS.
+6. Periksa output di folder `output/`.
 
 ---
 
-### Percobaan 4: Hough Transform — Deteksi Garis
+### Percobaan 4: RANSAC Fitting Garis
+**File**: `04_ransac_fitting_garis.py`
 
-**Tujuan**: Mendeteksi garis lurus pada gambar menggunakan Hough Transform.
+**Tujuan**: Mengimplementasikan RANSAC untuk fitting garis yang robust terhadap outlier.
 
 **Langkah Kerja**:
-1. Buat file `04_hough_lines.py`.
-2. Baca gambar (bangunan, jalan, papan tulis).
-3. Preprocessing: grayscale → blur → Canny edge.
-4. Terapkan Standard Hough Transform: `cv2.HoughLines()`.
-5. Terapkan Probabilistic Hough Transform: `cv2.HoughLinesP()`.
-6. Gambar garis yang terdeteksi di atas gambar asli.
-7. Variasikan parameter: `threshold`, `minLineLength`, `maxLineGap`.
-8. Filter garis berdasarkan sudut (horizontal, vertikal, diagonal).
-9. Hitung intersection antar garis.
-10. Terapkan pada gambar jalanan untuk lane detection sederhana.
+1. Buka dan pelajari file `04_ransac_fitting_garis.py`.
+2. Jalankan program: `python 04_ransac_fitting_garis.py`.
+3. Amati data sintetis dengan inlier dan outlier yang jelas.
+4. Perhatikan proses RANSAC: random sampling → fit → count inliers → update best.
+5. Bandingkan hasil RANSAC vs OLS pada data yang sama.
+6. Periksa output di folder `output/`.
 
 ---
 
-### Percobaan 5: Hough Transform — Deteksi Lingkaran
+### Percobaan 5: RANSAC Fitting Lingkaran
+**File**: `05_ransac_fitting_lingkaran.py`
 
-**Tujuan**: Mendeteksi lingkaran pada gambar.
+**Tujuan**: Menerapkan RANSAC untuk fitting lingkaran (estimasi center dan radius).
 
 **Langkah Kerja**:
-1. Buat file `05_hough_circles.py`.
-2. Baca gambar yang mengandung objek bulat (koin, bola, iris mata).
-3. Preprocessing: grayscale → median blur.
-4. Terapkan `cv2.HoughCircles()` dengan metode `cv2.HOUGH_GRADIENT`.
-5. Gambar lingkaran dan center yang terdeteksi.
-6. Variasikan parameter: `dp`, `minDist`, `param1`, `param2`, `minRadius`, `maxRadius`.
-7. Terapkan pada gambar koin → hitung jumlah koin.
-8. Terapkan pada gambar roda/ban.
-9. Filter false positive berdasarkan ukuran dan posisi.
-10. Simpan hasil deteksi dengan anotasi.
+1. Buka dan pelajari file `05_ransac_fitting_lingkaran.py`.
+2. Jalankan program: `python 05_ransac_fitting_lingkaran.py`.
+3. Amati fitting lingkaran pada data titik dengan outlier.
+4. Perhatikan minimum 3 titik untuk menentukan lingkaran.
+5. Bandingkan RANSAC circle vs least squares circle fit.
+6. Periksa output di folder `output/`.
 
 ---
 
-### Percobaan 6: Estimasi Homografi
+### Percobaan 6: Hough Transform Garis
+**File**: `06_hough_transform_garis.py`
 
-**Tujuan**: Mengestimasi matriks homografi dari titik korespondensi.
+**Tujuan**: Mendeteksi garis pada gambar menggunakan Hough Transform dan probabilistic Hough.
 
 **Langkah Kerja**:
-1. Buat file `06_homography.py`.
-2. Baca dua gambar dengan area overlap (misal: buku dari dua sudut).
-3. Deteksi dan match fitur (SIFT + FLANN + ratio test).
-4. Estimasi homografi: `H, mask = cv2.findHomography(src, dst, cv2.RANSAC)`.
-5. Visualisasikan inlier matches.
-6. Warp gambar pertama ke perspektif gambar kedua: `cv2.warpPerspective()`.
-7. Overlay hasil warp dengan gambar kedua.
-8. Variasikan metode: `cv2.RANSAC` vs `cv2.LMEDS` vs `0` (least squares).
-9. Bandingkan akurasi dan robustness tiap metode.
-10. Coba dengan jumlah match yang berbeda (4, 10, 50, 100+).
+1. Buka dan pelajari file `06_hough_transform_garis.py`.
+2. Jalankan program: `python 06_hough_transform_garis.py`.
+3. Amati akumulator Hough space (ρ, θ).
+4. Perhatikan perbedaan `cv2.HoughLines` vs `cv2.HoughLinesP` (probabilistic).
+5. Amati efek threshold dan parameter minLineLength/maxLineGap.
+6. Periksa output di folder `output/`.
 
 ---
 
-### Percobaan 7: Koreksi Perspektif
+### Percobaan 7: Hough Transform Lingkaran
+**File**: `07_hough_transform_lingkaran.py`
 
-**Tujuan**: Menerapkan homografi untuk mengoreksi perspektif objek planar.
+**Tujuan**: Mendeteksi lingkaran pada gambar menggunakan Hough Circle Transform.
 
 **Langkah Kerja**:
-1. Buat file `07_perspective_correction.py`.
-2. Baca gambar dokumen/buku/papan yang diambil dari sudut miring.
-3. Deteksi sudut objek secara manual (klik mouse) atau otomatis (contour).
-4. Definisikan titik tujuan (persegi panjang).
-5. Hitung homografi dan warp.
-6. Implementasikan auto-detection sudut dokumen:
-   - Canny edge → contour → approxPolyDP → 4 sudut.
-7. Terapkan pada beberapa gambar dokumen.
-8. Tambahkan validasi: pastikan 4 titik membentuk convex quadrilateral.
-9. Enhancement setelah warp: sharpen, contrast adjust.
-10. Simpan hasil before-after.
+1. Buka dan pelajari file `07_hough_transform_lingkaran.py`.
+2. Jalankan program: `python 07_hough_transform_lingkaran.py`.
+3. Amati deteksi lingkaran pada gambar koin atau objek bulat.
+4. Perhatikan parameter: dp, minDist, param1, param2, minRadius, maxRadius.
+5. Amati efek tuning parameter terhadap jumlah deteksi.
+6. Periksa output di folder `output/`.
 
 ---
 
-### Percobaan 8: Optical Flow
+### Percobaan 8: Homography Estimation
+**File**: `08_homography_estimation.py`
 
-**Tujuan**: Mengestimasi gerakan piksel antar dua frame berurutan.
+**Tujuan**: Mengestimasi matriks homografi 3×3 dari pasangan titik korespondensi.
 
 **Langkah Kerja**:
-1. Buat file `08_optical_flow.py`.
-2. Baca video atau buat dua frame sintetis dengan displacement.
-3. Sparse optical flow (Lucas-Kanade):
-   - Deteksi fitur di frame 1: `cv2.goodFeaturesToTrack()`.
-   - Track ke frame 2: `cv2.calcOpticalFlowPyrLK()`.
-   - Gambar trail gerakan.
-4. Dense optical flow (Farnebäck):
-   - `cv2.calcOpticalFlowFarneback()`.
-   - Visualisaikan sebagai HSV (hue = arah, value = magnitude).
-5. Bandingkan sparse vs dense flow secara visual.
-6. Simpan visualisasi optical flow.
-7. Hitung magnitude rata-rata flow sebagai indikator jumlah gerakan.
-8. Terapkan pada video real (webcam atau file).
-9. Implementasikan motion detection sederhana berdasarkan flow magnitude.
-10. Simpan visualisasi frame-by-frame.
+1. Buka dan pelajari file `08_homography_estimation.py`.
+2. Jalankan program: `python 08_homography_estimation.py`.
+3. Amati estimasi homografi dari 4+ pasang titik.
+4. Perhatikan perbedaan `cv2.findHomography` dengan metode RANSAC, LMEDS, RHO.
+5. Amati warpPerspective menggunakan homografi yang diestimasi.
+6. Periksa output di folder `output/`.
 
 ---
 
-### Percobaan 9: Interpolasi Scattered Data (RBF)
+### Percobaan 9: Koreksi Perspektif Dokumen
+**File**: `09_koreksi_perspektif_dokumen.py`
 
-**Tujuan**: Menggunakan Radial Basis Function untuk interpolasi data tersebar.
+**Tujuan**: Menerapkan homografi untuk koreksi perspektif dokumen (document scanner).
 
 **Langkah Kerja**:
-1. Buat file `09_scattered_interpolation_rbf.py`.
-2. Generate titik-titik sampel acak dengan nilai (misal: elevasi, suhu).
-3. Gunakan `scipy.interpolate.Rbf` untuk interpolasi.
-4. Buat grid reguler dan evaluasi interpolasi pada grid.
-5. Visualisasikan surface interpolasi (colormap 2D atau 3D).
-6. Bandingkan kernel RBF: `multiquadric`, `gaussian`, `linear`, `thin_plate`.
-7. Terapkan pada kasus: rekonstruksi depth map dari sparse points.
-8. Terapkan pada kasus: smooth displacement field dari sparse matches.
-9. Variasikan jumlah titik sampel dan amati kualitas interpolasi.
-10. Bandingkan dengan `scipy.interpolate.griddata`.
+1. Buka dan pelajari file `09_koreksi_perspektif_dokumen.py`.
+2. Jalankan program: `python 09_koreksi_perspektif_dokumen.py`.
+3. Amati deteksi kontur dokumen dan 4 titik sudut.
+4. Perhatikan penghitungan homografi dan warp ke tampilan tegak lurus.
+5. Amati pipeline lengkap: preprocessing → contour → homography → warp.
+6. Periksa output di folder `output/`.
 
 ---
 
-### Percobaan 10: Denoising dengan Regularisasi Variasional
+### Percobaan 10: IRLS (Iteratively Reweighted Least Squares)
+**File**: `10_irls_robust_fitting.py`
 
-**Tujuan**: Menerapkan Total Variation (TV) regularization untuk image denoising.
+**Tujuan**: Mengimplementasikan IRLS yang melakukan fitting iteratif dengan bobot yang di-update berdasarkan residual.
 
 **Langkah Kerja**:
-1. Buat file `10_variational_denoising.py`.
-2. Baca gambar bersih dan tambahkan Gaussian noise.
-3. Implementasikan TV denoising sederhana menggunakan iterasi:
-   - Minimize: $E(u) = \|u - f\|^2 + \lambda \|\nabla u\|_1$.
-4. Gunakan `skimage.restoration.denoise_tv_chambolle` atau implementasi manual.
-5. Variasikan λ (weight regulaisasi) dan amati trade-off smoothing vs detail.
-6. Bandingkan dengan Gaussian blur dan bilateral filter.
-7. Hitung PSNR untuk setiap metode.
-8. Visualisasikan per-pixel error map.
-9. Terapkan pada gambar medis noisy.
-10. Buat grafik: λ vs PSNR.
+1. Buka dan pelajari file `10_irls_robust_fitting.py`.
+2. Jalankan program: `python 10_irls_robust_fitting.py`.
+3. Amati proses iteratif: bobot besar untuk inlier, kecil untuk outlier.
+4. Perhatikan konvergensi IRLS dari iterasi ke iterasi.
+5. Bandingkan IRLS vs OLS vs RANSAC pada data yang sama.
+6. Periksa output di folder `output/`.
 
 ---
 
-## 4. ANALISIS
+### Percobaan 11: Regularisasi Ridge dan Lasso
+**File**: `11_regularisasi_ridge_lasso.py`
 
-### Analisis Percobaan 1 — Deteksi Fitur
-- Bandingkan distribusi dan repeatability fitur: Harris vs Shi-Tomasi vs SIFT vs ORB.
-- Metode mana yang paling banyak mendeteksi fitur? Apakah lebih banyak = lebih baik?
+**Tujuan**: Memahami regularisasi L2 (Ridge) dan L1 (Lasso) untuk mencegah overfitting.
 
-### Analisis Percobaan 2 — Feature Matching
-- Berapa persen match yang benar (setelah ratio test)?
-- Bandingkan kecepatan BF vs FLANN.
-
-### Analisis Percobaan 3 — RANSAC
-- Pada rasio outlier berapa RANSAC mulai gagal?
-- Bagaimana threshold ε mempengaruhi jumlah inlier?
-
-### Analisis Percobaan 4 — Hough Lines
-- Bandingkan Standard vs Probabilistic Hough: Pro dan kontra.
-- Bagaimana kualitas edge detection mempengaruhi deteksi garis?
-
-### Analisis Percobaan 5 — Hough Circles
-- False positive apa yang sering muncul? Bagaimana meminimalkannya?
-- Pengaruh preprocessing terhadap akurasi deteksi.
-
-### Analisis Percobaan 6 — Homografi
-- Bandingkan akurasi RANSAC vs LMEDS vs plain least squares.
-- Minimal berapa pasang match untuk homografi yang baik?
-
-### Analisis Percobaan 7 — Koreksi Perspektif
-- Seberapa akurat auto-detection sudut dibanding manual?
-- Apa kelemahan method contour-based detection?
-
-### Analisis Percobaan 8 — Optical Flow
-- Kapan Lucas-Kanade gagal (apa asumsinya)?
-- Bandingkan sparse vs dense flow: kapan masing-masing cocok?
-
-### Analisis Percobaan 9 — RBF Interpolation
-- Kernel RBF mana yang menghasilkan interpolasi paling smooth? Paling akurat?
-- Bagaimana densitas titik sampel mempengaruhi kualitas?
-
-### Analisis Percobaan 10 — TV Denoising
-- Pada λ berapa terjadi balance optimal antara smoothing dan detail?
-- Bandingkan TV vs Gaussian vs bilateral filter: metrik dan visual.
+**Langkah Kerja**:
+1. Buka dan pelajari file `11_regularisasi_ridge_lasso.py`.
+2. Jalankan program: `python 11_regularisasi_ridge_lasso.py`.
+3. Amati efek parameter regularisasi λ (alpha) pada fitting.
+4. Perhatikan Ridge: menyusutkan koefisien, Lasso: membuat koefisien = 0 (sparsity).
+5. Amati trade-off bias-variance dengan variasi λ.
+6. Periksa output di folder `output/`.
 
 ---
 
-## 5. KESIMPULAN
+### Percobaan 12: Fitting Ellips dan Kontur
+**File**: `12_fitting_ellips_kontur.py`
+
+**Tujuan**: Melakukan fitting ellips, minimum area rectangle, convex hull, dan polygon approximation pada kontur.
+
+**Langkah Kerja**:
+1. Buka dan pelajari file `12_fitting_ellips_kontur.py`.
+2. Jalankan program: `python 12_fitting_ellips_kontur.py`.
+3. Amati fitEllipse, fitEllipseAMS, dan fitEllipseDirect.
+4. Perhatikan minAreaRect, convexHull, dan approxPolyDP.
+5. Bandingkan berbagai metode fitting pada bentuk yang sama.
+6. Periksa output di folder `output/`.
+
+---
+
+### Percobaan 13: Template Matching
+**File**: `13_template_matching.py`
+
+**Tujuan**: Mencocokkan template pada gambar menggunakan berbagai metode korelasi dan NMS.
+
+**Langkah Kerja**:
+1. Buka dan pelajari file `13_template_matching.py`.
+2. Jalankan program: `python 13_template_matching.py`.
+3. Amati 6 metode matchTemplate (TM_CCOEFF, TM_CCORR, TM_SQDIFF + versi NORMED).
+4. Perhatikan multi-object detection dan Non-Maximum Suppression (NMS).
+5. Amati multi-scale template matching.
+6. Periksa output di folder `output/`.
+
+---
+
+### Percobaan 14: Graph Cut Segmentation
+**File**: `14_graph_cut_segmentation.py`
+
+**Tujuan**: Menerapkan segmentasi gambar menggunakan GrabCut, Watershed, dan MRF energy minimization.
+
+**Langkah Kerja**:
+1. Buka dan pelajari file `14_graph_cut_segmentation.py`.
+2. Jalankan program: `python 14_graph_cut_segmentation.py`.
+3. Amati GrabCut segmentation (rectangle-based dan mask-based).
+4. Perhatikan Watershed segmentation.
+5. Amati MRF ICM (Iterated Conditional Modes) energy minimization.
+6. Periksa output di folder `output/`.
+
+---
+
+### Percobaan 15: Lucas-Kanade Optical Flow
+**File**: `15_lucas_kanade_optical_flow.py`
+
+**Tujuan**: Mengestimasi sparse optical flow menggunakan metode Lucas-Kanade pyramidal.
+
+**Langkah Kerja**:
+1. Buka dan pelajari file `15_lucas_kanade_optical_flow.py`.
+2. Jalankan program: `python 15_lucas_kanade_optical_flow.py`.
+3. Amati deteksi good features dan tracking antar frame.
+4. Perhatikan efek window size dan jumlah level pyramid.
+5. Amati forward-backward verification untuk filtering flow yang buruk.
+6. Periksa output di folder `output/`.
+
+---
+
+### Percobaan 16: Dense Optical Flow
+**File**: `16_dense_optical_flow.py`
+
+**Tujuan**: Mengestimasi dense optical flow menggunakan metode Farneback dengan visualisasi HSV.
+
+**Langkah Kerja**:
+1. Buka dan pelajari file `16_dense_optical_flow.py`.
+2. Jalankan program: `python 16_dense_optical_flow.py`.
+3. Amati visualisasi flow: HSV (hue = arah, saturation = magnitude) dan quiver plot.
+4. Perhatikan efek parameter Farneback (pyr_scale, levels, winsize, iterations).
+5. Amati flow warping untuk verifikasi kualitas estimasi.
+6. Periksa output di folder `output/`.
+
+---
+
+### Percobaan 17: Feature Matching dengan RANSAC
+**File**: `17_feature_matching_ransac.py`
+
+**Tujuan**: Menggabungkan feature detection, matching, dan RANSAC-based homography estimation.
+
+**Langkah Kerja**:
+1. Buka dan pelajari file `17_feature_matching_ransac.py`.
+2. Jalankan program: `python 17_feature_matching_ransac.py`.
+3. Amati ORB keypoint detection dan BFMatcher.
+4. Perhatikan Lowe's ratio test dan findHomography dengan RANSAC.
+5. Bandingkan metode homography: RANSAC vs LMEDS vs RHO.
+6. Periksa output di folder `output/`.
+
+---
+
+### Percobaan 18: Cross-Validation dan Model Selection
+**File**: `18_cross_validation_model_selection.py`
+
+**Tujuan**: Menerapkan K-Fold dan LOO cross-validation untuk memilih model dan parameter optimal.
+
+**Langkah Kerja**:
+1. Buka dan pelajari file `18_cross_validation_model_selection.py`.
+2. Jalankan program: `python 18_cross_validation_model_selection.py`.
+3. Amati K-Fold CV dan Leave-One-Out CV.
+4. Perhatikan train error vs CV error (overfitting detection).
+5. Amati RANSAC threshold selection via cross-validation dan learning curves.
+6. Periksa output di folder `output/`.
+
+---
+
+### Percobaan 19: Denoising via Optimasi
+**File**: `19_denoising_optimasi.py`
+
+**Tujuan**: Menerapkan denoising berbasis optimasi: NLM, Total Variation, dan bilateral filter.
+
+**Langkah Kerja**:
+1. Buka dan pelajari file `19_denoising_optimasi.py`.
+2. Jalankan program: `python 19_denoising_optimasi.py`.
+3. Amati Non-Local Means denoising (fastNlMeansDenoising).
+4. Perhatikan Total Variation denoising via gradient descent.
+5. Bandingkan metode berdasarkan PSNR.
+6. Periksa output di folder `output/`.
+
+---
+
+### Percobaan 20: Pipeline Gabungan
+**File**: `20_pipeline_gabungan.py`
+
+**Tujuan**: Membangun pipeline end-to-end yang mengintegrasikan berbagai teknik model fitting.
+
+**Langkah Kerja**:
+1. Buka dan pelajari file `20_pipeline_gabungan.py`.
+2. Jalankan program: `python 20_pipeline_gabungan.py`.
+3. Amati Pipeline 1: Lane detection (Canny → Hough → RANSAC).
+4. Amati Pipeline 2: Transform estimation (ORB → match → homography → warp).
+5. Amati Pipeline 3: Benchmark fitting methods (OLS, WLS, TLS, RANSAC, IRLS).
+6. Periksa output di folder `output/`.
+
+---
+
+## 5. ANALISIS
+
+### Analisis Percobaan 1–3: OLS, WLS, dan TLS
+- Jelaskan perbedaan residual yang diminimalkan oleh OLS, WLS, dan TLS.
+- Kapan WLS lebih tepat digunakan daripada OLS?
+- Mengapa TLS lebih cocok ketika kedua variabel memiliki noise?
+
+### Analisis Percobaan 4–5: RANSAC
+- Jelaskan mengapa RANSAC robust terhadap outlier.
+- Bagaimana jumlah iterasi mempengaruhi probabilitas menemukan model terbaik?
+- Bandingkan RANSAC garis (2 titik) vs lingkaran (3 titik).
+
+### Analisis Percobaan 6–7: Hough Transform
+- Jelaskan prinsip voting di Hough space.
+- Apa trade-off antara resolution parameter dan akurasi deteksi?
+- Bandingkan standard Hough vs probabilistic Hough.
+
+### Analisis Percobaan 8–9: Homography dan Koreksi Perspektif
+- Jelaskan mengapa homografi memerlukan minimal 4 pasang titik.
+- Apa perbedaan metode RANSAC, LMEDS, dan RHO pada findHomography?
+- Bagaimana pipeline document scanner bekerja secara end-to-end?
+
+### Analisis Percobaan 10–11: IRLS dan Regularisasi
+- Jelaskan proses iteratif IRLS dan kapan ia konvergen.
+- Bandingkan efek Ridge (L2) vs Lasso (L1) pada koefisien model.
+- Bagaimana trade-off bias-variance terkait dengan parameter regularisasi?
+
+### Analisis Percobaan 12–13: Fitting Kontur dan Template Matching
+- Bandingkan fitEllipse, AMS, dan Direct pada berbagai bentuk.
+- Jelaskan kekuatan dan kelemahan template matching.
+- Mengapa multi-scale matching diperlukan?
+
+### Analisis Percobaan 14: Graph Cut Segmentation
+- Jelaskan prinsip energy minimization dalam GrabCut.
+- Bandingkan GrabCut vs Watershed: kapan masing-masing lebih unggul?
+- Apa limitasi MRF-based segmentation?
+
+### Analisis Percobaan 15–16: Optical Flow
+- Jelaskan asumsi brightness constancy pada optical flow.
+- Bandingkan Lucas-Kanade (sparse) vs Farneback (dense).
+- Mengapa pyramid diperlukan untuk menangkap gerakan besar?
+
+### Analisis Percobaan 17–18: Feature Matching RANSAC dan Cross-Validation
+- Jelaskan peran ratio test dalam filtering match yang buruk.
+- Bagaimana K-Fold CV berbeda dari LOO CV? Pro dan kontra masing-masing?
+- Mengapa cross-validation penting untuk memilih threshold RANSAC?
+
+### Analisis Percobaan 19–20: Denoising dan Pipeline
+- Bandingkan NLM, Total Variation, dan bilateral filter dari segi PSNR dan visual.
+- Jelaskan bagaimana pipeline lane detection bekerja.
+- Apa critical step dalam pipeline transform estimation?
+
+---
+
+## 6. KESIMPULAN
 
 Buatlah kesimpulan yang mencakup:
-1. Perbandingan metode deteksi fitur dan matching.
-2. Keunggulan RANSAC untuk data dengan outlier.
-3. Aplikasi Hough Transform dan keterbatasannya.
-4. Peran homografi dalam computer vision.
-5. Trade-off dalam regularisasi dan denoising.
+1. Pemahaman tentang berbagai metode least squares (OLS, WLS, TLS).
+2. Peran RANSAC dalam estimasi model yang robust terhadap outlier.
+3. Hough Transform sebagai metode voting untuk deteksi bentuk geometri.
+4. Homografi dan aplikasinya dalam koreksi perspektif.
+5. Regularisasi sebagai teknik pencegahan overfitting.
+6. Optical flow untuk estimasi gerakan antar frame.
+7. Cross-validation untuk model selection yang objektif.
+8. Integrasi berbagai teknik fitting dalam pipeline end-to-end.

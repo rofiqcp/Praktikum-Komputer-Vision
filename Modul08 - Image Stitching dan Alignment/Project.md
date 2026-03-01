@@ -3,7 +3,7 @@
 ---
 
 ## Deskripsi Umum
-Project mengintegrasikan seluruh konsep image stitching: feature matching, homography, warping, blending, exposure compensation, seam finding, dan projection. Pilih minimal 1 soal cerita.
+Project mengintegrasikan seluruh konsep dari 20 percobaan image stitching: feature matching, homography estimation, warping, blending, exposure compensation, seam finding, projection, auto-cropping, image registration, quality evaluation, loop closure, dan document stitching. Pilih minimal 1 soal cerita.
 
 ---
 
@@ -66,7 +66,7 @@ Acara event ingin photo booth panoramic. Buatlah: (a) capture 3 foto (kiri, cent
 | Komponen | Bobot | Keterangan |
 |----------|-------|------------|
 | Fungsionalitas | 35% | Semua fitur berjalan |
-| Integrasi Percobaan | 20% | Menggunakan konsep ≥5 percobaan |
+| Integrasi Percobaan | 20% | Menggunakan konsep ≥8 dari 20 percobaan |
 | Kualitas Kode | 15% | Clean, modular |
 | Dokumentasi | 15% | README, screenshot |
 | Kreativitas | 15% | Fitur tambahan, UI, optimasi |

@@ -42,10 +42,10 @@ print("=" * 60)
 # ============================================================
 
 # Membaca gambar kucing dalam mode warna (3 channel BGR)
-img_color = cv2.imread(os.path.join(IMAGE_DIR, "kucing.jpg"), cv2.IMREAD_COLOR)
+img_color = cv2.imread(os.path.join(IMAGE_DIR, "foto_kucing.jpg"), cv2.IMREAD_COLOR)
 
 # Membaca gambar yang sama dalam mode grayscale (1 channel)
-img_gray = cv2.imread(os.path.join(IMAGE_DIR, "kucing.jpg"), cv2.IMREAD_GRAYSCALE)
+img_gray = cv2.imread(os.path.join(IMAGE_DIR, "foto_kucing.jpg"), cv2.IMREAD_GRAYSCALE)
 
 # Memeriksa apakah gambar berhasil dimuat
 if img_color is None:

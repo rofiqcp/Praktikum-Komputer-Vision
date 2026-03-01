@@ -37,7 +37,7 @@ print("PERCOBAAN 4: AKSES DAN MANIPULASI PIKSEL")
 print("=" * 60)
 
 # Membaca gambar kucing dalam mode warna
-img = cv2.imread(os.path.join(IMAGE_DIR, "kucing.jpg"))
+img = cv2.imread(os.path.join(IMAGE_DIR, "foto_kucing.jpg"))
 if img is None:
     print("[ERROR] Jalankan download_image.py terlebih dahulu!")
     exit()

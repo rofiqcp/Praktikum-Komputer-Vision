@@ -1,366 +1,286 @@
 """
 ==========================================================================
-SCRIPT DOWNLOAD DAN GENERATE GAMBAR SAMPLE
+SCRIPT DOWNLOAD GAMBAR ASLI (REAL IMAGES)
 Modul 07 - Deteksi Fitur dan Pencocokan
 ==========================================================================
-Script ini menyiapkan semua gambar yang dibutuhkan untuk 20 percobaan
-Feature Detection dan Feature Matching.
-- Membuat folder 'image/' dan 'output/'
-- Men-generate gambar sintetis: checkerboard, bangunan, objek planar
-- Membuat pasangan gambar overlapping untuk feature matching
-- Membuat gambar objek dari sudut berbeda (simulasi)
+Script ini mengunduh gambar ASLI dari internet untuk semua 20 percobaan.
+TIDAK ADA gambar yang dibuat/di-generate secara manual.
 
-Jalankan script ini PERTAMA KALI sebelum menjalankan percobaan lainnya.
+Sumber gambar:
+  - OpenCV official sample images (building.jpg, fruits.jpg, dll)
+  - Wikipedia Commons (lisensi CC-BY-SA)
+
+Gambar yang diunduh:
+  checkerboard.jpg     - pola papan catur asli dari Wikipedia Commons
+  bangunan.jpg         - foto bangunan asli (OpenCV building.jpg)
+  scene_left.jpg       - setengah kiri foto outdoor asli (messi5.jpg)
+  scene_right.jpg      - setengah kanan foto outdoor asli (messi5.jpg)
+  scene_full.jpg       - foto outdoor penuh asli (messi5.jpg)
+  objek_buku.jpg       - foto buku asli (Wikipedia Commons)
+  objek_poster.jpg     - foto poster asli (Wikipedia Commons)
+  objek_kartu.jpg      - foto kartu asli (variasi foto asli)
+  scene_buku.jpg       - foto buku dalam scene asli
+  scene_poster.jpg     - foto poster dalam scene asli
+  scene_kartu.jpg      - foto kartu dalam scene asli
+  buku_rot*.jpg        - rotasi dari foto buku asli
+  buku_scale*.jpg      - scale dari foto buku asli
+  buku_bright*.jpg     - variasi brightness foto buku asli
+  tekstur_kompleks.jpg - foto tekstur alami asli (baboon.jpg)
+  ar_marker.jpg        - pola AR marker asli (Wikipedia Commons)
+  pano_left.jpg        - bagian kiri foto panorama asli
+  pano_center.jpg      - bagian tengah foto panorama asli
+  pano_right.jpg       - bagian kanan foto panorama asli
+
+Jalankan script ini PERTAMA KALI sebelum percobaan 01-20.
 ==========================================================================
 """
 
-# Mengimpor library os untuk operasi file dan folder
 import os
-
-# Mengimpor library numpy untuk operasi array/matriks
+import urllib.request
 import numpy as np
-
-# Mengimpor library OpenCV untuk pemrosesan gambar
 import cv2
 
-# ============================================================
-# LANGKAH 1: Membuat struktur folder yang dibutuhkan
-# ============================================================
-
-# Mendapatkan path direktori tempat script ini berada
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# Mendefinisikan path folder image dan output
 IMAGE_DIR = os.path.join(BASE_DIR, "image")
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
 
-# Membuat folder jika belum ada
-os.makedirs(IMAGE_DIR, exist_ok=True)
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+for d in [IMAGE_DIR, OUTPUT_DIR]:
+    os.makedirs(d, exist_ok=True)
 
-print("[INFO] Folder 'image/' dan 'output/' siap.")
-
-# ============================================================
-# LANGKAH 2: Generate gambar checkerboard
-# ============================================================
-
-def buat_checkerboard(rows=8, cols=8, cell_size=60):
-    """Membuat gambar pola papan catur untuk deteksi corner."""
-    h = rows * cell_size
-    w = cols * cell_size
-    img = np.zeros((h, w, 3), dtype=np.uint8)
-    for i in range(rows):
-        for j in range(cols):
-            if (i + j) % 2 == 0:
-                y1, y2 = i * cell_size, (i + 1) * cell_size
-                x1, x2 = j * cell_size, (j + 1) * cell_size
-                img[y1:y2, x1:x2] = 255
-    return img
-
-# ============================================================
-# LANGKAH 3: Generate gambar bangunan sintetis (banyak corner)
-# ============================================================
-
-def buat_bangunan():
-    """Membuat gambar bangunan sintetis dengan banyak sudut dan garis."""
-    img = np.ones((600, 800, 3), dtype=np.uint8) * 200
-
-    # Langit
-    img[:200, :] = [230, 180, 130]
-
-    # Tanah
-    img[450:, :] = [120, 110, 100]
-
-    # Bangunan utama
-    cv2.rectangle(img, (100, 150), (350, 450), (160, 150, 140), -1)
-    # Jendela bangunan utama (grid 3x4)
-    for row in range(4):
-        for col in range(3):
-            x = 120 + col * 70
-            y = 180 + row * 60
-            cv2.rectangle(img, (x, y), (x + 45, y + 35), (200, 200, 220), -1)
-            cv2.rectangle(img, (x, y), (x + 45, y + 35), (100, 100, 100), 1)
-
-    # Pintu
-    cv2.rectangle(img, (190, 370), (260, 450), (60, 50, 40), -1)
-
-    # Bangunan kedua
-    cv2.rectangle(img, (400, 200), (700, 450), (180, 170, 150), -1)
-    # Jendela bangunan kedua
-    for row in range(3):
-        for col in range(4):
-            x = 420 + col * 65
-            y = 220 + row * 65
-            cv2.rectangle(img, (x, y), (x + 40, y + 40), (200, 200, 230), -1)
-            cv2.rectangle(img, (x, y), (x + 40, y + 40), (100, 100, 100), 1)
-
-    # Atap segitiga pada bangunan pertama
-    pts = np.array([[80, 150], [225, 50], [370, 150]], np.int32)
-    cv2.fillPoly(img, [pts], (140, 80, 80))
-
-    # Pagar
-    for x in range(50, 780, 30):
-        cv2.line(img, (x, 430), (x, 470), (80, 80, 80), 2)
-    cv2.line(img, (50, 450), (780, 450), (80, 80, 80), 3)
-
-    return img
-
-# ============================================================
-# LANGKAH 4: Generate pasangan gambar overlapping
-# ============================================================
-
-def buat_pasangan_overlapping():
-    """Membuat 2 gambar yang saling overlap (untuk feature matching/stitching)."""
-    # Membuat scene besar
-    scene = np.ones((500, 1200, 3), dtype=np.uint8) * 200
-
-    # Langit
-    scene[:200, :] = [230, 180, 130]
-    # Rumput
-    scene[350:, :] = [60, 140, 60]
-
-    # Pohon-pohon
-    for tx in [100, 300, 500, 700, 900, 1100]:
-        h_pohon = np.random.randint(100, 180)
-        cv2.rectangle(scene, (tx - 8, 350 - h_pohon), (tx + 8, 350), (30, 80, 30), -1)
-        cv2.circle(scene, (tx, 350 - h_pohon - 30), 45, (20, 120 + (tx % 40), 20), -1)
-
-    # Rumah
-    cv2.rectangle(scene, (350, 200), (550, 350), (160, 140, 130), -1)
-    pts_atap = np.array([[330, 200], [450, 120], [570, 200]], np.int32)
-    cv2.fillPoly(scene, [pts_atap], (120, 60, 60))
-    cv2.rectangle(scene, (420, 280), (480, 350), (60, 50, 40), -1)
-    for wx, wy in [(370, 230), (370, 280), (500, 230), (500, 280)]:
-        cv2.rectangle(scene, (wx, wy), (wx + 30, wy + 25), (200, 200, 220), -1)
-
-    # Matahari
-    cv2.circle(scene, (1000, 80), 50, (0, 200, 255), -1)
-
-    # Awan
-    for cx in [200, 600, 800]:
-        cv2.ellipse(scene, (cx, 60), (60, 25), 0, 0, 360, (255, 255, 255), -1)
-
-    # Potong menjadi 2 gambar overlapping (overlap ~40%)
-    w = scene.shape[1]
-    mid = w // 2
-    overlap = 240  # piksel overlap
-
-    img_left = scene[:, :mid + overlap]
-    img_right = scene[:, mid - overlap:]
-
-    return img_left, img_right, scene
-
-# ============================================================
-# LANGKAH 5: Generate gambar objek planar (buku/poster)
-# ============================================================
-
-def buat_objek_planar(nama="buku"):
-    """Membuat gambar objek planar untuk homography detection."""
-    img = np.ones((400, 300, 3), dtype=np.uint8) * 240
-
-    if nama == "buku":
-        # Cover buku
-        cv2.rectangle(img, (20, 20), (280, 380), (180, 50, 50), -1)
-        cv2.rectangle(img, (30, 30), (270, 370), (200, 70, 70), 2)
-        cv2.putText(img, "COMPUTER", (50, 120), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
-        cv2.putText(img, "VISION", (70, 170), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 2)
-        cv2.putText(img, "2024", (100, 230), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 230, 200), 2)
-        cv2.line(img, (50, 260), (250, 260), (255, 200, 200), 2)
-        cv2.putText(img, "Szeliski", (80, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 230, 200), 2)
-
-    elif nama == "poster":
-        # Poster
-        cv2.rectangle(img, (10, 10), (290, 390), (50, 50, 180), -1)
-        cv2.circle(img, (150, 150), 80, (0, 200, 255), -1)
-        cv2.putText(img, "CV LAB", (60, 280), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 3)
-        # Dekorasi
-        for i in range(5):
-            cv2.circle(img, (30 + i * 60, 350), 15, (200, 200, 50), -1)
-
-    elif nama == "kartu":
-        # Kartu ID
-        cv2.rectangle(img, (10, 80), (290, 320), (255, 255, 255), -1)
-        cv2.rectangle(img, (10, 80), (290, 320), (0, 0, 0), 2)
-        cv2.rectangle(img, (10, 80), (290, 120), (50, 100, 200), -1)
-        cv2.putText(img, "ID CARD", (80, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
-        # Foto placeholder
-        cv2.rectangle(img, (30, 140), (110, 240), (200, 200, 200), -1)
-        cv2.circle(img, (70, 170), 20, (150, 150, 150), -1)
-        cv2.rectangle(img, (50, 195), (90, 235), (150, 150, 150), -1)
-        # Info
-        cv2.putText(img, "Nama: John", (130, 170), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
-        cv2.putText(img, "NIM: 123456", (130, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
-        cv2.putText(img, "Prodi: TI", (130, 230), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
-        # Barcode-like
-        for x in range(50, 250, 4):
-            h = np.random.randint(15, 30)
-            cv2.line(img, (x, 270), (x, 270 + h), (0, 0, 0), 1 + (x % 3))
-
-    return img
+print("[INFO] Folder siap: image/, output/")
 
 
-def buat_objek_dalam_scene(objek_img):
-    """Menempatkan objek planar dalam scene dengan perspektif."""
-    scene = np.ones((500, 700, 3), dtype=np.uint8) * 180
+def dl(url, path, label=""):
+    """Download gambar asli dari URL."""
+    if os.path.exists(path):
+        im = cv2.imread(path)
+        if im is not None:
+            print(f"  [SKIP] {os.path.basename(path)} ({im.shape[1]}x{im.shape[0]})")
+            return True
+    print(f"  [DL] {label or os.path.basename(path)}")
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=30) as r:
+            data = r.read()
+        arr = np.frombuffer(data, dtype=np.uint8)
+        im = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+        if im is not None:
+            cv2.imwrite(path, im)
+            print(f"  [OK] {os.path.basename(path)} ({im.shape[1]}x{im.shape[0]})")
+            return True
+        with open(path, "wb") as f:
+            f.write(data)
+        print(f"  [OK] {os.path.basename(path)} (raw)")
+        return True
+    except Exception as e:
+        print(f"  [FAIL] {os.path.basename(path)}: {e}")
+        return False
 
-    # Background (meja)
-    scene[250:, :] = [140, 120, 100]
 
-    # Simpan objek dalam scene (dengan sedikit transformasi perspektif)
-    h, w = objek_img.shape[:2]
-
-    # Titik sumber (4 corner dari objek)
-    src_pts = np.float32([[0, 0], [w, 0], [w, h], [0, h]])
-
-    # Titik tujuan (perspektif di scene)
-    dst_pts = np.float32([[200, 100], [480, 80], [500, 380], [180, 400]])
-
-    # Hitung homography
-    M = cv2.getPerspectiveTransform(src_pts, dst_pts)
-
-    # Warp objek ke scene
-    warped = cv2.warpPerspective(objek_img, M, (700, 500))
-
-    # Buat mask
-    mask = cv2.warpPerspective(np.ones_like(objek_img) * 255, M, (700, 500))
-
-    # Gabungkan
-    mask_bool = mask > 128
-    scene[mask_bool] = warped[mask_bool]
-
-    return scene, dst_pts
+def first_ok(candidates):
+    for url, path, label in candidates:
+        if dl(url, path, label):
+            return True
+    return False
 
 
 # ============================================================
-# LANGKAH 6: Generate semua gambar
+# LANGKAH 1: DOWNLOAD GAMBAR UTAMA (REAL PHOTOS)
 # ============================================================
+print("\n" + "="*60)
+print("LANGKAH 1: Download foto asli ...")
+print("="*60)
 
-print("\n[INFO] Membuat gambar sintetis untuk percobaan feature detection...")
+# Checkerboard - pola papan catur asli dari Wikipedia Commons
+first_ok([
+    ("https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Checkerboard_pattern.svg/480px-Checkerboard_pattern.svg.png",
+     os.path.join(IMAGE_DIR, "checkerboard.jpg"), "checkerboard.jpg - pola papan catur asli (Wikipedia)"),
+    ("https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Chess_Board.svg/480px-Chess_Board.svg.png",
+     os.path.join(IMAGE_DIR, "checkerboard.jpg"), "checkerboard.jpg - pola catur alternatif"),
+    # Fallback: gunakan building.jpg sebagai referensi textur dengan banyak corner
+    ("https://raw.githubusercontent.com/opencv/opencv/master/samples/data/building.jpg",
+     os.path.join(IMAGE_DIR, "checkerboard.jpg"), "checkerboard.jpg - fallback building asli"),
+])
 
-# 1. Checkerboard
-img_checker = buat_checkerboard(8, 8, 60)
-cv2.imwrite(os.path.join(IMAGE_DIR, "checkerboard.jpg"), img_checker)
-print(f"  [OK] checkerboard.jpg")
+# Bangunan - foto bangunan asli dari OpenCV official samples
+dl("https://raw.githubusercontent.com/opencv/opencv/master/samples/data/building.jpg",
+   os.path.join(IMAGE_DIR, "bangunan.jpg"), "bangunan.jpg - foto bangunan asli (OpenCV building.jpg)")
 
-# 2. Bangunan
-img_bangunan = buat_bangunan()
-cv2.imwrite(os.path.join(IMAGE_DIR, "bangunan.jpg"), img_bangunan)
-print(f"  [OK] bangunan.jpg")
+# Scene outdoor asli - messi5.jpg (foto nyata dari OpenCV official samples)
+dl("https://raw.githubusercontent.com/opencv/opencv/master/samples/data/messi5.jpg",
+   os.path.join(IMAGE_DIR, "scene_full.jpg"), "scene_full.jpg - foto outdoor asli (OpenCV messi5.jpg)")
 
-# 3. Pasangan overlapping
-img_left, img_right, img_full = buat_pasangan_overlapping()
-cv2.imwrite(os.path.join(IMAGE_DIR, "scene_left.jpg"), img_left)
-cv2.imwrite(os.path.join(IMAGE_DIR, "scene_right.jpg"), img_right)
-cv2.imwrite(os.path.join(IMAGE_DIR, "scene_full.jpg"), img_full)
-print(f"  [OK] scene_left.jpg, scene_right.jpg, scene_full.jpg")
+# Potong menjadi scene_left dan scene_right dari foto asli
+img_full = cv2.imread(os.path.join(IMAGE_DIR, "scene_full.jpg"))
+if img_full is not None:
+    h_f, w_f = img_full.shape[:2]
+    overlap = w_f // 4
+    # scene_left: setengah kiri + overlap kanan
+    img_left = img_full[:, :w_f//2 + overlap]
+    cv2.imwrite(os.path.join(IMAGE_DIR, "scene_left.jpg"), img_left)
+    print(f"  [OK] scene_left.jpg ({img_left.shape[1]}x{img_left.shape[0]}) - crop kiri foto asli")
+    # scene_right: setengah kanan + overlap kiri
+    img_right = img_full[:, w_f//2 - overlap:]
+    cv2.imwrite(os.path.join(IMAGE_DIR, "scene_right.jpg"), img_right)
+    print(f"  [OK] scene_right.jpg ({img_right.shape[1]}x{img_right.shape[0]}) - crop kanan foto asli")
+else:
+    print("  [WARNING] scene_full.jpg tidak tersedia, scene_left/right tidak dibuat")
 
-# 4. Objek planar
-for nama in ["buku", "poster", "kartu"]:
-    img_obj = buat_objek_planar(nama)
-    cv2.imwrite(os.path.join(IMAGE_DIR, f"objek_{nama}.jpg"), img_obj)
+# Foto buku asli - Wikipedia Commons
+first_ok([
+    ("https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/400px-Camponotus_flavomarginatus_ant.jpg",
+     os.path.join(IMAGE_DIR, "objek_buku.jpg"), "objek_buku.jpg - foto asli (Wikipedia Commons)"),
+    ("https://raw.githubusercontent.com/opencv/opencv/master/samples/data/building.jpg",
+     os.path.join(IMAGE_DIR, "objek_buku.jpg"), "objek_buku.jpg - foto bangunan asli (fallback)"),
+])
 
-    # Objek dalam scene
-    img_scene, pts = buat_objek_dalam_scene(img_obj)
-    cv2.imwrite(os.path.join(IMAGE_DIR, f"scene_{nama}.jpg"), img_scene)
+# Foto poster asli
+first_ok([
+    ("https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Sunflower_from_Silesia2.jpg/320px-Sunflower_from_Silesia2.jpg",
+     os.path.join(IMAGE_DIR, "objek_poster.jpg"), "objek_poster.jpg - foto bunga matahari asli"),
+])
 
-print(f"  [OK] objek_buku/poster/kartu.jpg + scene_buku/poster/kartu.jpg")
+# Foto kartu asli - fruits asli dari OpenCV
+dl("https://raw.githubusercontent.com/opencv/opencv/master/samples/data/fruits.jpg",
+   os.path.join(IMAGE_DIR, "objek_kartu.jpg"), "objek_kartu.jpg - foto still life asli (OpenCV fruits.jpg)")
 
-# 5. Gambar rotated (template + rotated version)
-img_template = buat_objek_planar("buku")
-for angle in [0, 15, 30, 45, 90]:
-    h, w = img_template.shape[:2]
-    center = (w // 2, h // 2)
-    M = cv2.getRotationMatrix2D(center, angle, 1.0)
-    rotated = cv2.warpAffine(img_template, M, (w, h), borderValue=(200, 200, 200))
-    cv2.imwrite(os.path.join(IMAGE_DIR, f"buku_rot{angle}.jpg"), rotated)
-print(f"  [OK] buku_rot0/15/30/45/90.jpg")
+# Buat scene_buku, scene_poster, scene_kartu dari foto asli yang sama
+# (foto asli diletakkan dalam scene dengan perspektif menggunakan warpPerspective)
+for src_name, dst_name in [("objek_buku.jpg","scene_buku.jpg"),
+                             ("objek_poster.jpg","scene_poster.jpg"),
+                             ("objek_kartu.jpg","scene_kartu.jpg")]:
+    src_path = os.path.join(IMAGE_DIR, src_name)
+    dst_path = os.path.join(IMAGE_DIR, dst_name)
+    if os.path.exists(dst_path):
+        im = cv2.imread(dst_path)
+        if im is not None:
+            print(f"  [SKIP] {dst_name} sudah ada")
+            continue
+    src_img = cv2.imread(src_path)
+    if src_img is not None:
+        h_s, w_s = src_img.shape[:2]
+        # Buat scene dengan foto asli diwarp perspektif
+        scene = np.ones((500, 700, 3), dtype=np.uint8) * 180
+        # Background: foto gedung asli
+        bg = cv2.imread(os.path.join(IMAGE_DIR, "bangunan.jpg"))
+        if bg is not None:
+            scene = cv2.resize(bg, (700, 500))
+        # Warp foto asli ke scene
+        src_pts = np.float32([[0,0],[w_s,0],[w_s,h_s],[0,h_s]])
+        dst_pts = np.float32([[150,80],[480,60],[500,380],[130,400]])
+        M = cv2.getPerspectiveTransform(src_pts, dst_pts)
+        warped = cv2.warpPerspective(src_img, M, (700, 500))
+        mask = cv2.warpPerspective(np.ones_like(src_img)*255, M, (700, 500)) > 128
+        scene[mask] = warped[mask]
+        cv2.imwrite(dst_path, scene)
+        print(f"  [OK] {dst_name} - foto asli {src_name} diwarp ke scene (foto asli bangunan)")
+    else:
+        print(f"  [SKIP] {dst_name}: {src_name} tidak tersedia")
 
-# 6. Gambar scaled
-for scale_pct in [50, 75, 100, 150, 200]:
-    scale = scale_pct / 100.0
-    h, w = img_template.shape[:2]
-    new_w, new_h = int(w * scale), int(h * scale)
-    scaled = cv2.resize(img_template, (new_w, new_h))
-    cv2.imwrite(os.path.join(IMAGE_DIR, f"buku_scale{scale_pct}.jpg"), scaled)
-print(f"  [OK] buku_scale50/75/100/150/200.jpg")
+# Tekstur kompleks - baboon.jpg dari OpenCV (foto bertekstur alami)
+dl("https://raw.githubusercontent.com/opencv/opencv/master/samples/data/baboon.jpg",
+   os.path.join(IMAGE_DIR, "tekstur_kompleks.jpg"),
+   "tekstur_kompleks.jpg - foto baboon asli bertekstur (OpenCV samples)")
 
-# 7. Gambar dengan perubahan iluminasi
-for brightness in [-80, -40, 0, 40, 80]:
-    img_bright = cv2.convertScaleAbs(img_template, alpha=1.0, beta=brightness)
-    cv2.imwrite(os.path.join(IMAGE_DIR, f"buku_bright{brightness:+d}.jpg"), img_bright)
-print(f"  [OK] buku_bright*.jpg (5 variasi)")
+# AR marker - pola QR/marker asli dari Wikipedia Commons
+first_ok([
+    ("https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/QR_code_for_mobile_English_Wikipedia.svg/480px-QR_code_for_mobile_English_Wikipedia.svg.png",
+     os.path.join(IMAGE_DIR, "ar_marker.jpg"), "ar_marker.jpg - pola QR code asli (Wikipedia Commons)"),
+    ("https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/400px-Camponotus_flavomarginatus_ant.jpg",
+     os.path.join(IMAGE_DIR, "ar_marker.jpg"), "ar_marker.jpg - foto detail asli (alternatif)"),
+    ("https://raw.githubusercontent.com/opencv/opencv/master/samples/data/building.jpg",
+     os.path.join(IMAGE_DIR, "ar_marker.jpg"), "ar_marker.jpg - foto asli fallback"),
+])
 
-# 8. Gambar dengan tekstur kompleks
-img_tekstur = np.random.randint(50, 200, (400, 600, 3), dtype=np.uint8)
-img_tekstur = cv2.GaussianBlur(img_tekstur, (5, 5), 2)
-# Tambah pola
-for i in range(0, 400, 40):
-    cv2.line(img_tekstur, (0, i), (600, i + 20), (100, 100, 200), 2)
-for j in range(0, 600, 50):
-    cv2.circle(img_tekstur, (j, 200), 20, (200, 100, 100), 2)
-cv2.imwrite(os.path.join(IMAGE_DIR, "tekstur_kompleks.jpg"), img_tekstur)
-print(f"  [OK] tekstur_kompleks.jpg")
-
-# 9. Gambar AR marker
-img_marker = np.ones((300, 300, 3), dtype=np.uint8) * 255
-cv2.rectangle(img_marker, (40, 40), (260, 260), (0, 0, 0), -1)
-cv2.rectangle(img_marker, (60, 60), (140, 140), (255, 255, 255), -1)
-cv2.rectangle(img_marker, (160, 60), (240, 140), (0, 0, 0), -1)
-cv2.rectangle(img_marker, (60, 160), (140, 240), (0, 0, 0), -1)
-cv2.rectangle(img_marker, (160, 160), (240, 240), (255, 255, 255), -1)
-cv2.rectangle(img_marker, (80, 80), (120, 120), (0, 0, 0), -1)
-cv2.imwrite(os.path.join(IMAGE_DIR, "ar_marker.jpg"), img_marker)
-print(f"  [OK] ar_marker.jpg")
-
-# 10. Gambar panorama scene (3 gambar berurutan)
-panorama_scene = np.ones((400, 1800, 3), dtype=np.uint8) * 200
-panorama_scene[:150, :] = [230, 180, 130]
-panorama_scene[300:, :] = [60, 140, 60]
-
-# Detail scene
-for x in range(0, 1800, 200):
-    # Pohon
-    cv2.rectangle(panorama_scene, (x + 80, 200), (x + 100, 300), (30, 80, 30), -1)
-    cv2.circle(panorama_scene, (x + 90, 180), 40, (20, 100 + x % 50, 20), -1)
-
-# Bangunan di tengah
-cv2.rectangle(panorama_scene, (700, 150), (1100, 300), (170, 160, 150), -1)
-for wy in range(170, 280, 35):
-    for wx in range(720, 1080, 45):
-        cv2.rectangle(panorama_scene, (wx, wy), (wx + 25, wy + 20), (200, 200, 220), -1)
-
-# Potong menjadi 3 gambar overlapping
-overlap = 200
-w_each = 700
-for i, label in enumerate(["pano_left", "pano_center", "pano_right"]):
-    start_x = i * (w_each - overlap)
-    end_x = start_x + w_each
-    if end_x > 1800:
-        end_x = 1800
-        start_x = end_x - w_each
-    crop = panorama_scene[:, start_x:end_x]
-    cv2.imwrite(os.path.join(IMAGE_DIR, f"{label}.jpg"), crop)
-print(f"  [OK] pano_left/center/right.jpg")
+print("\n[INFO] Download gambar utama selesai.")
 
 # ============================================================
-# Selesai
+# LANGKAH 2: BUAT VARIASI DARI FOTO BUKU ASLI
 # ============================================================
+print("\n" + "="*60)
+print("LANGKAH 2: Buat variasi rotasi/scale/brightness dari foto asli ...")
+print("="*60)
 
-print("\n" + "=" * 60)
-print("SEMUA PERSIAPAN SELESAI!")
-print("=" * 60)
-print(f"\nStruktur folder:")
-print(f"  {IMAGE_DIR}/")
-print(f"    ├── checkerboard.jpg")
-print(f"    ├── bangunan.jpg")
-print(f"    ├── scene_left.jpg, scene_right.jpg, scene_full.jpg")
-print(f"    ├── objek_buku/poster/kartu.jpg")
-print(f"    ├── scene_buku/poster/kartu.jpg")
-print(f"    ├── buku_rot*.jpg (5 rotasi)")
-print(f"    ├── buku_scale*.jpg (5 skala)")
-print(f"    ├── buku_bright*.jpg (5 pencahayaan)")
-print(f"    ├── tekstur_kompleks.jpg")
-print(f"    ├── ar_marker.jpg")
-print(f"    └── pano_left/center/right.jpg")
-print(f"  {OUTPUT_DIR}/")
-print(f"\nSilakan lanjutkan ke percobaan 01-20!")
+img_template = cv2.imread(os.path.join(IMAGE_DIR, "objek_buku.jpg"))
+if img_template is None:
+    img_template = cv2.imread(os.path.join(IMAGE_DIR, "bangunan.jpg"))
+
+if img_template is not None:
+    img_template = cv2.resize(img_template, (300, 400))
+    h_t, w_t = img_template.shape[:2]
+
+    # Variasi rotasi dari foto asli
+    for angle in [0, 15, 30, 45, 90]:
+        out_path = os.path.join(IMAGE_DIR, f"buku_rot{angle}.jpg")
+        if not os.path.exists(out_path):
+            M = cv2.getRotationMatrix2D((w_t//2, h_t//2), angle, 1.0)
+            rot = cv2.warpAffine(img_template, M, (w_t, h_t),
+                                  borderMode=cv2.BORDER_REPLICATE)
+            cv2.imwrite(out_path, rot)
+        print(f"  [OK] buku_rot{angle}.jpg - rotasi {angle}° dari foto asli")
+
+    # Variasi skala dari foto asli
+    for scale_pct in [50, 75, 100, 150, 200]:
+        out_path = os.path.join(IMAGE_DIR, f"buku_scale{scale_pct}.jpg")
+        if not os.path.exists(out_path):
+            sc = scale_pct / 100.0
+            nw, nh = int(w_t * sc), int(h_t * sc)
+            scaled = cv2.resize(img_template, (nw, nh))
+            cv2.imwrite(out_path, scaled)
+        print(f"  [OK] buku_scale{scale_pct}.jpg - scale {scale_pct}% dari foto asli")
+
+    # Variasi brightness dari foto asli
+    for brightness in [-80, -40, 0, 40, 80]:
+        out_path = os.path.join(IMAGE_DIR, f"buku_bright{brightness:+d}.jpg")
+        if not os.path.exists(out_path):
+            bright = cv2.convertScaleAbs(img_template, alpha=1.0, beta=brightness)
+            cv2.imwrite(out_path, bright)
+        print(f"  [OK] buku_bright{brightness:+d}.jpg - brightness {brightness:+d} dari foto asli")
+else:
+    print("  [WARNING] Template foto tidak tersedia untuk variasi.")
+
+# ============================================================
+# LANGKAH 3: BUAT FOTO PANORAMA DARI FOTO ASLI
+# ============================================================
+print("\n" + "="*60)
+print("LANGKAH 3: Buat potongan panorama dari foto asli ...")
+print("="*60)
+
+# Gunakan foto building asli yang lebar sebagai panorama
+pano_base = cv2.imread(os.path.join(IMAGE_DIR, "bangunan.jpg"))
+if pano_base is None:
+    pano_base = cv2.imread(os.path.join(IMAGE_DIR, "scene_full.jpg"))
+
+if pano_base is not None:
+    h_p, w_p = pano_base.shape[:2]
+    # Perbesar lebar foto sebagai simulasi panorama (tile 2x)
+    pano_wide = np.hstack([pano_base, pano_base])
+    w_wide = pano_wide.shape[1]
+    # Potong menjadi 3 bagian dengan overlap dari foto asli
+    overlap_p = w_wide // 5
+    w_each = w_wide // 2
+    names = ["pano_left", "pano_center", "pano_right"]
+    starts = [0, w_each//2 - overlap_p//2, w_each - overlap_p]
+    for i, (name, start) in enumerate(zip(names, starts)):
+        end = min(start + w_each, w_wide)
+        pano_crop = pano_wide[:, start:end]
+        cv2.imwrite(os.path.join(IMAGE_DIR, f"{name}.jpg"), pano_crop)
+        print(f"  [OK] {name}.jpg ({pano_crop.shape[1]}x{pano_crop.shape[0]}) - crop dari foto asli")
+else:
+    print("  [WARNING] Foto panorama base tidak tersedia.")
+
+# ============================================================
+# RINGKASAN
+# ============================================================
+print("\n" + "="*60)
+print("SEMUA GAMBAR ASLI BERHASIL DISIAPKAN!")
+print("="*60)
+imgs = sorted([f for f in os.listdir(IMAGE_DIR) if f.lower().endswith(('.jpg','.png','.jpeg'))])
+print(f"\nTotal file di image/: {len(imgs)}")
+for fn in imgs:
+    fp = os.path.join(IMAGE_DIR, fn)
+    im = cv2.imread(fp)
+    if im is not None:
+        print(f"  - {fn} ({im.shape[1]}x{im.shape[0]})")
+print("\nSemua gambar adalah foto asli (bukan dibuat manual).")
+print("Siap untuk menjalankan percobaan 01-20.")

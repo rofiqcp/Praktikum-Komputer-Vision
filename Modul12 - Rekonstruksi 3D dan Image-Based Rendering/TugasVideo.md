@@ -3,7 +3,7 @@
 ---
 
 ## Deskripsi Tugas
-Buat video laporan yang mendemonstrasikan seluruh materi, 10 percobaan, dan project Rekonstruksi 3D & Image-Based Rendering. Fokus pada visualisasi 3D dan novel view synthesis.
+Buat video laporan yang mendemonstrasikan seluruh materi, 20 percobaan, dan project Rekonstruksi 3D & Image-Based Rendering. Fokus pada visualisasi 3D dan novel view synthesis.
 
 ---
 
@@ -22,22 +22,32 @@ Buat video laporan yang mendemonstrasikan seluruh materi, 10 percobaan, dan proj
 - Neural rendering: NeRF dan 3D Gaussian Splatting (konsep).
 - **Wajib**: Diagram pipeline lengkap (SfM → dense → mesh → render).
 
-### 3. Demo 10 Percobaan (30–40 menit)
+### 3. Demo 20 Percobaan (40–60 menit)
 
 | No | Percobaan | Poin Penting |
 |----|-----------|--------------|
 | 1 | Point Cloud Basics | Load, visualisasi, properties |
 | 2 | Filtering & Downsampling | Noise removal, voxel grid |
-| 3 | Normal Estimation | Normal visualization, orientasi |
-| 4 | ICP Registration | P2P vs P2Plane, fitness metric |
+| 3 | Normal Estimation | Normal visualization, PCA |
+| 4 | ICP Registration | P2P vs P2Plane, fitness |
 | 5 | Surface Reconstruction | Poisson vs BPA perbandingan |
 | 6 | Mesh Processing | Simplification, smoothing |
-| 7 | TSDF Integration | Inkremental build dari RGB-D |
-| 8 | Image Warping | Forward warp, disocclusion, inpainting |
+| 7 | TSDF Integration | Inkremental build dari depth |
+| 8 | Image Warping | Forward warp, disocclusion |
 | 9 | View Interpolation | Smooth transition video |
-| 10 | Neural Rendering | NeRF/3DGS training + novel views |
+| 10 | Neural Rendering | MLP image regression, konsep |
+| 11 | Ball Pivoting Detail | Multi-radius, coverage analysis |
+| 12 | Alpha Shapes | Alpha parameter, concave shape |
+| 13 | Mesh Texturing | Projecting color, trisurf |
+| 14 | Point Cloud Colorization | 6 metode colorization |
+| 15 | Point Cloud Segmentation | RANSAC plane, clustering |
+| 16 | Marching Cubes | Isosurface, sphere/torus |
+| 17 | Volumetric Rendering | MIP, average, first-surface |
+| 18 | Forward vs Inverse Warp | Holes, splatting, bilinear |
+| 19 | Light Field Basics | 4D, sub-aperture, refocus |
+| 20 | 3D Visualization & Export | PLY/OBJ, turntable video |
 
-- Tunjukkan visualisasi 3D dari berbagai angle (rotate di Open3D).
+- Tunjukkan visualisasi 3D dari berbagai angle (rotate di Open3D/matplotlib).
 - Bandingkan metode secara visual side-by-side.
 
 ### 4. Demo Project (10–15 menit)
@@ -55,7 +65,7 @@ Buat video laporan yang mendemonstrasikan seluruh materi, 10 percobaan, dan proj
 
 | Aspek | Ketentuan |
 |-------|-----------|
-| Durasi | 60–75 menit |
+| Durasi | 75–100 menit |
 | Resolusi | Minimal 1080p |
 | Recording | Screen recording + webcam |
 | Webcam | Tunjukkan objek fisik saat capture foto untuk rekonstruksi |
@@ -71,7 +81,7 @@ Buat video laporan yang mendemonstrasikan seluruh materi, 10 percobaan, dan proj
 |----------|-------|------------|
 | Pembukaan | 5% | Profesional |
 | Penjelasan Materi | 15% | Akurat, diagram pipeline |
-| Demo 10 Percobaan | 40% | Semua berjalan, 3D visualization |
+| Demo 20 Percobaan | 40% | Semua berjalan, 3D visualization |
 | Demo Project | 20% | Fitur lengkap, 3D output |
 | Analisis & Kesimpulan | 10% | Kritis, perbandingan metode |
 | Kualitas Video | 10% | Resolusi, audio |

@@ -109,68 +109,10 @@ for idx_kat, kategori in enumerate(kategori_list):
 
     # Memeriksa apakah folder kategori ada
     if not os.path.exists(folder_kategori):
-        # Menampilkan peringatan jika folder tidak ditemukan
-        print(f"  [WARNING] Folder '{kategori}' tidak ditemukan, membuat gambar sintetis...")
-
-        # Membuat folder kategori jika belum ada
-        os.makedirs(folder_kategori, exist_ok=True)
-
-        # Membuat 10 gambar sintetis untuk kategori ini
-        for i in range(10):
-            # Membuat canvas kosong berwarna putih
-            canvas = np.ones((100, 100, 3), dtype=np.uint8) * 255
-
-            # Menghasilkan warna random untuk variasi
-            warna = (random.randint(0, 200), random.randint(0, 200), random.randint(0, 200))
-
-            # Menghasilkan offset random untuk variasi posisi
-            dx = random.randint(-10, 10)
-            dy = random.randint(-10, 10)
-
-            # Menggambar bentuk sesuai kategori
-            if kategori == "lingkaran":
-                # Menggambar lingkaran dengan radius bervariasi
-                radius = random.randint(20, 40)
-                cv2.circle(canvas, (50 + dx, 50 + dy), radius, warna, -1)
-            elif kategori == "persegi":
-                # Menggambar persegi dengan ukuran bervariasi
-                sisi = random.randint(20, 40)
-                cv2.rectangle(canvas, (50 - sisi + dx, 50 - sisi + dy),
-                              (50 + sisi + dx, 50 + sisi + dy), warna, -1)
-            elif kategori == "segitiga":
-                # Mendefinisikan titik-titik segitiga
-                ukuran = random.randint(20, 40)
-                pts = np.array([[50 + dx, 50 - ukuran + dy],
-                                [50 - ukuran + dx, 50 + ukuran + dy],
-                                [50 + ukuran + dx, 50 + ukuran + dy]], np.int32)
-                # Menggambar segitiga terisi
-                cv2.fillPoly(canvas, [pts], warna)
-            elif kategori == "bintang":
-                # Mendefinisikan titik-titik bintang (5 titik luar, 5 titik dalam)
-                ukuran_luar = random.randint(25, 40)
-                ukuran_dalam = ukuran_luar // 2
-                pts = []
-                for j in range(10):
-                    # Menghitung sudut untuk setiap titik
-                    sudut = np.pi / 2 + j * np.pi / 5
-                    # Memilih radius luar atau dalam bergantian
-                    r = ukuran_luar if j % 2 == 0 else ukuran_dalam
-                    # Menghitung koordinat titik
-                    x = int(50 + dx + r * np.cos(sudut))
-                    y = int(50 + dy - r * np.sin(sudut))
-                    pts.append([x, y])
-                # Menggambar bintang terisi
-                cv2.fillPoly(canvas, [np.array(pts, np.int32)], warna)
-            elif kategori == "elips":
-                # Menggambar elips dengan sumbu bervariasi
-                sumbu_a = random.randint(25, 45)
-                sumbu_b = random.randint(15, 30)
-                cv2.ellipse(canvas, (50 + dx, 50 + dy), (sumbu_a, sumbu_b),
-                            0, 0, 360, warna, -1)
-
-            # Menyimpan gambar sintetis ke folder
-            path_simpan = os.path.join(folder_kategori, f"{kategori}_{i+1:02d}.png")
-            cv2.imwrite(path_simpan, canvas)
+        # Menampilkan error jika folder tidak ditemukan
+        print(f"  [ERROR] Folder dataset '{kategori}' tidak ditemukan!")
+        print(f"          Jalankan download_image.py terlebih dahulu.")
+        exit()
 
     # Mencari semua gambar dalam folder kategori
     pola_gambar = os.path.join(folder_kategori, "*.*")

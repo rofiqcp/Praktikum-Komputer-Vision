@@ -8,6 +8,11 @@
 3. Mengimplementasikan feature matching (Brute-Force, FLANN, Ratio Test).
 4. Mengimplementasikan geometric verification (Homography + RANSAC).
 5. Membangun aplikasi berbasis feature matching.
+6. Menganalisis invariansi fitur terhadap rotasi, skala, dan iluminasi.
+7. Membandingkan properti deskriptor (SIFT, ORB, AKAZE) secara kuantitatif.
+8. Mengimplementasikan Content-Based Image Retrieval (CBIR) dan AR marker detection.
+9. Mengukur repeatability keypoint dan melakukan multi-image matching.
+10. Membangun pipeline feature matching lengkap (OOP) dan proyek aplikasi akhir.
 
 ---
 
@@ -299,13 +304,299 @@ Menggabungkan semua konsep: memilih detektor + deskriptor + matcher + verifikasi
 
 ---
 
+## Percobaan 11: Feature Invariance terhadap Skala
+
+### Tujuan
+Menguji invariansi detektor fitur terhadap perubahan skala gambar.
+
+### Dasar Teori
+Detektor berbasis scale-space (SIFT, AKAZE) dirancang untuk mendeteksi keypoints pada berbagai skala. Pengujian pada gambar yang di-resize membuktikan apakah keypoints konsisten terdeteksi di lokasi yang berkorespondensi.
+
+### Langkah Kerja
+1. Load gambar asli (resolusi tinggi, banyak fitur).
+2. Buat 4 versi skala: 50%, 100%, 200%, 300%.
+3. Deteksi keypoints menggunakan SIFT pada semua versi.
+4. Deteksi keypoints menggunakan ORB pada semua versi.
+5. Deteksi keypoints menggunakan AKAZE pada semua versi.
+6. Hitung jumlah keypoints per skala per detektor.
+7. Normalisasi posisi keypoints ke koordinat gambar asli.
+8. Hitung keypoint correspondence: berapa keypoints pada versi skala cocok dengan keypoints gambar asli.
+9. Plot jumlah keypoints vs skala untuk setiap detektor.
+10. Buat tabel ringkasan: detektor × skala → jumlah kp, match rate, waktu.
+
+### Analisis Percobaan 11
+- Detektor mana yang paling konsisten menghasilkan keypoints di semua skala?
+- Berapa persen keypoints yang berkorespondensi antara skala 50% dan 100%?
+- Apakah skala 300% memperkenalkan keypoints palsu (noise)?
+- Mengapa SIFT lebih invariant terhadap skala dibandingkan ORB?
+
+---
+
+## Percobaan 12: Feature Invariance terhadap Iluminasi
+
+### Tujuan
+Menguji ketahanan detektor dan deskriptor fitur terhadap perubahan kondisi pencahayaan.
+
+### Dasar Teori
+Perubahan iluminasi (brightness, contrast, gamma) mengubah nilai intensitas piksel tetapi seharusnya tidak mengubah struktur geometris fitur. Deskriptor yang baik harus robust terhadap variasi pencahayaan.
+
+### Langkah Kerja
+1. Load gambar asli.
+2. Buat variasi brightness: +50, +100, −50, −100 (clamp 0–255).
+3. Buat variasi contrast: ×0.5, ×1.0, ×1.5, ×2.0.
+4. Buat variasi gamma: γ = 0.5, 1.0, 1.5, 2.0.
+5. Deteksi + deskripsi (SIFT, ORB, AKAZE) pada semua variasi.
+6. Match deskriptor setiap variasi terhadap gambar asli (FLANN + ratio test).
+7. Hitung jumlah good matches per variasi per detektor.
+8. Hitung match rate (good matches / total keypoints).
+9. Visualisasikan matches pada kondisi terburuk.
+10. Buat tabel dan plot: variasi iluminasi × detektor → match rate.
+
+### Analisis Percobaan 12
+- Pada perubahan brightness berapa matching mulai menurun drastis?
+- Detektor mana yang paling robust terhadap perubahan contrast?
+- Apakah gamma correction mempengaruhi semua detektor secara merata?
+- Strategi preprocessing apa yang bisa meningkatkan robustness iluminasi?
+
+---
+
+## Percobaan 13: Perbandingan Deskriptor Fitur
+
+### Tujuan
+Membandingkan properti dan performa deskriptor SIFT, ORB, dan AKAZE secara komprehensif.
+
+### Dasar Teori
+Deskriptor fitur memiliki properti berbeda: SIFT menghasilkan vektor float 128-D, ORB menghasilkan binary 256-bit, AKAZE menghasilkan binary descriptor. Perbandingan meliputi dimensionalitas, kecepatan komputasi, dan akurasi matching.
+
+### Langkah Kerja
+1. Load pasangan gambar (scene yang sama, sudut sedikit berbeda).
+2. Deteksi + deskripsi menggunakan SIFT, ORB, dan AKAZE.
+3. Cetak properti deskriptor: shape, dtype, ukuran memori.
+4. Ukur waktu deteksi + deskripsi (rata-rata 10 kali).
+5. Match masing-masing deskriptor (BF matcher dengan norm yang sesuai).
+6. Terapkan ratio test dan hitung jumlah good matches.
+7. Hitung akurasi matching menggunakan ground truth (jika tersedia) atau manual inspection.
+8. Visualisasikan distribusi jarak match (histogram per detektor).
+9. Bandingkan ukuran memori total deskriptor per gambar.
+10. Buat tabel perbandingan komprehensif: dimensi, tipe, waktu, jumlah match, akurasi, memori.
+
+### Analisis Percobaan 13
+- Deskriptor mana yang memiliki dimensi paling rendah namun akurasi match tinggi?
+- Berapa kali lebih cepat ORB dibandingkan SIFT dalam deskripsi?
+- Apakah binary descriptor (ORB, AKAZE) menghasilkan match yang sama baiknya dengan float (SIFT)?
+- Dalam skenario apa masing-masing deskriptor paling unggul?
+
+---
+
+## Percobaan 14: Geometric Verification Detail
+
+### Tujuan
+Mengeksplorasi detail geometric verification: tuning RANSAC, analisis inlier, dan kualitas model fitting.
+
+### Dasar Teori
+RANSAC memiliki parameter yang mempengaruhi kualitas estimasi: threshold reproyeksi, jumlah iterasi, dan confidence level. Analisis inlier/outlier ratio serta residual error memberikan gambaran kualitas model homography.
+
+### Langkah Kerja
+1. Load pasangan gambar dengan bidang datar yang jelas.
+2. Deteksi SIFT + match (FLANN + ratio test).
+3. Estimasi homography dengan RANSAC threshold bervariasi: 1.0, 3.0, 5.0, 10.0, 20.0.
+4. Untuk setiap threshold, catat: jumlah inlier, inlier ratio, reprojection error rata-rata.
+5. Variasikan `maxIters` RANSAC: 100, 500, 1000, 5000.
+6. Variasikan `confidence`: 0.9, 0.95, 0.99, 0.999.
+7. Visualisasikan inlier (hijau) dan outlier (merah) untuk setiap konfigurasi.
+8. Hitung reprojection error per match point.
+9. Plot histogram reprojection error.
+10. Bandingkan RANSAC vs LMEDS vs RHO: inlier count, error, waktu.
+
+### Analisis Percobaan 14
+- Pada threshold berapa inlier ratio optimal (banyak inlier, error rendah)?
+- Apakah menambah iterasi RANSAC signifikan meningkatkan kualitas?
+- Bagaimana perbandingan RANSAC vs LMEDS vs RHO untuk data Anda?
+- Berapa reprojection error rata-rata pada konfigurasi terbaik?
+
+---
+
+## Percobaan 15: Image Retrieval
+
+### Tujuan
+Membangun sistem image retrieval sederhana menggunakan fitur lokal.
+
+### Dasar Teori
+Image retrieval menggunakan deskriptor fitur untuk mengindeks gambar dan menemukan gambar yang paling mirip dengan query. Pendekatan Bag of Visual Words (BoVW) atau direct feature matching dapat digunakan.
+
+### Langkah Kerja
+1. Kumpulkan database 10+ gambar dari berbagai kategori (bangunan, objek, pemandangan).
+2. Ekstrak deskriptor SIFT dari semua gambar database.
+3. Simpan deskriptor beserta metadata gambar.
+4. Pilih 5 gambar query (3 ada di database dengan sudut berbeda, 2 tidak ada).
+5. Untuk setiap query, match terhadap semua gambar database.
+6. Hitung similarity score: jumlah good matches per gambar database.
+7. Ranking gambar database berdasarkan similarity score.
+8. Visualisasikan top-3 retrieved images per query.
+9. Evaluasi: apakah gambar yang benar ada di top-1 / top-3?
+10. Ukur waktu retrieval dan diskusikan skalabilitas.
+
+### Analisis Percobaan 15
+- Berapa akurasi top-1 dan top-3 retrieval?
+- Apakah query dari sudut berbeda berhasil menemukan gambar yang benar?
+- Bagaimana waktu retrieval meningkat seiring bertambahnya database?
+- Apa kelemahan pendekatan direct matching untuk retrieval skala besar?
+
+---
+
+## Percobaan 16: AR Marker Detection
+
+### Tujuan
+Mendeteksi marker planar dan melakukan overlay konten virtual menggunakan homography.
+
+### Dasar Teori
+AR marker detection mendeteksi gambar referensi (marker) pada scene, mengestimasi homography antara marker dan deteksi pada scene, lalu menggunakan homography untuk mewarpkan konten overlay ke posisi marker.
+
+### Langkah Kerja
+1. Siapkan gambar marker (gambar dengan banyak fitur, misal: poster, cover buku).
+2. Siapkan gambar overlay (logo, gambar AR yang ingin ditampilkan).
+3. Foto marker dalam scene nyata dari berbagai sudut.
+4. Deteksi fitur (SIFT/ORB) pada marker dan scene.
+5. Match fitur dan estimasi homography.
+6. Jika cukup inlier, warp gambar overlay ke area marker pada scene.
+7. Blend overlay dengan scene (alpha blending atau seamless clone).
+8. Uji pada 5 scene dengan sudut, jarak, dan pencahayaan berbeda.
+9. Ukur keberhasilan overlay (visual inspection + inlier count).
+10. Tampilkan grid hasil: scene asli → deteksi → overlay.
+
+### Analisis Percobaan 16
+- Pada sudut berapa overlay mulai terdistorsi atau gagal?
+- Berapa minimum inlier agar overlay stabil?
+- Apakah pencahayaan mempengaruhi akurasi overlay?
+- Apa perbedaan menggunakan SIFT vs ORB untuk AR marker detection?
+
+---
+
+## Percobaan 17: Keypoint Repeatability
+
+### Tujuan
+Mengukur secara kuantitatif berapa banyak keypoints yang terdeteksi ulang pada gambar yang ditransformasi.
+
+### Dasar Teori
+Repeatability adalah metrik fundamental untuk mengevaluasi detektor fitur. Repeatability rate mengukur proporsi keypoints yang terdeteksi di kedua gambar (asli dan transformasi) pada lokasi yang berkorespondensi (dalam toleransi tertentu).
+
+### Langkah Kerja
+1. Load gambar asli.
+2. Buat transformasi: rotasi (30°, 60°, 90°), skala (0.5, 1.5, 2.0), blur (σ=1, 2, 3), noise (σ=10, 25, 50).
+3. Deteksi keypoints (SIFT, ORB, AKAZE) pada gambar asli dan setiap transformasi.
+4. Transformasi balik posisi keypoints dari gambar transformasi ke koordinat gambar asli.
+5. Hitung repeatability: keypoints yang jarak-nya < ε piksel (misal ε=5) dari keypoint asli.
+6. Hitung repeatability rate = matched keypoints / min(kp_asli, kp_transformasi).
+7. Plot repeatability rate vs tipe transformasi per detektor.
+8. Plot repeatability rate vs intensitas transformasi (misal vs sudut rotasi).
+9. Identifikasi transformasi mana yang paling menurunkan repeatability.
+10. Buat tabel rangkuman: detektor × transformasi → repeatability rate.
+
+### Analisis Percobaan 17
+- Detektor mana yang memiliki repeatability tertinggi secara keseluruhan?
+- Transformasi apa yang paling menurunkan repeatability?
+- Apakah ada korelasi antara jumlah keypoints dan repeatability?
+- Bagaimana noise mempengaruhi repeatability dibandingkan transformasi geometris?
+
+---
+
+## Percobaan 18: Multi-Image Matching
+
+### Tujuan
+Mencocokkan fitur secara simultan pada 3 atau lebih gambar.
+
+### Dasar Teori
+Multi-image matching dibutuhkan untuk aplikasi seperti panorama stitching dan 3D reconstruction. Matching dilakukan secara pairwise, lalu track fitur yang konsisten melintasi banyak gambar (feature tracks).
+
+### Langkah Kerja
+1. Ambil 4–5 gambar dari scene yang sama dengan overlap berturutan.
+2. Deteksi fitur (SIFT) pada semua gambar.
+3. Lakukan pairwise matching: gambar 1↔2, 2↔3, 3↔4, dst.
+4. Juga lakukan matching non-berturutan: 1↔3, 2↔4 (jika overlap ada).
+5. Bangun feature tracks: fitur yang muncul di ≥3 gambar.
+6. Visualisasikan graph konektivitas antar gambar (jumlah match per pasangan).
+7. Visualisasikan feature tracks pada gambar-gambar yang terhubung.
+8. Hitung statistik: jumlah tracks, panjang rata-rata track, coverage.
+9. Identifikasi pasangan gambar dengan match terkuat dan terlemah.
+10. Buat tabel: pasangan gambar → jumlah matches, inlier ratio, homography quality.
+
+### Analisis Percobaan 18
+- Berapa banyak feature tracks yang muncul di ≥3 gambar?
+- Apakah matching non-berturutan menghasilkan matches bermakna?
+- Pasangan gambar mana yang memiliki konektivitas terkuat?
+- Apa tantangan utama dalam multi-image matching dibandingkan dua gambar?
+
+---
+
+## Percobaan 19: Feature Matching Pipeline Lengkap
+
+### Tujuan
+Mengimplementasikan pipeline feature matching end-to-end menggunakan pendekatan berbasis class (OOP).
+
+### Dasar Teori
+Pipeline yang terstruktur memudahkan eksperimen dan deployment. Class-based design memungkinkan penggantian komponen (detektor, deskriptor, matcher, verifier) secara modular.
+
+### Langkah Kerja
+1. Desain class `FeatureMatchingPipeline` dengan method: `detect()`, `describe()`, `match()`, `verify()`.
+2. Implementasikan constructor yang menerima parameter: detector_type, matcher_type, ratio_threshold, ransac_threshold.
+3. Implementasikan method `detect()` yang mendukung SIFT, ORB, dan AKAZE.
+4. Implementasikan method `match()` yang mendukung BF dan FLANN + ratio test.
+5. Implementasikan method `verify()` untuk homography estimation + RANSAC.
+6. Tambahkan method `evaluate()` yang menghitung precision, recall, F1.
+7. Tambahkan method `visualize()` untuk menampilkan hasil matching.
+8. Uji pipeline pada 3 pasangan gambar dengan konfigurasi berbeda.
+9. Bandingkan minimal 3 konfigurasi pipeline (kombinasi detektor + matcher).
+10. Dokumentasikan API class dan buat contoh penggunaan lengkap.
+
+### Analisis Percobaan 19
+- Apakah desain modular memudahkan perbandingan konfigurasi?
+- Konfigurasi pipeline mana yang menghasilkan performa terbaik?
+- Apa keuntungan class-based approach dibandingkan script prosedural?
+- Komponen mana yang paling mempengaruhi performa keseluruhan pipeline?
+
+---
+
+## Percobaan 20: Proyek Feature Matching App
+
+### Tujuan
+Membangun aplikasi feature matching lengkap yang mengintegrasikan seluruh konsep dari Percobaan 1–19.
+
+### Dasar Teori
+Proyek akhir menggabungkan semua teknik: deteksi fitur, deskripsi, matching, geometric verification, dan evaluasi menjadi satu aplikasi yang fungsional dan user-friendly.
+
+### Langkah Kerja
+1. Pilih domain aplikasi: image retrieval, AR, object detection, atau document matching.
+2. Bangun database referensi minimal 10 gambar.
+3. Implementasikan pipeline lengkap menggunakan class dari Percobaan 19.
+4. Tambahkan UI sederhana (command-line menu atau GUI dasar).
+5. Implementasikan mode batch processing untuk banyak query.
+6. Tambahkan logging dan reporting (hasil per query, statistik keseluruhan).
+7. Evaluasi pada 20 query gambar (10 match, 10 non-match).
+8. Hitung metrik: precision, recall, F1-score, waktu rata-rata per query.
+9. Optimasi: pilih konfigurasi terbaik berdasarkan evaluasi.
+10. Dokumentasikan aplikasi: README, screenshot, instruksi penggunaan.
+
+### Analisis Percobaan 20
+- Apakah aplikasi berhasil menangani semua test case?
+- Berapa F1-score keseluruhan aplikasi?
+- Apa bottleneck utama dalam hal kecepatan?
+- Fitur apa yang bisa ditambahkan untuk meningkatkan aplikasi ke level produksi?
+
+---
+
 ## Kesimpulan
 Tuliskan kesimpulan berdasarkan:
 1. Perbandingan detektor fitur (Harris, Shi-Tomasi, SIFT, ORB, AKAZE, FAST).
 2. Perbandingan matcher (BF, FLANN) dan filtering (crosscheck, ratio test).
 3. Efektivitas RANSAC untuk geometric verification.
-4. Rekomendasi kombinasi optimal untuk berbagai use case.
-5. Keterbatasan feature-based methods dan potensi alternatif (deep learning features).
+4. Invariansi fitur terhadap rotasi, skala, dan perubahan iluminasi.
+5. Perbandingan kuantitatif deskriptor (dimensi, kecepatan, akurasi).
+6. Efektivitas geometric verification dan tuning RANSAC.
+7. Penerapan image retrieval dan AR marker detection.
+8. Repeatability keypoint di berbagai kondisi transformasi.
+9. Strategi multi-image matching dan pipeline end-to-end.
+10. Rekomendasi kombinasi optimal untuk berbagai use case.
+11. Keterbatasan feature-based methods dan potensi alternatif (deep learning features).
 
 ---
 

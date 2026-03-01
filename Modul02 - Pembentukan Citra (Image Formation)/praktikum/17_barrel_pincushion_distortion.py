@@ -22,7 +22,7 @@ OUTPUT_DIR = os.path.join(SCRIPT_DIR, "output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Gunakan grid agar distorsi mudah dilihat
-img = cv2.imread(os.path.join(IMAGE_DIR, "grid.png"))
+img = cv2.imread(os.path.join(IMAGE_DIR, "gedung.jpg"))
 if img is None:
     print("[ERROR] Jalankan download_image.py!"); exit()
 img = cv2.resize(img, (512, 512))

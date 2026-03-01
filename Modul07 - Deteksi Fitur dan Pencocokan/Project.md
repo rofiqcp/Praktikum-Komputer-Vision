@@ -3,7 +3,7 @@
 ---
 
 ## Deskripsi Umum
-Project mengintegrasikan seluruh konsep feature detection & matching: berbagai detektor, deskriptor, matcher, geometric verification, dan aplikasi dunia nyata. Pilih minimal 1 soal cerita.
+Project mengintegrasikan seluruh konsep dari 20 percobaan feature detection & matching: berbagai detektor, deskriptor, matcher, geometric verification, invariance analysis, image retrieval, AR marker detection, dan aplikasi dunia nyata. Pilih minimal 1 soal cerita.
 
 ---
 
@@ -66,7 +66,7 @@ Kolektor kartu (Pokemon, MTG) ingin mengidentifikasi kartu dari foto. Buatlah: (
 | Komponen | Bobot | Keterangan |
 |----------|-------|------------|
 | Fungsionalitas | 35% | Semua fitur berjalan sesuai deskripsi |
-| Integrasi Percobaan | 20% | Menggunakan konsep dari ≥5 percobaan |
+| Integrasi Percobaan | 20% | Menggunakan konsep dari ≥8 dari 20 percobaan |
 | Kualitas Kode | 15% | Clean code, modular, well-commented |
 | Dokumentasi | 15% | README, instruksi, screenshot |
 | Kreativitas | 15% | Fitur tambahan, optimasi, UI |

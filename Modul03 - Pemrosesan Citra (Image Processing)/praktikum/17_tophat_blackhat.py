@@ -115,13 +115,13 @@ print("  Top Hat mengoreksi pencahayaan tidak merata")
 # ============================================================
 print("\n--- 6. Top Hat Biner ---")
 
-biner = cv2.imread(os.path.join(IMAGE_DIR, "biner_noise.png"), cv2.IMREAD_GRAYSCALE)
-if biner is not None:
-    se_bin = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
-    th_bin = cv2.morphologyEx(biner, cv2.MORPH_TOPHAT, se_bin)
-    bh_bin = cv2.morphologyEx(biner, cv2.MORPH_BLACKHAT, se_bin)
-    print(f"  Top Hat biner: {np.sum(th_bin > 0)} piksel (noise kecil)")
-    print(f"  Black Hat biner: {np.sum(bh_bin > 0)} piksel (lubang kecil)")
+# Buat gambar biner dari dokumen.jpg yang sudah dimuat (threshold Otsu)
+_, biner = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+se_bin = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
+th_bin = cv2.morphologyEx(biner, cv2.MORPH_TOPHAT, se_bin)
+bh_bin = cv2.morphologyEx(biner, cv2.MORPH_BLACKHAT, se_bin)
+print(f"  Top Hat biner: {np.sum(th_bin > 0)} piksel (noise kecil)")
+print(f"  Black Hat biner: {np.sum(bh_bin > 0)} piksel (lubang kecil)")
 
 # ============================================================
 # 7. Visualisasi

@@ -3,7 +3,7 @@
 ---
 
 ## Deskripsi Umum
-Project mengintegrasikan seluruh konsep recognition yang dipelajari: face detection, face recognition, OCR, object classification, gesture recognition, dan evaluation metrics. Pilih minimal 1 soal cerita dan kembangkan menjadi aplikasi lengkap.
+Project mengintegrasikan seluruh konsep recognition yang dipelajari dalam 20 percobaan: face detection, face recognition, face landmarks, OCR, scene text detection, pedestrian/vehicle detection, hand gesture recognition, object classification (BoVW), scene recognition, face embedding, tracking, evaluation metrics, dan pipeline integration. Pilih minimal 1 soal cerita dan kembangkan menjadi aplikasi lengkap.
 
 ---
 
@@ -66,7 +66,7 @@ Developer game memerlukan kontrol berbasis gestur. Buatlah: (a) hand tracking re
 | Komponen | Bobot | Keterangan |
 |----------|-------|------------|
 | Fungsionalitas | 35% | Semua fitur berjalan sesuai deskripsi |
-| Integrasi Percobaan | 20% | Menggunakan konsep dari ≥5 percobaan |
+| Integrasi Percobaan | 20% | Menggunakan konsep dari ≥10 percobaan |
 | Kualitas Kode | 15% | Clean code, modular, well-commented |
 | Dokumentasi | 15% | README, instruksi penggunaan, screenshot |
 | Kreativitas | 15% | Fitur tambahan, UI/UX, solusi inovatif |

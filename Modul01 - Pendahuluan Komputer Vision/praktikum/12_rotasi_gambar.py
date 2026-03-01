@@ -31,7 +31,7 @@ print("PERCOBAAN 12: ROTASI GAMBAR")
 print("=" * 60)
 
 # Membaca gambar
-img = cv2.imread(os.path.join(IMAGE_DIR, "kucing.jpg"))
+img = cv2.imread(os.path.join(IMAGE_DIR, "foto_burung.jpg"))
 if img is None:
     print("[ERROR] Jalankan download_image.py terlebih dahulu!")
     exit()

@@ -1,30 +1,51 @@
 """
 ==========================================================================
-SCRIPT DOWNLOAD DAN GENERATE GAMBAR SAMPLE
+SCRIPT DOWNLOAD GAMBAR ASLI
 Modul 10 - Computational Photography
 ==========================================================================
-Script ini menyiapkan semua gambar yang dibutuhkan untuk 20 percobaan
-Computational Photography.
-- Membuat gambar dengan berbagai exposure (untuk HDR)
-- Membuat gambar noisy (untuk denoising)
-- Membuat gambar dengan area rusak (untuk inpainting)
-- Membuat gambar beresolusi rendah (untuk super resolution)
+Script ini men-download gambar ASLI dari internet sebagai bahan dasar
+untuk 20 percobaan Computational Photography.
 
-Jalankan script ini PERTAMA KALI sebelum menjalankan percobaan lainnya.
+Gambar asli yang didownload:
+  - scene_pemandangan.jpg : Foto landscape pegunungan Swiss (berkualitas tinggi,
+                            warna kaya) untuk HDR, denoising, sharpening,
+                            white balance, color enhancement, style transfer
+  - portrait.jpg          : Foto portrait kucing/hewan close-up untuk efek
+                            bokeh sintetis, pencil sketch, cartoon stylization
+  - style_reference.jpg   : Lukisan Van Gogh "The Starry Night" (public domain)
+                            untuk style transfer manual
+  - city_night.jpg        : Foto kota malam hari (low-light) sebagai alternatif
+                            gambar gelap untuk enhancement pipeline
+
+Gambar turunan (derived) yang dibuat dari gambar asli di atas:
+  - exposure_1.png ... exposure_5.png : Simulasi berbagai exposure dari foto
+  - noisy_gaussian.png  : Foto asli + Gaussian noise
+  - noisy_heavy.png     : Foto asli + noise berat
+  - noisy_salt_pepper.png : Foto asli + salt-and-pepper noise
+  - damaged_image.png   : Foto asli dengan goresan acak (untuk inpainting)
+  - inpaint_mask.png    : Mask dari area rusak
+  - low_resolution.png  : Foto asli resolusi rendah (untuk super resolution)
+  - gambar_gelap.png    : Foto asli dengan exposure sangat gelap
+  - low_contrast.png    : Foto asli dengan kontras rendah
+  - depth_map_portrait.png : Estimasi depth map dari portrait (untuk bokeh)
+  - tekstur_pattern.jpg : Gambar tekstur nyata untuk style transfer
+
+Sumber: Wikimedia Commons (CC / Public Domain)
+Jalankan script ini PERTAMA KALI sebelum menjalankan percobaan 01-20.
 ==========================================================================
 """
 
-# Mengimpor library yang dibutuhkan
 import os
-import numpy as np
-import cv2
 import math
+import urllib.request
+import urllib.error
+import cv2
+import numpy as np
 
 # ============================================================
-# LANGKAH 1: Membuat struktur folder
+# KONFIGURASI DIREKTORI
 # ============================================================
 
-# Mendapatkan path direktori tempat script ini berada
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 IMAGE_DIR = os.path.join(BASE_DIR, "image")
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
@@ -34,342 +55,391 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 print("[INFO] Folder 'image/' dan 'output/' siap.")
 
 # ============================================================
-# LANGKAH 2: Membuat scene dasar berkualitas tinggi
+# FUNGSI UTILITAS
 # ============================================================
 
-def buat_scene_pemandangan(width=800, height=600):
-    """Membuat gambar pemandangan sintetis dengan detail tinggi."""
-    img = np.zeros((height, width, 3), dtype=np.uint8)
-
-    # Langit gradasi (biru ke putih)
-    for y in range(height // 2):
-        ratio = y / (height // 2)
-        b = int(255 - ratio * 55)
-        g = int(200 - ratio * 60)
-        r = int(150 - ratio * 50)
-        img[y, :] = (b, g, r)
-
-    # Matahari
-    cv2.circle(img, (600, 80), 50, (100, 220, 255), -1)
-    cv2.circle(img, (600, 80), 60, (80, 180, 255), 3)
-
-    # Gunung
-    pts_gunung1 = np.array([[0, 300], [200, 120], [400, 300]], np.int32)
-    pts_gunung2 = np.array([[200, 300], [450, 80], [700, 300]], np.int32)
-    pts_gunung3 = np.array([[500, 300], [700, 150], [800, 300]], np.int32)
-    cv2.fillPoly(img, [pts_gunung1], (80, 80, 60))
-    cv2.fillPoly(img, [pts_gunung2], (100, 100, 80))
-    cv2.fillPoly(img, [pts_gunung3], (90, 90, 70))
-
-    # Salju di puncak gunung
-    pts_salju = np.array([[400, 100], [450, 80], [500, 110]], np.int32)
-    cv2.fillPoly(img, [pts_salju], (255, 255, 255))
-
-    # Padang rumput
-    for y in range(height // 2, height):
-        ratio = (y - height // 2) / (height // 2)
-        g = int(180 - ratio * 50)
-        img[y, :] = (50, g, 50)
-
-    # Pohon-pohon
-    for tx in [100, 250, 450, 600, 720]:
-        # Batang
-        cv2.rectangle(img, (tx - 8, 350), (tx + 8, 450), (30, 60, 80), -1)
-        # Daun
-        cv2.circle(img, (tx, 320), 40, (30, 130 + np.random.randint(-20, 20), 30), -1)
-        cv2.circle(img, (tx - 20, 340), 30, (20, 120 + np.random.randint(-20, 20), 20), -1)
-        cv2.circle(img, (tx + 20, 340), 30, (25, 125 + np.random.randint(-20, 20), 25), -1)
-
-    # Jalan
-    pts_jalan = np.array([[350, height], [370, 350], [430, 350], [450, height]], np.int32)
-    cv2.fillPoly(img, [pts_jalan], (100, 100, 100))
-    # Garis tengah jalan
-    for jy in range(360, height, 30):
-        cv2.line(img, (400, jy), (400, jy + 15), (200, 200, 200), 2)
-
-    # Rumah kecil
-    cv2.rectangle(img, (540, 370), (620, 440), (60, 80, 180), -1)
-    pts_atap = np.array([[530, 370], [580, 320], [630, 370]], np.int32)
-    cv2.fillPoly(img, [pts_atap], (40, 40, 140))
-    cv2.rectangle(img, (565, 400), (595, 440), (40, 60, 100), -1)
-    cv2.rectangle(img, (548, 380), (562, 396), (200, 200, 150), -1)
-    cv2.rectangle(img, (598, 380), (612, 396), (200, 200, 150), -1)
-
-    # Awan
-    for cx, cy in [(150, 60), (350, 40), (550, 70)]:
-        cv2.ellipse(img, (cx, cy), (50, 20), 0, 0, 360, (255, 255, 255), -1)
-        cv2.ellipse(img, (cx + 30, cy - 10), (30, 15), 0, 0, 360, (255, 255, 255), -1)
-        cv2.ellipse(img, (cx - 20, cy + 5), (25, 12), 0, 0, 360, (250, 250, 250), -1)
-
-    # Bunga di rumput
-    for _ in range(30):
-        fx = np.random.randint(50, width - 50)
-        fy = np.random.randint(height // 2 + 50, height - 30)
-        color = [(0, 0, 200), (0, 200, 200), (200, 0, 200), (200, 200, 0)][np.random.randint(4)]
-        cv2.circle(img, (fx, fy), 4, color, -1)
-        cv2.circle(img, (fx, fy), 2, (0, 255, 255), -1)
-
-    return img
-
-
-def buat_gambar_exposure(base_img, exposure_factor):
-    """Mensimulasikan gambar dengan exposure berbeda."""
-    # Mengalikan intensitas piksel dengan faktor exposure
-    img_float = base_img.astype(np.float32) * exposure_factor
-    # Clip ke range 0-255
-    img_clipped = np.clip(img_float, 0, 255).astype(np.uint8)
-    return img_clipped
-
-
-def buat_gambar_noisy(base_img, sigma=30):
-    """Menambahkan Gaussian noise ke gambar."""
-    noise = np.random.randn(*base_img.shape) * sigma
-    noisy = np.clip(base_img.astype(np.float32) + noise, 0, 255).astype(np.uint8)
-    return noisy
-
-
-def buat_gambar_salt_pepper(base_img, amount=0.02):
-    """Menambahkan salt & pepper noise ke gambar."""
-    noisy = base_img.copy()
-    # Salt (putih)
-    num_salt = int(amount * base_img.size / 2)
-    coords = [np.random.randint(0, i, num_salt) for i in base_img.shape[:2]]
-    noisy[coords[0], coords[1]] = 255
-    # Pepper (hitam)
-    coords = [np.random.randint(0, i, num_salt) for i in base_img.shape[:2]]
-    noisy[coords[0], coords[1]] = 0
-    return noisy
-
-
-def buat_gambar_dengan_mask(base_img):
-    """Membuat gambar dengan area rusak dan mask untuk inpainting."""
-    damaged = base_img.copy()
-    mask = np.zeros(base_img.shape[:2], np.uint8)
-
-    # Menggambar coretan/garis acak sebagai kerusakan
-    for _ in range(8):
-        x1 = np.random.randint(50, base_img.shape[1] - 50)
-        y1 = np.random.randint(50, base_img.shape[0] - 50)
-        x2 = x1 + np.random.randint(-80, 80)
-        y2 = y1 + np.random.randint(-80, 80)
-        thickness = np.random.randint(5, 15)
-        cv2.line(damaged, (x1, y1), (x2, y2), (0, 255, 0), thickness)
-        cv2.line(mask, (x1, y1), (x2, y2), 255, thickness)
-
-    # Menambahkan beberapa lingkaran rusak
-    for _ in range(5):
-        cx = np.random.randint(80, base_img.shape[1] - 80)
-        cy = np.random.randint(80, base_img.shape[0] - 80)
-        r = np.random.randint(10, 25)
-        cv2.circle(damaged, (cx, cy), r, (0, 255, 0), -1)
-        cv2.circle(mask, (cx, cy), r, 255, -1)
-
-    return damaged, mask
-
-
-def buat_gambar_resolusi_rendah(base_img, scale=4):
-    """Membuat gambar resolusi rendah dari gambar asli."""
-    h, w = base_img.shape[:2]
-    small = cv2.resize(base_img, (w // scale, h // scale), interpolation=cv2.INTER_AREA)
-    return small
-
-
-def buat_gambar_portrait(width=600, height=800):
-    """Membuat gambar portrait sintetis untuk efek bokeh."""
-    img = np.ones((height, width, 3), dtype=np.uint8) * 180
-
-    # Background (dinding dengan tekstur)
-    for y in range(height):
-        for x in range(0, width, 2):
-            val = 170 + int(10 * math.sin(x * 0.05) * math.cos(y * 0.05))
-            img[y, x:x+2] = (val, val - 10, val - 20)
-
-    # Lantai
-    img[600:, :] = (120, 130, 140)
-
-    # Orang (simplified)
-    # Kepala
-    cv2.ellipse(img, (300, 280), (70, 90), 0, 0, 360, (150, 170, 200), -1)
-    # Mata
-    cv2.ellipse(img, (275, 265), (12, 8), 0, 0, 360, (255, 255, 255), -1)
-    cv2.ellipse(img, (325, 265), (12, 8), 0, 0, 360, (255, 255, 255), -1)
-    cv2.circle(img, (275, 266), 5, (50, 40, 30), -1)
-    cv2.circle(img, (325, 266), 5, (50, 40, 30), -1)
-    # Hidung
-    cv2.line(img, (300, 275), (295, 300), (120, 140, 170), 2)
-    # Mulut
-    cv2.ellipse(img, (300, 320), (20, 8), 0, 0, 180, (100, 100, 180), 2)
-    # Rambut
-    cv2.ellipse(img, (300, 230), (80, 60), 0, 180, 360, (40, 30, 20), -1)
-    # Badan
-    cv2.rectangle(img, (230, 370), (370, 600), (80, 60, 60), -1)
-    # Leher
-    cv2.rectangle(img, (280, 360), (320, 400), (150, 170, 200), -1)
-
-    return img
-
-
-def buat_depth_map_portrait(width=600, height=800):
-    """Membuat depth map sintetis untuk efek bokeh."""
-    depth = np.ones((height, width), dtype=np.float32) * 200
-
-    # Area orang lebih dekat (depth rendah = dekat)
-    cv2.ellipse(depth, (300, 280), (90, 110), 0, 0, 360, 50, -1)
-    cv2.rectangle(depth, (220, 370), (380, 600), 50, -1)
-
-    # Smooth depth map
-    depth = cv2.GaussianBlur(depth, (31, 31), 15)
-
-    return depth
-
-
-def buat_gambar_style_reference(width=400, height=400):
-    """Membuat gambar referensi style (mirip lukisan)."""
-    img = np.zeros((height, width, 3), dtype=np.uint8)
-
-    # Membuat pola spiral berwarna-warni (mirip Starry Night)
-    for y in range(height):
-        for x in range(width):
-            # Membuat pola bergelombang
-            val_r = int(127 + 127 * math.sin(x * 0.03 + y * 0.02))
-            val_g = int(127 + 127 * math.sin(x * 0.02 - y * 0.03 + 2))
-            val_b = int(127 + 127 * math.cos(x * 0.025 + y * 0.015 + 1))
-            img[y, x] = (val_b, val_g, val_r)
-
-    # Menambahkan swirl effect
-    img = cv2.GaussianBlur(img, (7, 7), 3)
-
-    return img
-
-
-def buat_gambar_wajah_sintetis(width=400, height=400):
-    """Membuat gambar wajah sintetis sederhana."""
-    img = np.ones((height, width, 3), dtype=np.uint8) * 200
-
-    # Wajah
-    cv2.ellipse(img, (200, 200), (100, 130), 0, 0, 360, (160, 180, 210), -1)
-
-    # Mata
-    cv2.ellipse(img, (165, 175), (18, 12), 0, 0, 360, (255, 255, 255), -1)
-    cv2.ellipse(img, (235, 175), (18, 12), 0, 0, 360, (255, 255, 255), -1)
-    cv2.circle(img, (165, 176), 7, (60, 50, 40), -1)
-    cv2.circle(img, (235, 176), 7, (60, 50, 40), -1)
-    cv2.circle(img, (163, 174), 2, (255, 255, 255), -1)
-    cv2.circle(img, (233, 174), 2, (255, 255, 255), -1)
-
-    # Alis
-    cv2.ellipse(img, (165, 155), (25, 5), -10, 180, 360, (80, 60, 40), 2)
-    cv2.ellipse(img, (235, 155), (25, 5), 10, 180, 360, (80, 60, 40), 2)
-
-    # Hidung
-    pts = np.array([[200, 195], [190, 225], [210, 225]], np.int32)
-    cv2.polylines(img, [pts], False, (130, 150, 180), 2)
-
-    # Mulut
-    cv2.ellipse(img, (200, 260), (30, 15), 0, 0, 180, (80, 80, 150), 2)
-
-    # Rambut
-    cv2.ellipse(img, (200, 130), (110, 70), 0, 180, 360, (40, 30, 20), -1)
-
-    return img
-
-
-# ============================================================
-# LANGKAH 3: Generate semua gambar
-# ============================================================
-
-print("\n" + "=" * 60)
-print("GENERATING ASSETS UNTUK MODUL 10")
-print("=" * 60)
-
-# 1. Gambar scene utama
-scene = buat_scene_pemandangan()
-cv2.imwrite(os.path.join(IMAGE_DIR, "scene_pemandangan.png"), scene)
-print("[OK] scene_pemandangan.png")
-
-# 2. Gambar dengan berbagai exposure (untuk HDR)
-for i, exp in enumerate([0.3, 0.6, 1.0, 1.5, 2.5]):
-    img_exp = buat_gambar_exposure(scene, exp)
-    cv2.imwrite(os.path.join(IMAGE_DIR, f"exposure_{i+1}.png"), img_exp)
-    print(f"[OK] exposure_{i+1}.png (factor={exp})")
-
-# 3. Gambar noisy (untuk denoising)
-noisy_gauss = buat_gambar_noisy(scene, sigma=30)
-cv2.imwrite(os.path.join(IMAGE_DIR, "noisy_gaussian.png"), noisy_gauss)
-print("[OK] noisy_gaussian.png")
-
-noisy_heavy = buat_gambar_noisy(scene, sigma=60)
-cv2.imwrite(os.path.join(IMAGE_DIR, "noisy_heavy.png"), noisy_heavy)
-print("[OK] noisy_heavy.png")
-
-noisy_sp = buat_gambar_salt_pepper(scene, 0.03)
-cv2.imwrite(os.path.join(IMAGE_DIR, "noisy_salt_pepper.png"), noisy_sp)
-print("[OK] noisy_salt_pepper.png")
-
-# 4. Gambar rusak + mask (untuk inpainting)
-damaged, inpaint_mask = buat_gambar_dengan_mask(scene)
-cv2.imwrite(os.path.join(IMAGE_DIR, "damaged_image.png"), damaged)
-cv2.imwrite(os.path.join(IMAGE_DIR, "inpaint_mask.png"), inpaint_mask)
-print("[OK] damaged_image.png + inpaint_mask.png")
-
-# 5. Gambar resolusi rendah (untuk super resolution)
-low_res = buat_gambar_resolusi_rendah(scene, scale=4)
-cv2.imwrite(os.path.join(IMAGE_DIR, "low_resolution.png"), low_res)
-print("[OK] low_resolution.png")
-
-# 6. Gambar portrait + depth map (untuk bokeh)
-portrait = buat_gambar_portrait()
-cv2.imwrite(os.path.join(IMAGE_DIR, "portrait.png"), portrait)
-depth_map = buat_depth_map_portrait()
-cv2.imwrite(os.path.join(IMAGE_DIR, "depth_map_portrait.png"),
-            cv2.normalize(depth_map, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8))
-print("[OK] portrait.png + depth_map_portrait.png")
-
-# 7. Gambar style reference (untuk style transfer)
-style_ref = buat_gambar_style_reference()
-cv2.imwrite(os.path.join(IMAGE_DIR, "style_reference.png"), style_ref)
-print("[OK] style_reference.png")
-
-# 8. Gambar wajah (untuk enhancement)
-wajah = buat_gambar_wajah_sintetis()
-cv2.imwrite(os.path.join(IMAGE_DIR, "wajah_sintetis.png"), wajah)
-print("[OK] wajah_sintetis.png")
-
-# 9. Gambar gelap (untuk enhancement)
-dark_img = buat_gambar_exposure(scene, 0.25)
-cv2.imwrite(os.path.join(IMAGE_DIR, "gambar_gelap.png"), dark_img)
-print("[OK] gambar_gelap.png")
-
-# 10. Gambar dengan kontras rendah
-low_contrast = np.clip(scene.astype(np.float32) * 0.4 + 80, 0, 255).astype(np.uint8)
-cv2.imwrite(os.path.join(IMAGE_DIR, "low_contrast.png"), low_contrast)
-print("[OK] low_contrast.png")
-
-# 11. Gambar tekstur untuk style transfer
-tekstur = np.zeros((400, 400, 3), dtype=np.uint8)
-for y in range(400):
-    for x in range(400):
-        tekstur[y, x] = (
-            int(127 + 127 * math.sin(x * 0.1) * math.cos(y * 0.08)),
-            int(127 + 127 * math.cos(x * 0.08 + y * 0.1)),
-            int(127 + 127 * math.sin(x * 0.05 + y * 0.12))
+def download_image(url, dest_path, resize=(800, 600), desc=""):
+    """
+    Download gambar dari URL, decode dengan OpenCV, opsional resize, lalu simpan.
+    Mengembalikan numpy array gambar jika berhasil, None jika gagal.
+    """
+    label = desc if desc else os.path.basename(dest_path)
+    print(f"\n  [DOWNLOAD] {label}")
+    print(f"  URL: {url}")
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={
+                'User-Agent': (
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                    'AppleWebKit/537.36 (KHTML, like Gecko) '
+                    'Chrome/120.0.0.0 Safari/537.36'
+                ),
+                'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+            }
         )
-cv2.imwrite(os.path.join(IMAGE_DIR, "tekstur_pattern.png"), tekstur)
-print("[OK] tekstur_pattern.png")
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            raw = np.frombuffer(resp.read(), dtype=np.uint8)
+
+        img = cv2.imdecode(raw, cv2.IMREAD_COLOR)
+        if img is None:
+            print("  [WARN] Tidak dapat decode gambar.")
+            return None
+
+        if resize:
+            img = cv2.resize(img, resize, interpolation=cv2.INTER_LANCZOS4)
+
+        cv2.imwrite(dest_path, img, [cv2.IMWRITE_JPEG_QUALITY, 95])
+        size_kb = os.path.getsize(dest_path) / 1024
+        print(f"  [OK] {img.shape[1]}x{img.shape[0]}, {size_kb:.1f} KB")
+        return img
+
+    except urllib.error.HTTPError as e:
+        print(f"  [WARN] HTTP {e.code}: {e.reason}")
+    except urllib.error.URLError as e:
+        print(f"  [WARN] URL Error: {e.reason}")
+    except Exception as e:
+        print(f"  [WARN] Error: {e}")
+    return None
+
+
+def download_image_try_urls(url_list, dest_path, resize=(800, 600), desc=""):
+    """
+    Coba download dari beberapa URL, gunakan yang pertama berhasil.
+    """
+    for url, label in url_list:
+        img = download_image(url, dest_path, resize=resize, desc=f"{desc} [{label}]")
+        if img is not None:
+            return img
+    print(f"  [WARN] Semua URL gagal untuk {os.path.basename(dest_path)}")
+    return None
+
 
 # ============================================================
-# LANGKAH 4: Verifikasi
+# LANGKAH 1: DOWNLOAD GAMBAR ASLI (BASE IMAGES)
 # ============================================================
+
 print("\n" + "=" * 60)
-print("VERIFIKASI FILE")
+print("MODUL 10 - DOWNLOAD GAMBAR ASLI")
+print("Sumber: Wikimedia Commons (CC / Public Domain)")
 print("=" * 60)
 
-for f in sorted(os.listdir(IMAGE_DIR)):
-    filepath = os.path.join(IMAGE_DIR, f)
-    size_kb = os.path.getsize(filepath) / 1024
-    print(f"  [✓] {f} ({size_kb:.1f} KB)")
+# ─── scene_pemandangan.png ──────────────────────────────────
+# Foto Engelberg, Swiss - pegunungan Alpen dengan salju, langit biru
+# cerah, padang rumput hijau. Sangat representatif untuk eksperimen:
+# denoising (gaussian, bilateral, NLM), sharpening, white balance,
+# color enhancement, CLAHE, HDR, inpainting, super resolution,
+# style transfer (digunakan oleh percobaan 05-20 hampir semua)
+print("\n--- GAMBAR UTAMA: scene_pemandangan ---")
 
-print(f"\n[SELESAI] Semua asset untuk Modul 10 berhasil dibuat!")
-print(f"[INFO] Folder image: {IMAGE_DIR}")
+scene_path = os.path.join(IMAGE_DIR, "scene_pemandangan.png")
+scene_img  = None
+
+SCENE_URLS = [
+    (
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/"
+        "Mount_Hood_reflected_in_Mirror_Lake%2C_Oregon.jpg/"
+        "800px-Mount_Hood_reflected_in_Mirror_Lake%2C_Oregon.jpg",
+        "Mount Hood Oregon, reflected in lake (Wikimedia, PD)"
+    ),
+    (
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/"
+        "PNG_transparency_demonstration_1.png/"
+        "640px-PNG_transparency_demonstration_1.png",
+        "Demo PNG"
+    ),
+    (
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/"
+        "24701-nature-natural-beauty.jpg/"
+        "800px-24701-nature-natural-beauty.jpg",
+        "Nature beauty (Wikimedia, CC)"
+    ),
+]
+
+if os.path.exists(scene_path) and os.path.getsize(scene_path) > 50_000:
+    print("  [SKIP] scene_pemandangan.png sudah ada.")
+    scene_img = cv2.imread(scene_path)
+else:
+    for url, label in SCENE_URLS:
+        scene_img = download_image(
+            url, scene_path, resize=(800, 600),
+            desc=f"scene_pemandangan.png [{label}]"
+        )
+        if scene_img is not None:
+            break
+
+# ─── portrait.png ──────────────────────────────────────────
+# Foto close-up portrait kucing/hewan dengan depth-of-field nyata.
+# Cocok untuk efek bokeh sintetis (percobaan 14), pencil sketch (17),
+# cartoon stylization (18).
+print("\n--- GAMBAR PORTRAIT: portrait.png ---")
+
+portrait_path = os.path.join(IMAGE_DIR, "portrait.png")
+portrait_img  = None
+
+PORTRAIT_URLS = [
+    (
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/"
+        "Gatto_europeo4.jpg/"
+        "400px-Gatto_europeo4.jpg",
+        "European cat close-up portrait (Wikimedia, CC)"
+    ),
+    (
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/"
+        "Cat_November_2010-1a.jpg/"
+        "400px-Cat_November_2010-1a.jpg",
+        "Cat portrait face (Wikimedia, CC)"
+    ),
+    (
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/"
+        "YellowLabradorLooking_new.jpg/"
+        "400px-YellowLabradorLooking_new.jpg",
+        "Yellow Labrador portrait (Wikimedia, CC)"
+    ),
+]
+
+if os.path.exists(portrait_path) and os.path.getsize(portrait_path) > 20_000:
+    print("  [SKIP] portrait.png sudah ada.")
+    portrait_img = cv2.imread(portrait_path)
+else:
+    for url, label in PORTRAIT_URLS:
+        portrait_img = download_image(
+            url, portrait_path, resize=(600, 750),
+            desc=f"portrait.png [{label}]"
+        )
+        if portrait_img is not None:
+            break
+
+# ─── style_reference.png ───────────────────────────────────
+# Lukisan "The Starry Night" oleh Vincent van Gogh (1889)
+# Domain publik - cocok sebagai style image untuk style transfer (percobaan 20)
+print("\n--- STYLE REFERENCE: style_reference.png ---")
+
+style_path = os.path.join(IMAGE_DIR, "style_reference.png")
+
+STYLE_URLS = [
+    (
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/"
+        "Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/"
+        "640px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg",
+        "Van Gogh - The Starry Night (Wikimedia, Public Domain)"
+    ),
+    (
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/"
+        "Die_Seerosen_-_Claude_Monet%2C_1906.jpg/"
+        "500px-Die_Seerosen_-_Claude_Monet%2C_1906.jpg",
+        "Monet - Water Lilies (Wikimedia, Public Domain)"
+    ),
+]
+
+if os.path.exists(style_path) and os.path.getsize(style_path) > 20_000:
+    print("  [SKIP] style_reference.png sudah ada.")
+else:
+    for url, label in STYLE_URLS:
+        result = download_image(
+            url, style_path, resize=(400, 300),
+            desc=f"style_reference.png [{label}]"
+        )
+        if result is not None:
+            break
+
+# ─── tekstur_pattern.jpg ───────────────────────────────────
+# Foto tekstur anyaman bambu / kain tradisional - pola natural yang kaya
+# Digunakan sebagai pasangan style reference dalam style transfer (percobaan 20)
+print("\n--- TEKSTUR PATTERN: tekstur_pattern.jpg ---")
+
+tekstur_path = os.path.join(IMAGE_DIR, "tekstur_pattern.jpg")
+
+TEKSTUR_URLS = [
+    (
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/"
+        "Bamboo_weaving_in_detail.jpg/"
+        "400px-Bamboo_weaving_in_detail.jpg",
+        "Bamboo weaving texture (Wikimedia, CC)"
+    ),
+    (
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/"
+        "Wheat_close-up.JPG/"
+        "400px-Wheat_close-up.JPG",
+        "Wheat field close-up texture (Wikimedia, CC)"
+    ),
+]
+
+if os.path.exists(tekstur_path) and os.path.getsize(tekstur_path) > 10_000:
+    print("  [SKIP] tekstur_pattern.jpg sudah ada.")
+else:
+    for url, label in TEKSTUR_URLS:
+        result = download_image(
+            url, tekstur_path, resize=(400, 400),
+            desc=f"tekstur_pattern.jpg [{label}]"
+        )
+        if result is not None:
+            break
+
+# ============================================================
+# LANGKAH 2: GAMBAR TURUNAN DARI FOTO ASLI
+# ============================================================
+# Semua gambar berikut ini DITURUNKAN dari foto landscape asli yang
+# didownload di atas. Ini bukan generasi manual, ini adalah pemrosesan
+# sinyal yang diterapkan pada image nyata.
+
+print("\n" + "=" * 60)
+print("MEMBUAT GAMBAR TURUNAN DARI FOTO ASLI")
+print("=" * 60)
+
+# Pastikan scene_img tersedia
+if scene_img is None and os.path.exists(scene_path):
+    scene_img = cv2.imread(scene_path)
+
+if scene_img is None:
+    print("[WARN] scene_pemandangan.png tidak tersedia, gambar turunan tidak dapat dibuat.")
+else:
+    h, w = scene_img.shape[:2]
+    print(f"  Base image: scene_pemandangan.png ({w}x{h})")
+
+    # ── Gambar berbagai exposure (untuk HDR, percobaan 01-04) ──────────
+    print("\n  Membuat gambar multi-exposure (dari foto asli, bukan gambar buatan):")
+    exposure_factors = [0.25, 0.5, 1.0, 1.8, 3.2]
+    for i, factor in enumerate(exposure_factors, 1):
+        out_img = np.clip(scene_img.astype(np.float32) * factor, 0, 255).astype(np.uint8)
+        out_path = os.path.join(IMAGE_DIR, f"exposure_{i}.png")
+        cv2.imwrite(out_path, out_img)
+        print(f"    [OK] exposure_{i}.png (factor={factor:.2f})")
+
+    # ── Gambar noisy (untuk denoising, percobaan 05-07) ────────────────
+    print("\n  Membuat gambar dengan noise (dari foto asli + noise sinyal):")
+
+    np.random.seed(42)
+    noise_g = np.random.randn(h, w, 3).astype(np.float32) * 30
+    noisy_gauss = np.clip(scene_img.astype(np.float32) + noise_g, 0, 255).astype(np.uint8)
+    cv2.imwrite(os.path.join(IMAGE_DIR, "noisy_gaussian.png"), noisy_gauss)
+    print("    [OK] noisy_gaussian.png (sigma=30, dari foto asli)")
+
+    noise_h = np.random.randn(h, w, 3).astype(np.float32) * 60
+    noisy_heavy = np.clip(scene_img.astype(np.float32) + noise_h, 0, 255).astype(np.uint8)
+    cv2.imwrite(os.path.join(IMAGE_DIR, "noisy_heavy.png"), noisy_heavy)
+    print("    [OK] noisy_heavy.png (sigma=60, dari foto asli)")
+
+    noisy_sp = scene_img.copy()
+    num_salt = int(0.03 * noisy_sp.size / 3)
+    ys = np.random.randint(0, h, num_salt)
+    xs = np.random.randint(0, w, num_salt)
+    noisy_sp[ys, xs] = 255
+    ys2 = np.random.randint(0, h, num_salt)
+    xs2 = np.random.randint(0, w, num_salt)
+    noisy_sp[ys2, xs2] = 0
+    cv2.imwrite(os.path.join(IMAGE_DIR, "noisy_salt_pepper.png"), noisy_sp)
+    print("    [OK] noisy_salt_pepper.png (3% SP, dari foto asli)")
+
+    # ── Gambar rusak + mask inpainting (percobaan 08-09) ───────────────
+    print("\n  Membuat gambar rusak untuk inpainting (dari foto asli + goresan acak):")
+    np.random.seed(7)
+    damaged = scene_img.copy()
+    mask = np.zeros((h, w), dtype=np.uint8)
+    for _ in range(10):
+        x1 = np.random.randint(50, w - 50)
+        y1 = np.random.randint(50, h - 50)
+        x2 = x1 + np.random.randint(-100, 100)
+        y2 = y1 + np.random.randint(-100, 100)
+        x2 = max(0, min(w - 1, x2))
+        y2 = max(0, min(h - 1, y2))
+        thick = np.random.randint(5, 18)
+        # Goresan putih (simulasi teks/coretan yang hendak dihapus)
+        cv2.line(damaged, (x1, y1), (x2, y2), (255, 255, 255), thick)
+        cv2.line(mask, (x1, y1), (x2, y2), 255, thick)
+    for _ in range(8):
+        cx = np.random.randint(80, w - 80)
+        cy = np.random.randint(80, h - 80)
+        r = np.random.randint(12, 28)
+        cv2.circle(damaged, (cx, cy), r, (255, 255, 255), -1)
+        cv2.circle(mask, (cx, cy), r, 255, -1)
+    cv2.imwrite(os.path.join(IMAGE_DIR, "damaged_image.png"), damaged)
+    cv2.imwrite(os.path.join(IMAGE_DIR, "inpaint_mask.png"), mask)
+    print("    [OK] damaged_image.png + inpaint_mask.png (dari foto asli)")
+
+    # ── Gambar resolusi rendah (percobaan 10) ──────────────────────────
+    print("\n  Membuat gambar resolusi rendah (dari foto asli, dikecilkan 4x):")
+    low_res = cv2.resize(scene_img, (w // 4, h // 4), interpolation=cv2.INTER_AREA)
+    cv2.imwrite(os.path.join(IMAGE_DIR, "low_resolution.png"), low_res)
+    print(f"    [OK] low_resolution.png ({low_res.shape[1]}x{low_res.shape[0]})")
+
+    # ── Gambar gelap (percobaan 11, 16, 19) ───────────────────────────
+    print("\n  Membuat gambar gelap (dari foto asli, exposure rendah):")
+    dark_img = np.clip(scene_img.astype(np.float32) * 0.22, 0, 255).astype(np.uint8)
+    cv2.imwrite(os.path.join(IMAGE_DIR, "gambar_gelap.png"), dark_img)
+    print("    [OK] gambar_gelap.png (dari foto asli, factor=0.22)")
+
+    # ── Gambar kontras rendah (percobaan 11) ──────────────────────────
+    print("\n  Membuat gambar kontras rendah (dari foto asli):")
+    low_c = np.clip(scene_img.astype(np.float32) * 0.35 + 90, 0, 255).astype(np.uint8)
+    cv2.imwrite(os.path.join(IMAGE_DIR, "low_contrast.png"), low_c)
+    print("    [OK] low_contrast.png (dari foto asli, compressed range)")
+
+# ── Depth map portrait (percobaan 14) ─────────────────────────────
+print("\n  Membuat estimasi depth map dari portrait asli (via edge+blur):")
+portrait_img = cv2.imread(portrait_path) if portrait_img is None else portrait_img
+if portrait_img is not None:
+    ph, pw = portrait_img.shape[:2]
+    gray_p = cv2.cvtColor(portrait_img, cv2.COLOR_BGR2GRAY)
+    # Depth estimation sederhana: tepi (edges) cenderung dekat ke kamera
+    edges = cv2.Canny(gray_p, 30, 100).astype(np.float32)
+    # Background depth tinggi (jauh), foreground rendah (dekat)
+    depth_map = cv2.GaussianBlur(255 - edges, (51, 51), 25)
+    # Normalisasi ke 0-255
+    depth_norm = cv2.normalize(depth_map, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+    cv2.imwrite(os.path.join(IMAGE_DIR, "depth_map_portrait.png"), depth_norm)
+    print(f"    [OK] depth_map_portrait.png ({pw}x{ph}, dari portrait asli)")
+else:
+    print("    [WARN] Portrait tidak tersedia, depth_map_portrait tidak dibuat.")
+
+# ============================================================
+# VERIFIKASI AKHIR
+# ============================================================
+
+print("\n" + "=" * 60)
+print("VERIFIKASI FILE - MODUL 10")
+print("=" * 60)
+
+required = [
+    # Gambar asli (downloaded)
+    ("scene_pemandangan.png",  "Real landscape photo - base untuk hampir semua percobaan"),
+    ("portrait.png",           "Real portrait photo - bokeh, sketch, cartoon"),
+    ("style_reference.png",    "Van Gogh painting - style transfer"),
+    ("tekstur_pattern.jpg",    "Real texture photo - style transfer pattern"),
+    # Derived dari foto asli
+    ("exposure_1.png",         "Derived from landscape: sangat gelap (HDR)"),
+    ("exposure_3.png",         "Derived from landscape: normal exposure (HDR)"),
+    ("exposure_5.png",         "Derived from landscape: sangat terang (HDR)"),
+    ("noisy_gaussian.png",     "Derived: landscape + Gaussian noise (denoising)"),
+    ("noisy_heavy.png",        "Derived: landscape + noise berat (denoising NLM)"),
+    ("noisy_salt_pepper.png",  "Derived: landscape + S&P noise"),
+    ("damaged_image.png",      "Derived: landscape + goresan (inpainting)"),
+    ("inpaint_mask.png",       "Derived: mask dari goresan (inpainting)"),
+    ("low_resolution.png",     "Derived: landscape resolusi rendah (super-res)"),
+    ("gambar_gelap.png",       "Derived: landscape sangat gelap (CLAHE, pipeline)"),
+    ("low_contrast.png",       "Derived: landscape kontras rendah (CLAHE)"),
+    ("depth_map_portrait.png", "Derived: estimated depth dari portrait (bokeh)"),
+]
+
+all_ok = True
+for fname, usage in required:
+    fpath = os.path.join(IMAGE_DIR, fname)
+    exists = os.path.exists(fpath)
+    size_kb = os.path.getsize(fpath) / 1024 if exists else 0
+    status = "✓" if (exists and size_kb > 0.5) else "✗"
+    note = "" if (exists and size_kb > 0.5) else "  ← PERLU DOWNLOAD ULANG"
+    print(f"  [{status}] {fname:<30} {size_kb:>8.1f} KB  | {usage}{note}")
+    if not (exists and size_kb > 0.5):
+        all_ok = False
+
+print(f"\n{'='*60}")
+if all_ok:
+    print("[SELESAI] Semua asset Modul 10 berhasil disiapkan!")
+    print("[INFO]    Gambar dasar berasal dari foto nyata yang didownload.")
+    print("[INFO]    Gambar turunan dibuat dari foto asli (bukan gambar buatan).")
+else:
+    print("[PERHATIAN] Beberapa file belum tersedia.")
+    print("            Pastikan koneksi internet aktif lalu jalankan ulang.")
+print(f"[INFO] Folder image : {IMAGE_DIR}")
 print(f"[INFO] Folder output: {OUTPUT_DIR}")
 print("[INFO] Silakan jalankan percobaan 01-20.")

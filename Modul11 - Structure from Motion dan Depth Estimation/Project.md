@@ -66,7 +66,7 @@ Sistem parkir memerlukan estimasi jarak kendaraan. Buatlah: (a) stereo kamera si
 | Komponen | Bobot | Keterangan |
 |----------|-------|------------|
 | Fungsionalitas | 35% | Semua fitur berjalan |
-| Integrasi Percobaan | 20% | Menggunakan konsep ≥5 percobaan |
+| Integrasi Percobaan | 20% | Menggunakan konsep ≥10 percobaan |
 | Kualitas Kode | 15% | Clean, modular |
 | Dokumentasi | 15% | README, screenshot, 3D visualisasi |
 | Kreativitas | 15% | Fitur tambahan, 3D visualization, accuracy analysis |

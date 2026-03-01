@@ -27,9 +27,9 @@ print("PERCOBAAN 15: SPLITTING DAN MERGING CHANNEL WARNA")
 print("=" * 60)
 
 # Membaca gambar berwarna
-img = cv2.imread(os.path.join(IMAGE_DIR, "warna_warni.png"))
+img = cv2.imread(os.path.join(IMAGE_DIR, "foto_bunga2.jpg"))
 if img is None:
-    img = cv2.imread(os.path.join(IMAGE_DIR, "kucing.jpg"))
+    img = cv2.imread(os.path.join(IMAGE_DIR, "foto_bunga.jpg"))
 if img is None:
     print("[ERROR] Jalankan download_image.py!")
     exit()

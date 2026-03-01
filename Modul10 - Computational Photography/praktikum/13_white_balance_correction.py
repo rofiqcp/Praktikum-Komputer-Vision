@@ -60,16 +60,18 @@ path_img = os.path.join(IMAGE_DIR, "scene_pemandangan.png")
 # Membaca gambar dalam format BGR
 img = cv2.imread(path_img)
 
-# Memeriksa apakah gambar berhasil dimuat
+# Memeriksa apakah gambar berhasil dimuat; jika tidak, download otomatis
 if img is None:
-    # Jika gambar tidak ditemukan, buat gambar sintetis dengan warna bias
-    print("[INFO] scene_pemandangan.png tidak ditemukan, membuat gambar sintetis...")
-    # Membuat gambar sintetis dengan bias kuning (simulasi cahaya tungsten)
-    base = np.random.randint(60, 200, (400, 600, 3), dtype=np.uint8)
-    # Menambahkan bias warna hangat (lebih banyak merah dan hijau)
-    base[:, :, 2] = np.clip(base[:, :, 2].astype(np.int16) + 40, 0, 255).astype(np.uint8)
-    base[:, :, 1] = np.clip(base[:, :, 1].astype(np.int16) + 20, 0, 255).astype(np.uint8)
-    img = base
+    print("[WARN] scene_pemandangan.png tidak ditemukan. Menjalankan download_image.py otomatis...")
+    import subprocess as _subp, sys as _sys
+    _dl = os.path.join(os.path.dirname(os.path.abspath(__file__)), "download_image.py")
+    _subp.run([_sys.executable, _dl], check=False)
+    img = cv2.imread(path_img)
+if img is None:
+    raise FileNotFoundError(
+        "[ERROR] scene_pemandangan.png tidak tersedia setelah download.\n"
+        "  Jalankan terlebih dahulu: python download_image.py"
+    )
 
 # Menampilkan informasi dimensi dan tipe data gambar
 print(f"[INFO] Ukuran gambar: {img.shape}")

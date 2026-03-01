@@ -59,29 +59,25 @@ path_img = os.path.join(IMAGE_DIR, "scene_pemandangan.png")
 # Membaca gambar dalam format BGR
 img = cv2.imread(path_img)
 
-# Memeriksa apakah gambar berhasil dimuat
+# Memeriksa apakah gambar berhasil dimuat; jika tidak, coba gambar_gelap
 if img is None:
-    # Mencoba gambar alternatif (gambar gelap)
     path_alt = os.path.join(IMAGE_DIR, "gambar_gelap.png")
     img = cv2.imread(path_alt)
 
-# Jika masih tidak ditemukan, buat gambar sintetis
+# Jika masih tidak ditemukan, download otomatis
 if img is None:
-    print("[INFO] Gambar tidak ditemukan, membuat gambar sintetis...")
-    # Membuat gambar sintetis bertema pemandangan
-    img = np.zeros((400, 600, 3), dtype=np.uint8)
-    # Membuat langit gradient
-    for y in range(200):
-        val = int(80 + 120 * (1 - y / 200))
-        img[y, :] = [val + 40, val, val - 20]
-    # Membuat tanah/rumput
-    for y in range(200, 400):
-        img[y, :] = [30, 100 + int(40 * (y - 200) / 200), 40]
-    # Menambahkan "matahari"
-    cv2.circle(img, (450, 80), 40, (50, 200, 255), -1)
-    # Noise halus
-    noise = np.random.randint(-8, 8, img.shape, dtype=np.int16)
-    img = np.clip(img.astype(np.int16) + noise, 0, 255).astype(np.uint8)
+    print("[WARN] Gambar tidak ditemukan. Menjalankan download_image.py otomatis...")
+    import subprocess as _subp, sys as _sys
+    _dl = os.path.join(os.path.dirname(os.path.abspath(__file__)), "download_image.py")
+    _subp.run([_sys.executable, _dl], check=False)
+    img = cv2.imread(path_img)
+    if img is None:
+        img = cv2.imread(os.path.join(IMAGE_DIR, "gambar_gelap.png"))
+if img is None:
+    raise FileNotFoundError(
+        "[ERROR] scene_pemandangan.png / gambar_gelap.png tidak tersedia.\n"
+        "  Jalankan terlebih dahulu: python download_image.py"
+    )
 
 # Menampilkan informasi gambar
 print(f"[INFO] Ukuran gambar: {img.shape}")

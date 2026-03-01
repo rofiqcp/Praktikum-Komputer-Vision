@@ -36,7 +36,7 @@ print("PERCOBAAN 10: RESIZE DAN SCALING GAMBAR")
 print("=" * 60)
 
 # Membaca gambar
-img = cv2.imread(os.path.join(IMAGE_DIR, "kucing.jpg"))
+img = cv2.imread(os.path.join(IMAGE_DIR, "foto_tekstur.jpg"))
 if img is None:
     print("[ERROR] Jalankan download_image.py terlebih dahulu!")
     exit()

@@ -28,7 +28,7 @@ print("PERCOBAAN 01: TRANSLASI GAMBAR")
 print("=" * 60)
 
 # Membaca gambar grid (cocok untuk melihat pergeseran)
-img = cv2.imread(os.path.join(IMAGE_DIR, "grid.png"))
+img = cv2.imread(os.path.join(IMAGE_DIR, "gedung.jpg"))
 if img is None:
     img = cv2.imread(os.path.join(IMAGE_DIR, "gedung.jpg"))
 if img is None:

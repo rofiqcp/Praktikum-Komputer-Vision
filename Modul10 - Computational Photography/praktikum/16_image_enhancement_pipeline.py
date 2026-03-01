@@ -63,18 +63,18 @@ path_img = os.path.join(IMAGE_DIR, "gambar_gelap.png")
 # Membaca gambar dalam format BGR
 img = cv2.imread(path_img)
 
-# Memeriksa apakah gambar berhasil dimuat
+# Memeriksa apakah gambar berhasil dimuat; jika tidak, download otomatis
 if img is None:
-    # Jika gambar tidak ditemukan, buat gambar sintetis gelap dan noisy
-    print("[INFO] gambar_gelap.png tidak ditemukan, membuat gambar sintetis...")
-    # Membuat gambar sintetis gelap
-    img = np.random.randint(15, 65, (400, 600, 3), dtype=np.uint8)
-    # Menambahkan objek untuk variasi
-    cv2.rectangle(img, (100, 80), (300, 250), (40, 50, 70), -1)
-    cv2.circle(img, (450, 200), 80, (60, 45, 35), -1)
-    # Menambahkan noise
-    noise = np.random.randint(-10, 10, img.shape, dtype=np.int16)
-    img = np.clip(img.astype(np.int16) + noise, 0, 255).astype(np.uint8)
+    print("[WARN] gambar_gelap.png tidak ditemukan. Menjalankan download_image.py otomatis...")
+    import subprocess as _subp, sys as _sys
+    _dl = os.path.join(os.path.dirname(os.path.abspath(__file__)), "download_image.py")
+    _subp.run([_sys.executable, _dl], check=False)
+    img = cv2.imread(path_img)
+if img is None:
+    raise FileNotFoundError(
+        "[ERROR] gambar_gelap.png tidak tersedia setelah download.\n"
+        "  Jalankan terlebih dahulu: python download_image.py"
+    )
 
 # Menampilkan informasi gambar
 print(f"[INFO] Ukuran gambar: {img.shape}")

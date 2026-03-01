@@ -3,7 +3,7 @@
 ---
 
 ## Deskripsi Umum
-Project mengintegrasikan konsep deep learning: klasifikasi, deteksi, segmentasi, transfer learning, dan deployment. Pilih minimal 1 soal cerita.
+Project mengintegrasikan konsep deep learning dari 20 percobaan: klasifikasi (OpenCV DNN, CNN), deteksi (HOG, sliding window, YOLO), segmentasi (semantic, instance), transfer learning, data augmentasi, loss functions, optimizers, Batch Normalization, Dropout, metrik evaluasi (accuracy, precision, recall, F1, mAP, IoU), dan deployment (ONNX). Pilih minimal 1 soal cerita.
 
 ---
 

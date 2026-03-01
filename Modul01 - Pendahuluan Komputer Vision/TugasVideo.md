@@ -12,7 +12,7 @@ Buatlah video laporan menyeluruh yang mencakup **penjelasan materi**, **seluruh 
 
 | Aspek | Ketentuan |
 |-------|-----------|
-| **Durasi** | 25–45 menit |
+| **Durasi** | 30–50 menit |
 | **Format** | MP4, resolusi minimal 720p |
 | **Screen Recording** | Wajib — menunjukkan kode, terminal, dan output |
 | **Webcam** | Wajib — wajah terlihat menjelaskan (picture-in-picture) |
@@ -37,24 +37,34 @@ Buatlah video laporan menyeluruh yang mencakup **penjelasan materi**, **seluruh 
 5. Jelaskan representasi gambar digital sebagai matriks piksel.
 6. Jelaskan minimal 3 ruang warna (RGB, HSV, Grayscale) dan kegunaannya.
 
-### C. DEMONSTRASI SELURUH PERCOBAAN PRAKTIKUM (12–20 menit)
-Untuk **setiap percobaan (1 s.d. 10)**, tunjukkan:
+### C. DEMONSTRASI SELURUH PERCOBAAN PRAKTIKUM (15–25 menit)
+Untuk **setiap percobaan (1 s.d. 20)**, tunjukkan:
 1. **Kode program** — jelaskan baris-baris kunci (tidak harus baris per baris, tapi konsep utama).
 2. **Eksekusi program** — jalankan di terminal, tunjukkan proses.
 3. **Output/hasil** — tunjukkan gambar output, console output, atau grafik.
 4. **Penjelasan singkat** — apa yang dilakukan dan apa yang dipelajari.
 
 Urutan percobaan yang harus ditunjukkan:
-- Percobaan 1: Loading dan Membaca Gambar
-- Percobaan 2: Menampilkan Gambar (OpenCV & Matplotlib)
-- Percobaan 3: Properti dan Metadata Gambar
-- Percobaan 4: Konversi Ruang Warna
-- Percobaan 5: Akses dan Manipulasi Piksel
-- Percobaan 6: Operasi Aritmatika Gambar
-- Percobaan 7: Menggambar Bentuk dan Anotasi
-- Percobaan 8: Region of Interest (ROI)
-- Percobaan 9: Resizing dan Transformasi Dasar
-- Percobaan 10: Menyimpan dan Mengekspor Gambar
+- Percobaan 1: Loading dan Menampilkan Gambar
+- Percobaan 2: Properti Gambar
+- Percobaan 3: Konversi Ruang Warna
+- Percobaan 4: Akses dan Manipulasi Piksel
+- Percobaan 5: Operasi Aritmatika Gambar
+- Percobaan 6: Operasi Bitwise
+- Percobaan 7: Menggambar Bentuk Geometris
+- Percobaan 8: Menulis Teks pada Gambar
+- Percobaan 9: Region of Interest (ROI)
+- Percobaan 10: Resize dan Scaling
+- Percobaan 11: Cropping Gambar
+- Percobaan 12: Rotasi Gambar
+- Percobaan 13: Flip Gambar
+- Percobaan 14: Padding dan Border Gambar
+- Percobaan 15: Splitting dan Merging Channel
+- Percobaan 16: Blending Dua Gambar
+- Percobaan 17: Brightness dan Contrast
+- Percobaan 18: Histogram Gambar
+- Percobaan 19: Masking Gambar
+- Percobaan 20: Menyimpan Berbagai Format
 
 ### D. DEMONSTRASI PROJECT (5–10 menit)
 1. Jelaskan soal cerita yang dipilih dan alasan pemilihan.
@@ -81,7 +91,7 @@ Urutan percobaan yang harus ditunjukkan:
 |----------|-------|-----------|
 | Pembukaan | 5% | 5 |
 | Penjelasan Materi | 15% | 15 |
-| Demonstrasi 10 Percobaan | 40% | 40 |
+| Demonstrasi 20 Percobaan | 40% | 40 |
 | Demonstrasi Project | 20% | 20 |
 | Analisis dan Penutup | 10% | 10 |
 | Kualitas Video, Audio & Presentasi | 10% | 10 |
@@ -105,14 +115,12 @@ Urutan percobaan yang harus ditunjukkan:
 | 5–8 | Penjelasan ada tapi banyak membaca teks / kurang mendalam |
 | 0–4 | Tidak menjelaskan materi atau salah konsep |
 
-#### 3. Demonstrasi 10 Percobaan (40 poin — 4 poin per percobaan)
+#### 3. Demonstrasi 20 Percobaan (40 poin — 2 poin per percobaan)
 Untuk setiap percobaan:
 | Skor | Kriteria |
 |------|----------|
-| 4 | Kode ditunjukkan dan dijelaskan, eksekusi berhasil, output ditampilkan, ada penjelasan insight |
-| 3 | Demo berhasil, penjelasan cukup |
-| 2 | Demo ditunjukkan tapi tanpa penjelasan |
-| 1 | Hanya menunjukkan output tanpa proses |
+| 2 | Kode ditunjukkan dan dijelaskan, eksekusi berhasil, output ditampilkan, ada penjelasan insight |
+| 1 | Demo ditunjukkan tapi tanpa penjelasan yang memadai |
 | 0 | Tidak ditunjukkan |
 
 #### 4. Demonstrasi Project (20 poin)
@@ -155,8 +163,8 @@ Untuk setiap percobaan:
 #### Penalti
 | Pelanggaran | Penalti |
 |-------------|---------|
-| Durasi < 20 menit | −10 |
-| Durasi > 50 menit | −5 |
+| Durasi < 25 menit | −10 |
+| Durasi > 55 menit | −5 |
 | Tidak ada webcam / face cam | −10 |
 | Membaca teks sepanjang video | −10 |
 | Terlambat submit per hari | −5 |

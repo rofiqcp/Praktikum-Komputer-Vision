@@ -4,34 +4,34 @@
 
 ## Deskripsi Umum
 
-Project ini merupakan pengembangan dan improvisasi dari 10 percobaan praktikum Modul 1. Mahasiswa diminta memilih **minimal 1 soal cerita** dari 10 pilihan di bawah, kemudian mengimplementasikan solusi menggunakan seluruh konsep yang telah dipelajari. Setiap project harus mengintegrasikan minimal 5 dari 10 percobaan praktikum.
+Project ini merupakan pengembangan dan improvisasi dari 20 percobaan praktikum Modul 1. Mahasiswa diminta memilih **minimal 1 soal cerita** dari 10 pilihan di bawah, kemudian mengimplementasikan solusi menggunakan seluruh konsep yang telah dipelajari. Setiap project harus mengintegrasikan minimal 10 dari 20 percobaan praktikum.
 
 ---
 
-## Daftar Improvisasi Percobaan (10–20 Pengembangan)
+## Daftar Improvisasi Percobaan (20 Pengembangan)
 
 Berikut adalah pengembangan lanjutan dari setiap percobaan dasar:
 
 1. **Batch Image Loader** — Buat sistem yang membaca semua gambar dari sebuah folder secara otomatis, mendeteksi format, dan menampilkan thumbnail grid.
-2. **Interactive Image Viewer** — Buat viewer interaktif dengan OpenCV trackbar untuk zoom, pan, dan scroll antar gambar.
-3. **Image Metadata Analyzer** — Buat tool yang mengekstrak dan membandingkan properti (resolusi, channel, warna dominan) dari kumpulan gambar kemudian menghasilkan report CSV.
-4. **Real-time Color Space Explorer** — Buat aplikasi dengan trackbar yang menampilkan konversi ruang warna secara real-time, termasuk channel-wise visualization.
-5. **Pixel Art Generator** — Buat generator pixel art dari foto: downscale drastis kemudian upscale dengan nearest neighbor, terapkan palette warna terbatas.
-6. **Image Blending Transition** — Buat video transisi smooth antar dua gambar menggunakan alpha blending bertahap (fade-in/fade-out), simpan sebagai video.
-7. **Annotation Tool Sederhana** — Buat tool anotasi yang memungkinkan user menggambar bounding box, lingkaran, dan teks pada gambar via mouse callback OpenCV.
-8. **Smart ROI Extractor** — Buat tool yang mendeteksi area menarik dari gambar (berdasarkan variance piksel) dan otomatis crop region tersebut.
-9. **Batch Image Resizer & Converter** — Buat tool command-line untuk resize batch gambar ke berbagai ukuran dan konversi antar format sekaligus, dengan laporan ukuran file.
-10. **Image Quality Comparator** — Buat tool yang menyimpan satu gambar di berbagai kualitas JPEG (10–100), menghitung PSNR dan SSIM, dan membuat grafik perbandingan otomatis.
-11. **Color Palette Extractor** — Ekstrak 5–10 warna dominan dari gambar menggunakan k-means pada piksel gambar, tampilkan palet warna.
-12. **Image Collage Maker** — Buat collage otomatis dari kumpulan gambar dengan layout grid yang bisa dikonfigurasi.
-13. **Histogram Matcher** — Ambil histogram dari satu gambar dan terapkan ke gambar lain (histogram matching).
-14. **Image Watermark Tool** — Buat tool untuk menambahkan watermark (teks atau logo) dengan transparansi ke batch gambar.
-15. **Photo ID Standardizer** — Buat tool untuk standarisasi foto identitas: crop wajah, resize 3×4, atur background.
-16. **Color Filter Simulator** — Simulasikan efek filter warna (sepia, cool, warm, vintage) menggunakan operasi aritmatika dan manipulasi channel.
-17. **Split-Screen Comparator** — Buat tool yang menampilkan 2 gambar side-by-side dengan slider interaktif untuk membandingkan.
-18. **Image Mosaic from Tiles** — Buat gambar mosaik besar yang tersusun dari gambar-gambar kecil berdasarkan kecocokan warna.
-19. **QR Code Region Detector** — Deteksi dan crop area QR code dari foto menggunakan teknik ROI dan thresholding dasar.
-20. **Digital Photo Frame** — Buat slideshow otomatis dari folder gambar dengan transisi blending dan overlay teks informasi.
+2. **Image Metadata Analyzer** — Buat tool yang mengekstrak dan membandingkan properti (resolusi, channel, warna dominan) dari kumpulan gambar kemudian menghasilkan report CSV.
+3. **Real-time Color Space Explorer** — Buat aplikasi dengan trackbar yang menampilkan konversi ruang warna secara real-time, termasuk channel-wise visualization.
+4. **Pixel Art Generator** — Buat generator pixel art dari foto: downscale drastis kemudian upscale dengan nearest neighbor, terapkan palette warna terbatas.
+5. **Image Calculator** — Buat kalkulator gambar yang mendemonstrasikan semua operasi aritmatika dengan GUI trackbar untuk mengatur parameter secara interaktif.
+6. **Logo Watermark Tool** — Buat tool untuk menambahkan logo watermark menggunakan operasi bitwise dengan transparansi yang bisa diatur.
+7. **Interactive Drawing Tool** — Buat tool menggambar interaktif menggunakan mouse callback OpenCV untuk menggambar bentuk geometris secara real-time.
+8. **Annotation Tool Sederhana** — Buat tool anotasi yang memungkinkan user menambahkan teks, label, dan bounding box via mouse callback dan keyboard input.
+9. **Smart ROI Extractor** — Buat tool yang mendeteksi area menarik dari gambar (berdasarkan variance piksel) dan otomatis crop region tersebut.
+10. **Batch Image Resizer & Converter** — Buat tool command-line untuk resize batch gambar ke berbagai ukuran dan konversi antar format sekaligus.
+11. **Auto Crop Tool** — Buat tool yang secara otomatis memotong area putih/kosong di sekitar objek dalam gambar.
+12. **Panorama Rotator** — Buat viewer gambar yang menampilkan rotasi bertahap 360° dengan transisi smooth.
+13. **Augmentasi Data Sederhana** — Buat pipeline augmentasi data yang menerapkan flip, rotasi, dan modifikasi acak untuk training dataset.
+14. **Photo Frame Generator** — Buat generator frame foto otomatis dengan berbagai tipe border dan dekorasi.
+15. **Channel Mixer** — Buat tool interaktif untuk mencampur dan menukar channel warna dengan slider untuk setiap channel.
+16. **Image Blending Transition** — Buat video transisi smooth antar dua gambar menggunakan alpha blending bertahap (fade-in/fade-out), simpan sebagai video.
+17. **Auto Brightness/Contrast** — Buat tool yang secara otomatis mengoreksi gambar under/overexposed berdasarkan analisis histogram.
+18. **Histogram Matcher** — Ambil histogram dari satu gambar dan terapkan ke gambar lain (histogram specification/matching).
+19. **Color Filter Simulator** — Simulasikan efek filter warna (sepia, cool, warm, vintage) menggunakan operasi masking dan manipulasi channel.
+20. **Image Quality Comparator** — Buat tool yang menyimpan satu gambar di berbagai kualitas JPEG (10–100), menghitung PSNR dan SSIM, dan membuat grafik perbandingan otomatis.
 
 ---
 
@@ -59,7 +59,7 @@ Sebuah kantor kelurahan ingin mendigitalkan arsip surat-surat lama. Buatlah sist
 Seorang mahasiswa ingin membuat aplikasi filter foto sederhana ala Instagram. Buatlah aplikasi dengan: (a) load foto dari file, (b) terapkan minimal 6 filter (grayscale, sepia, negative, brightness+, vignette, blur artistik), (c) tampilkan preview semua filter dalam grid 2×3, (d) user memilih filter via input, (e) atur intensitas filter via trackbar, (f) tambahkan border dan watermark, dan (g) simpan hasil final dalam kualitas optimal.
 
 ### Soal 8: Sistem Monitoring Tanaman Sederhana
-Petani Pak Budi ingin memantau pertumbuhan tanamannya menggunakan foto harian. Buatlah sistem yang dapat: (a) membaca foto tanaman harian, (b) mengekstrak area tanaman menggunakan ROI, (c) menganalisis persentase warna hijau menggunakan HSV, (d) membuat grafik perubahan warna hijau dari hari ke hari, (e) membuat perbandingan side-by-side foto antar hari, (f) menandai area tanaman yang menguning (potensi penyakit), dan (g) menghasilkan laporan mingguan berupa collage progress.
+Petani Pak Budi ingin memantau pertumbuhan tanamannya menggunakan foto harian. Buatlah sistem yang dapat: (a) membaca foto tanaman harian, (b) mengekstrak area tanaman menggunakan ROI, (c) menganalisis persentase warna hijau menggunakan HSV masking, (d) membuat grafik perubahan warna hijau dari hari ke hari, (e) membuat perbandingan side-by-side foto antar hari, (f) menandai area tanaman yang menguning (potensi penyakit), dan (g) menghasilkan laporan mingguan berupa collage progress.
 
 ### Soal 9: Tool Perbandingan Resolusi untuk E-Commerce
 Sebuah marketplace ingin menentukan standar kualitas foto produk. Buatlah tool analisis yang dapat: (a) membaca foto produk asli, (b) membuat versi dengan berbagai resolusi (thumbnail 150×150, medium 600×600, HD 1200×1200), (c) membandingkan kualitas visual tiap resolusi secara side-by-side, (d) menghitung PSNR dan estimasi SSIM antara setiap versi dan asli, (e) membuat grafik ukuran file vs kualitas, (f) membuat perbandingan metode interpolasi, dan (g) merekomendasikan standar resolusi optimal.
@@ -76,7 +76,7 @@ Organisasi mahasiswa perlu membuat ID card untuk 100+ anggota. Buatlah sistem ya
 | Komponen | Bobot | Deskripsi |
 |----------|-------|-----------|
 | **Fungsionalitas** | 35% | Semua fitur yang diminta berjalan dengan benar |
-| **Integrasi Percobaan** | 20% | Minimal 5 dari 10 konsep percobaan terintegrasi dalam project |
+| **Integrasi Percobaan** | 20% | Minimal 10 dari 20 konsep percobaan terintegrasi dalam project |
 | **Kualitas Kode** | 15% | Terstruktur, modular, ada komentar, penamaan variabel deskriptif |
 | **Dokumentasi** | 15% | README lengkap, cara instalasi, screenshot, penjelasan alur |
 | **Kreativitas & Fitur Tambahan** | 15% | Improvisasi di luar requirement minimum |
@@ -95,11 +95,11 @@ Organisasi mahasiswa perlu membuat ID card untuk 100+ anggota. Buatlah sistem ya
 #### Integrasi Percobaan (20%)
 | Skor | Kriteria |
 |------|----------|
-| 90–100 | 8–10 konsep percobaan terintegrasi secara koheren |
-| 75–89 | 6–7 konsep terintegrasi |
-| 60–74 | 5 konsep terintegrasi (minimum requirement) |
-| 40–59 | 3–4 konsep terintegrasi |
-| 0–39 | Kurang dari 3 konsep |
+| 90–100 | 16–20 konsep percobaan terintegrasi secara koheren |
+| 75–89 | 12–15 konsep terintegrasi |
+| 60–74 | 10 konsep terintegrasi (minimum requirement) |
+| 40–59 | 6–9 konsep terintegrasi |
+| 0–39 | Kurang dari 6 konsep |
 
 #### Kualitas Kode (15%)
 | Skor | Kriteria |

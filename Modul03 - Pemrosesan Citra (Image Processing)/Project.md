@@ -1,30 +1,35 @@
-# PROJECT MODUL 3: PEMROSESAN CITRA
+# PROJECT MODUL 3: PEMROSESAN CITRA (IMAGE PROCESSING)
 
 ---
 
 ## Deskripsi Umum
 
-Project ini mengintegrasikan seluruh teknik pemrosesan citra dari 10 percobaan. Mahasiswa memilih minimal 1 soal cerita dan membangun solusi yang menggunakan minimal 5 konsep percobaan (filtering, thresholding, edge detection, morfologi, Fourier, dll.).
+Project ini mengintegrasikan seluruh teknik pemrosesan citra dari 20 percobaan. Mahasiswa memilih minimal 1 soal cerita dan membangun solusi yang menggunakan minimal **10 dari 20 konsep** percobaan (brightness/contrast, histogram, CLAHE, gamma, thresholding, konvolusi, blur, sharpening, edge detection, morfologi, Fourier, filtering frekuensi, compositing, dll.).
 
 ---
 
-## Daftar Improvisasi Percobaan (15 Pengembangan)
+## Daftar Improvisasi Percobaan (20 Pengembangan)
 
-1. **Auto Image Enhancer** — Pipeline enhancement otomatis yang menganalisis gambar dan memilih parameter optimal.
-2. **Noise Removal Benchmark** — Bandingkan 5+ metode denoising pada berbagai jenis noise (Gaussian, salt-pepper, speckle).
-3. **Document Binarizer** — Thresholding adaptif multi-tahap untuk binarisasi dokumen dengan pencahayaan buruk.
-4. **Edge-based Object Counter** — Hitung jumlah objek dalam gambar menggunakan edge detection + morfologi + contour.
-5. **Frequency Domain Editor** — Remove pola periodik (moiré) dari gambar scan menggunakan notch filter di domain Fourier.
-6. **HDR Tone Mapper Sederhana** — Gabungkan beberapa exposure menggunakan Laplacian blending dan gamma mapping.
-7. **Skin Detection System** — Deteksi area kulit menggunakan thresholding di HSV space + morfologi.
-8. **Adaptive Enhancement per Region** — Bagi gambar ke region, analisis histogram per region, enhance masing-masing.
-9. **Pencil Sketch Effect** — Buat efek sketsa pensil dari foto menggunakan edge detection + blending.
-10. **Multi-scale Edge Detector** — Deteksi edge pada berbagai skala menggunakan Gaussian pyramid + Canny.
-11. **Image Segmentation Sederhana** — Segmentasi objek menggunakan kombinasi thresholding + morfologi + watershed.
-12. **Cartoon Effect Generator** — Bilateral filter (smoothing) + edge detection → gabungkan untuk efek kartun.
-13. **Text Extraction Preprocessor** — Pipeline preprocessing gambar dokumen untuk meningkatkan akurasi OCR.
+1. **Auto Image Enhancer** — Pipeline enhancement otomatis: analisis gambar → pilih parameter optimal.
+2. **Noise Removal Benchmark** — Bandingkan 5+ metode denoising pada berbagai jenis noise.
+3. **Document Binarizer** — Thresholding adaptif multi-tahap untuk dokumen dengan pencahayaan buruk.
+4. **Edge-based Object Counter** — Hitung objek menggunakan edge detection + morfologi + contour.
+5. **Frequency Domain Editor** — Remove pola periodik (moiré) menggunakan notch filter Fourier.
+6. **HDR Tone Mapper** — Gabungkan beberapa exposure menggunakan Laplacian blending + gamma mapping.
+7. **Skin Detection System** — Deteksi area kulit menggunakan HSV thresholding + morfologi.
+8. **Adaptive Enhancement per Region** — Analisis histogram per region, enhance masing-masing.
+9. **Pencil Sketch Effect** — Efek sketsa pensil: edge detection + inversion + blending.
+10. **Multi-scale Edge Detector** — Deteksi edge pada berbagai skala: Gaussian pyramid + Canny.
+11. **Image Segmentation Pipeline** — Thresholding + morfologi + watershed segmentasi.
+12. **Cartoon Effect Generator** — Bilateral filter + edge detection → gabungkan untuk efek kartun.
+13. **Text Extraction Preprocessor** — Pipeline preprocessing dokumen untuk meningkatkan akurasi OCR.
 14. **Fourier Watermarking** — Sisipkan watermark tak terlihat di domain frekuensi.
-15. **Real-time Filter App** — Aplikasi webcam real-time dengan pilihan filter yang bisa di-switch.
+15. **Real-time Filter App** — Webcam real-time dengan pilihan filter yang bisa di-switch.
+16. **CLAHE Parameter Optimizer** — Auto-tune clipLimit dan tileGridSize berdasarkan gambar.
+17. **Morphological Feature Extractor** — Ekstraksi fitur geometri (area, perimeter, convexity, solidity).
+18. **Unsharp Mask HDR** — Pipeline sharpening + CLAHE + gamma untuk hasil HDR.
+19. **Frequency Band Analyzer** — Analisis dan visualisasi kontribusi setiap band frekuensi.
+20. **Alpha Matte Generator** — Trimap-based alpha matting untuk compositing objek.
 
 ---
 
@@ -40,19 +45,19 @@ Pabrik minuman ingin mendeteksi cacat pada label botol. Buatlah sistem yang: (a)
 Startup lokal ingin membuat alternatif Instagram sederhana. Buatlah aplikasi yang menyediakan: (a) filter brightness/contrast manual, (b) filter sepia/vintage menggunakan LUT, (c) filter sketch menggunakan edge detection + blending, (d) filter cartoon menggunakan bilateral + edge, (e) filter HDR menggunakan CLAHE, (f) filter blur artistik (bokeh simulasi) dengan Gaussian, (g) preview semua filter, (h) export dengan watermark.
 
 ### Soal 4: Sistem Penghitung Sel Darah Otomatis
-Lab biologi kampus memerlukan tool untuk menghitung jumlah sel darah merah dari foto mikroskop. Buatlah sistem yang: (a) enhance gambar mikroskop (contrast + CLAHE), (b) konversi ke grayscale dan thresholding, (c) operasi morfologi untuk memisahkan sel yang berdekatan, (d) deteksi kontur dan hitung jumlah sel, (e) gambar outline tiap sel yang terdeteksi, (f) hitung statistik (jumlah, rata-rata ukuran, distribusi), (g) buat laporan dengan visualisasi.
+Lab biologi kampus memerlukan tool untuk menghitung sel darah merah dari foto mikroskop. Buatlah sistem yang: (a) enhance gambar mikroskop (contrast + CLAHE), (b) konversi ke grayscale dan thresholding, (c) operasi morfologi untuk memisahkan sel berdekatan, (d) deteksi kontur dan hitung jumlah sel, (e) gambar outline tiap sel, (f) hitung statistik (jumlah, rata-rata ukuran, distribusi), (g) buat laporan dengan visualisasi.
 
 ### Soal 5: Sistem Deteksi Plat Nomor (Preprocessing)
-Sistem parkir memerlukan preprocessing gambar CCTV sebelum OCR. Buatlah pipeline yang: (a) crop ROI area plat, (b) konversi ke grayscale, (c) CLAHE untuk menormalisasi pencahayaan, (d) bilateral filter untuk denoising tanpa menghilangkan edge, (e) edge detection + morfologi untuk menemukan batas karakter, (f) thresholding adaptif untuk binarisasi, (g) resize ke ukuran standar, (h) simpan hasil dengan confidence score per step.
+Sistem parkir memerlukan preprocessing gambar CCTV sebelum OCR. Buatlah pipeline yang: (a) crop ROI area plat, (b) konversi ke grayscale, (c) CLAHE untuk menormalisasi pencahayaan, (d) bilateral filter untuk denoising tanpa menghilangkan edge, (e) edge detection + morfologi untuk menemukan batas karakter, (f) thresholding adaptif untuk binarisasi, (g) resize ke ukuran standar, (h) simpan hasil per step.
 
 ### Soal 6: Tool Restorasi Foto Lama
 Studio foto menerima banyak pesanan restorasi foto lama. Buatlah tool yang: (a) analisis kerusakan (noise, fading, spots), (b) denoising adaptif, (c) contrast enhancement dengan CLAHE, (d) removal spot/scratch menggunakan morfologi + inpainting mask, (e) sharpening adaptif, (f) colorization sederhana (apply sepia/tint), (g) before-after comparison.
 
 ### Soal 7: Sistem Monitoring Traffic dari CCTV
-Dinas Perhubungan ingin mendeteksi kepadatan lalu lintas dari CCTV. Buatlah sistem yang: (a) preprocessing frame video (denoising), (b) edge detection untuk mendeteksi kendaraan, (c) thresholding dan morfologi untuk segmentasi area jalan, (d) hitung piksel area kendaraan vs area kosong, (e) klasifikasi kepadatan (sepi/normal/padat/macet), (f) buat grafik kepadatan sepanjang waktu, (g) tampilkan heatmap kepadatan.
+Dinas Perhubungan ingin mendeteksi kepadatan lalu lintas dari CCTV. Buatlah sistem yang: (a) preprocessing frame video (denoising), (b) edge detection untuk mendeteksi kendaraan, (c) thresholding dan morfologi untuk segmentasi area jalan, (d) hitung piksel area kendaraan vs area kosong, (e) klasifikasi kepadatan (sepi/normal/padat/macet), (f) buat grafik kepadatan, (g) tampilkan heatmap kepadatan.
 
 ### Soal 8: Sistem Analisis Kualitas Buah
-Petani buah ingin grading kualitas buah berdasarkan tampilan visual. Buatlah sistem yang: (a) segmentasi buah dari background (HSV thresholding + morfologi), (b) analisis warna (ekstrak warna dominan), (c) deteksi bintik/cacat (edge detection pada ROI), (d) hitung persentase area cacat, (e) grading (Grade A/B/C), (f) batch processing, (g) buat laporan grading dengan visualisasi.
+Petani buah ingin grading kualitas buah berdasarkan tampilan visual. Buatlah sistem yang: (a) segmentasi buah dari background (HSV thresholding + morfologi), (b) analisis warna dominan, (c) deteksi bintik/cacat (edge detection pada ROI), (d) hitung persentase area cacat, (e) grading (Grade A/B/C), (f) batch processing, (g) buat laporan grading.
 
 ### Soal 9: Pendeteksi Kebocoran Pipa (Thermal Image Processing)
 Perusahaan utilitas menggunakan kamera thermal untuk deteksi kebocoran. Buatlah tool yang: (a) load thermal image (pseudocolor), (b) konversi ke grayscale, (c) histogram analysis untuk identifikasi anomali suhu, (d) thresholding adaptif untuk area panas, (e) Fourier analysis untuk filter noise sensor, (f) morfologi untuk clean-up, (g) highlight dan annotasi area potensial kebocoran.
@@ -64,28 +69,45 @@ Dosen mata kuliah PCD memerlukan alat peraga interaktif. Buatlah aplikasi yang: 
 
 ## Rubrik Penilaian Project
 
-| Komponen | Bobot |
-|----------|-------|
-| **Fungsionalitas** | 35% |
-| **Integrasi Percobaan** | 20% |
-| **Kualitas Kode** | 15% |
-| **Dokumentasi** | 15% |
-| **Kreativitas** | 15% |
+| Komponen | Bobot | Deskripsi |
+|----------|-------|-----------|
+| **Fungsionalitas** | 35% | Semua fitur berjalan dengan benar dan robust |
+| **Integrasi Percobaan** | 20% | Minimal 10 dari 20 konsep percobaan terintegrasi |
+| **Kualitas Kode** | 15% | Modular, terdokumentasi, penamaan deskriptif |
+| **Dokumentasi** | 15% | README, screenshot, penjelasan alur program |
+| **Kreativitas** | 15% | Fitur tambahan, UI, solusi inovatif |
 
-*(Detail rubrik sama dengan format standar — lihat Modul 01)*
+### Detail Penilaian Integrasi
+| Jumlah Konsep | Skor Integrasi |
+|---------------|----------------|
+| 15–20 konsep | 90–100% |
+| 10–14 konsep | 70–89% |
+| 7–9 konsep | 50–69% |
+| 4–6 konsep | 30–49% |
+| < 4 konsep | 0–29% |
 
-### Konversi Nilai
-| Range | Grade |
-|-------|-------|
-| 90–100 | A |
-| 80–89 | AB |
-| 70–79 | B |
-| 60–69 | BC |
-| 50–59 | C |
-| 0–49 | D/E |
+### Skala Nilai
+| Range | Grade | Predikat |
+|-------|-------|----------|
+| 90–100 | A | Sangat Memuaskan |
+| 80–89 | AB | Memuaskan |
+| 70–79 | B | Baik |
+| 60–69 | BC | Cukup Baik |
+| 50–59 | C | Cukup |
+| 40–49 | D | Kurang |
+| 0–39 | E | Gagal |
+
+### Penalti
+| Pelanggaran | Penalti |
+|-------------|---------|
+| Terlambat 1 hari | −10% |
+| Terlambat 2–3 hari | −20% |
+| Terlambat > 3 hari | −40% |
+| Plagiarisme | Nilai 0 + sanksi akademik |
 
 ---
 
 ## Format Pengumpulan
 - **Deadline**: 1 minggu setelah modul selesai.
 - **Format**: ZIP — `NIM_Nama_Project03.zip`
+- **Isi**: Source code, README.md, screenshot (min. 5), data sample.

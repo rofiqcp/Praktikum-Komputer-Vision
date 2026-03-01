@@ -1,431 +1,404 @@
 """
 ==========================================================================
-SCRIPT DOWNLOAD DAN GENERATE GAMBAR/VIDEO SAMPLE
+SCRIPT DOWNLOAD GAMBAR DAN VIDEO ASLI
 Modul 09 - Estimasi Gerak (Motion Estimation)
 ==========================================================================
-Script ini menyiapkan semua gambar dan video sintetis yang dibutuhkan
-untuk 20 percobaan Motion Estimation.
-- Membuat folder 'image/' dan 'output/'
-- Men-generate gambar sintetis dan video dummy untuk latihan
-- Membuat sekuens frame untuk simulasi optical flow & tracking
+Script ini men-download video dan gambar ASLI dari internet untuk digunakan
+pada 20 percobaan Motion Estimation.
 
-Jalankan script ini PERTAMA KALI sebelum menjalankan percobaan lainnya.
+Video yang didownload (footage nyata):
+  - video_bola.avi        : Footage olahraga/aksi - objek bergerak cepat
+                            (untuk optical flow LK, dense flow, frame diff,
+                             tracking CSRT/KCF, MHI, feature trajectory)
+  - video_orang.avi       : Footage outdoor dengan figur manusia bergerak
+                            (untuk background subtraction MOG2/KNN,
+                             running average background)
+  - video_multi_objek.avi : Footage jalanan dengan banyak objek bergerak
+                            (untuk multi-object tracking, optical flow
+                             magnitude, bg subtraction comparison,
+                             motion contour detection)
+  - video_panning.avi     : Footage outdoor dengan gerakan kamera lateral
+                            (untuk video stabilization)
+
+Gambar static yang didownload / diekstrak:
+  - frame_t0.png          : Frame real dari video (optical flow statis,
+                            frame interpolation linear/flow)
+  - frame_t1.png          : Frame berikutnya dari video (frame pair)
+  - textured_scene.png    : Foto landscape dengan tekstur kaya (feature tracking)
+
+Sumber: Google Developers Sample Videos (freely available for developers)
+        Wikimedia Commons (CC Licensed)
+Jalankan script ini PERTAMA KALI sebelum menjalankan percobaan 01-20.
 ==========================================================================
 """
 
-# Mengimpor library os untuk operasi file dan folder
 import os
-
-# Mengimpor library numpy untuk operasi array/matriks
+import sys
+import urllib.request
+import urllib.error
+import cv2
 import numpy as np
 
-# Mengimpor library OpenCV untuk pemrosesan gambar & video
-import cv2
-
-# Mengimpor math untuk operasi trigonometri
-import math
-
 # ============================================================
-# LANGKAH 1: Membuat struktur folder yang dibutuhkan
+# KONFIGURASI DIREKTORI
 # ============================================================
 
-# Mendapatkan path direktori tempat script ini berada
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# Mendefinisikan path folder image dan output
 IMAGE_DIR = os.path.join(BASE_DIR, "image")
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
 
-# Membuat folder 'image' jika belum ada
 os.makedirs(IMAGE_DIR, exist_ok=True)
-
-# Membuat folder 'output' jika belum ada
 os.makedirs(OUTPUT_DIR, exist_ok=True)
-
 print("[INFO] Folder 'image/' dan 'output/' siap.")
 
 # ============================================================
-# LANGKAH 2: Generate video sintetis dengan objek bergerak
+# FUNGSI UTILITAS
 # ============================================================
 
-def buat_video_bola_bergerak(filename="video_bola.avi", width=640, height=480, fps=30, durasi=5):
+def download_file(url, dest_path, desc=""):
     """
-    Membuat video sintetis dengan bola yang bergerak secara diagonal.
-    Video ini digunakan untuk latihan optical flow dan tracking.
+    Download file dari URL ke dest_path.
+    Menggunakan User-Agent agar tidak diblokir server.
     """
-    filepath = os.path.join(IMAGE_DIR, filename)
-    # Codec XVID untuk format AVI
+    label = desc if desc else os.path.basename(dest_path)
+    print(f"\n  [DOWNLOAD] {label}")
+    print(f"  URL: {url}")
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={
+                'User-Agent': (
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                    'AppleWebKit/537.36 (KHTML, like Gecko) '
+                    'Chrome/120.0.0.0 Safari/537.36'
+                ),
+                'Accept': '*/*',
+            }
+        )
+        with urllib.request.urlopen(req, timeout=180) as response:
+            data = response.read()
+
+        with open(dest_path, 'wb') as f:
+            f.write(data)
+
+        size_kb = os.path.getsize(dest_path) / 1024
+        print(f"  [OK] Berhasil: {size_kb:.1f} KB")
+        return True
+
+    except urllib.error.HTTPError as e:
+        print(f"  [WARN] HTTP {e.code}: {e.reason}")
+        return False
+    except urllib.error.URLError as e:
+        print(f"  [WARN] URL Error: {e.reason}")
+        return False
+    except Exception as e:
+        print(f"  [WARN] Error: {e}")
+        return False
+
+
+def convert_mp4_to_avi(mp4_path, avi_path, max_frames=180, target_size=(640, 480)):
+    """
+    Konversi video MP4 (real footage) ke format AVI menggunakan OpenCV.
+    Mengambil max_frames pertama dari video sumber.
+    Video sumber adalah footage nyata yang baru didownload.
+    """
+    cap = cv2.VideoCapture(mp4_path)
+    if not cap.isOpened():
+        print(f"  [WARN] Tidak dapat membuka: {mp4_path}")
+        return False
+
+    fps_src = cap.get(cv2.CAP_PROP_FPS)
+    fps = fps_src if 5 < fps_src <= 60 else 30.0
+
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter(filepath, fourcc, fps, (width, height))
+    out = cv2.VideoWriter(avi_path, fourcc, fps, target_size)
+    if not out.isOpened():
+        # Coba codec alternatif
+        fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+        out = cv2.VideoWriter(avi_path, fourcc, fps, target_size)
 
-    total_frames = fps * durasi
-    # Posisi awal bola
-    x, y = 100, 100
-    # Kecepatan bola (piksel per frame)
-    vx, vy = 3, 2
-    # Radius bola
-    radius = 30
+    count = 0
+    while count < max_frames:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        frame_resized = cv2.resize(frame, target_size)
+        out.write(frame_resized)
+        count += 1
 
-    for i in range(total_frames):
-        # Membuat frame dengan background biru tua
-        frame = np.zeros((height, width, 3), dtype=np.uint8)
-        frame[:] = (40, 30, 20)
-
-        # Menambahkan grid sebagai tekstur background agar optical flow bekerja
-        for gx in range(0, width, 50):
-            cv2.line(frame, (gx, 0), (gx, height), (60, 50, 40), 1)
-        for gy in range(0, height, 50):
-            cv2.line(frame, (0, gy), (width, gy), (60, 50, 40), 1)
-
-        # Mengupdate posisi bola
-        x += vx
-        y += vy
-
-        # Memantulkan bola saat menyentuh tepi
-        if x - radius <= 0 or x + radius >= width:
-            vx = -vx
-        if y - radius <= 0 or y + radius >= height:
-            vy = -vy
-
-        # Menggambar bola berwarna merah
-        cv2.circle(frame, (int(x), int(y)), radius, (0, 0, 255), -1)
-        # Menambahkan highlight pada bola
-        cv2.circle(frame, (int(x) - 8, int(y) - 8), 8, (100, 100, 255), -1)
-
-        # Menulis frame ke video
-        out.write(frame)
-
+    cap.release()
     out.release()
-    print(f"[OK] Video '{filename}' berhasil dibuat ({total_frames} frame, {durasi}s).")
-    return filepath
+
+    if count > 0:
+        size_kb = os.path.getsize(avi_path) / 1024
+        print(f"  [OK] AVI dibuat: {os.path.basename(avi_path)} ({count} frame, {size_kb:.0f} KB)")
+        return True
+    return False
 
 
-def buat_video_multi_objek(filename="video_multi_objek.avi", width=640, height=480, fps=30, durasi=5):
+def extract_frame_pair(video_path, idx_a=30, idx_b=33,
+                       name_a="frame_t0.png", name_b="frame_t1.png"):
     """
-    Membuat video dengan beberapa objek bergerak secara independen.
-    Digunakan untuk multi-object tracking dan background subtraction.
+    Ekstrak dua frame dari video nyata sebagai pasangan frame untuk
+    percobaan optical flow statis dan frame interpolation.
+    Frame diambil dari footage real yang sudah didownload.
     """
-    filepath = os.path.join(IMAGE_DIR, filename)
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter(filepath, fourcc, fps, (width, height))
+    path_a = os.path.join(IMAGE_DIR, name_a)
+    path_b = os.path.join(IMAGE_DIR, name_b)
 
-    total_frames = fps * durasi
-    # Mendefinisikan beberapa objek: [x, y, vx, vy, radius, warna]
-    objek_list = [
-        [100, 100, 4, 2, 25, (0, 0, 255)],    # Merah
-        [400, 300, -3, 3, 20, (0, 255, 0)],    # Hijau
-        [300, 200, 2, -4, 30, (255, 0, 0)],    # Biru
-        [500, 100, -2, 2, 22, (0, 255, 255)],  # Kuning
+    cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        return False
+
+    saved_a = saved_b = False
+    frame_count = 0
+
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+        if frame_count == idx_a:
+            cv2.imwrite(path_a, cv2.resize(frame, (640, 480)))
+            saved_a = True
+        if frame_count == idx_b:
+            cv2.imwrite(path_b, cv2.resize(frame, (640, 480)))
+            saved_b = True
+        if saved_a and saved_b:
+            break
+        frame_count += 1
+
+    cap.release()
+
+    if saved_a and saved_b:
+        print(f"  [OK] Frame pair diekstrak dari footage nyata:")
+        print(f"       {name_a} (frame #{idx_a})")
+        print(f"       {name_b} (frame #{idx_b})")
+        return True
+    return False
+
+
+def download_image(url, dest_path, resize=None):
+    """
+    Download gambar dari URL dan simpan. Opsional resize ke ukuran tertentu.
+    """
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={
+                'User-Agent': (
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                    'AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36'
+                )
+            }
+        )
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            raw = np.frombuffer(resp.read(), dtype=np.uint8)
+        img = cv2.imdecode(raw, cv2.IMREAD_COLOR)
+        if img is None:
+            return False
+        if resize:
+            img = cv2.resize(img, resize)
+        cv2.imwrite(dest_path, img)
+        size_kb = os.path.getsize(dest_path) / 1024
+        print(f"  [OK] {os.path.basename(dest_path)} ({img.shape[1]}x{img.shape[0]}, {size_kb:.1f} KB)")
+        return True
+    except Exception as e:
+        print(f"  [WARN] Gagal download gambar: {e}")
+        return False
+
+
+# ============================================================
+# LANGKAH 1: DOWNLOAD VIDEO ASLI
+# ============================================================
+
+print("\n" + "=" * 60)
+print("MODUL 09 - DOWNLOAD VIDEO DAN GAMBAR ASLI")
+print("=" * 60)
+
+# Sumber: Google Developers Sample Videos
+# Video-video ini adalah footage nyata (real footage), bebas digunakan
+# untuk keperluan development/pendidikan
+GOOGLE_CDN = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample"
+
+# ForBiggerBlazes.mp4  → aksi outdoor / objek bergerak → video_bola.avi
+# ForBiggerEscapes.mp4 → figur manusia outdoor bergerak → video_orang.avi
+# ForBiggerJoyrides.mp4 → perjalanan outdoor multi-subjek → video_multi_objek.avi
+# ForBiggerMeltdowns.mp4 → outdoor dengan pan kamera → video_panning.avi
+
+print("\n--- VIDEO ---")
+
+video_configs = [
+    {
+        "url":      f"{GOOGLE_CDN}/ForBiggerBlazes.mp4",
+        "temp":     "temp_v1.mp4",
+        "avi":      "video_bola.avi",
+        "desc": (
+            "Footage aksi outdoor (ForBiggerBlazes.mp4) → video_bola.avi\n"
+            "  Digunakan: optical flow LK/dense, tracking CSRT/KCF, MHI,\n"
+            "  frame diff, feature trajectory, realtime optical flow"
+        ),
+    },
+    {
+        "url":      f"{GOOGLE_CDN}/ForBiggerEscapes.mp4",
+        "temp":     "temp_v2.mp4",
+        "avi":      "video_orang.avi",
+        "desc": (
+            "Footage figur manusia outdoor (ForBiggerEscapes.mp4) → video_orang.avi\n"
+            "  Digunakan: background subtraction MOG2/KNN, running average BG"
+        ),
+    },
+    {
+        "url":      f"{GOOGLE_CDN}/ForBiggerJoyrides.mp4",
+        "temp":     "temp_v3.mp4",
+        "avi":      "video_multi_objek.avi",
+        "desc": (
+            "Footage perjalanan outdoor (ForBiggerJoyrides.mp4) → video_multi_objek.avi\n"
+            "  Digunakan: multi-object tracking, optical flow magnitude/direction,\n"
+            "  background subtraction comparison, deteksi gerakan contour"
+        ),
+    },
+    {
+        "url":      f"{GOOGLE_CDN}/ForBiggerMeltdowns.mp4",
+        "temp":     "temp_v4.mp4",
+        "avi":      "video_panning.avi",
+        "desc": (
+            "Footage outdoor dengan gerakan kamera (ForBiggerMeltdowns.mp4) → video_panning.avi\n"
+            "  Digunakan: video stabilization"
+        ),
+    },
+]
+
+first_avi_path = None  # Untuk ekstrak frame pair
+
+for cfg in video_configs:
+    print(f"\n{'─'*55}")
+    print(f"  {cfg['desc']}")
+
+    temp_path = os.path.join(IMAGE_DIR, cfg["temp"])
+    avi_path  = os.path.join(IMAGE_DIR, cfg["avi"])
+
+    # Skip jika sudah ada
+    if os.path.exists(avi_path) and os.path.getsize(avi_path) > 50_000:
+        print(f"  [SKIP] {cfg['avi']} sudah ada.")
+        if first_avi_path is None:
+            first_avi_path = avi_path
+        continue
+
+    # Download MP4 asli
+    ok = download_file(cfg["url"], temp_path)
+    if ok and os.path.getsize(temp_path) > 50_000:
+        # Konversi ke AVI (160 frame ≈ 5-6 detik @ 30fps)
+        ok2 = convert_mp4_to_avi(temp_path, avi_path, max_frames=160)
+        if ok2 and first_avi_path is None:
+            first_avi_path = avi_path
+        # Hapus file temp
+        try:
+            os.remove(temp_path)
+        except Exception:
+            pass
+    else:
+        print(f"  [WARN] Download gagal, {cfg['avi']} tidak tersedia.")
+        # Hapus file kosong
+        if os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except Exception:
+                pass
+
+# ============================================================
+# LANGKAH 2: EKSTRAK FRAME PAIR DARI VIDEO NYATA
+# ============================================================
+
+print(f"\n{'─'*55}")
+print("  Ekstrak frame pair dari footage nyata → frame_t0.png + frame_t1.png")
+print("  Digunakan: visualisasi optical flow statis, frame interpolation")
+
+frame_t0 = os.path.join(IMAGE_DIR, "frame_t0.png")
+frame_t1 = os.path.join(IMAGE_DIR, "frame_t1.png")
+
+if (os.path.exists(frame_t0) and os.path.exists(frame_t1) and
+        os.path.getsize(frame_t0) > 1000):
+    print("  [SKIP] frame_t0.png + frame_t1.png sudah ada.")
+elif first_avi_path and os.path.exists(first_avi_path):
+    ok = extract_frame_pair(first_avi_path, 30, 33)
+    if not ok:
+        # Coba dengan index berbeda
+        extract_frame_pair(first_avi_path, 5, 8)
+else:
+    print("  [WARN] Tidak ada video sumber untuk ekstrak frame pair.")
+
+# ============================================================
+# LANGKAH 3: DOWNLOAD GAMBAR BERTEKSTUR ASLI
+# ============================================================
+
+print(f"\n{'─'*55}")
+print("  Download gambar bertekstur → textured_scene.png")
+print("  Digunakan: feature tracking, pengujian optical flow")
+
+textured_path = os.path.join(IMAGE_DIR, "textured_scene.png")
+
+if os.path.exists(textured_path) and os.path.getsize(textured_path) > 10_000:
+    print("  [SKIP] textured_scene.png sudah ada.")
+else:
+    # Foto Sahara Desert dunes - tekstur pasir sangat kaya untuk feature detection
+    # Sumber: Wikimedia Commons (Public Domain)
+    TEXTURE_URLS = [
+        (
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/"
+            "Sand_dunes_in_the_Sahara.jpg/640px-Sand_dunes_in_the_Sahara.jpg",
+            "Sahara desert dunes (Wikimedia Commons, PD)"
+        ),
+        (
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/"
+            "24701-nature-natural-beauty.jpg/640px-24701-nature-natural-beauty.jpg",
+            "Nature forest texture (Wikimedia Commons, CC)"
+        ),
     ]
-
-    for i in range(total_frames):
-        # Background statis (pemandangan sederhana)
-        frame = np.ones((height, width, 3), dtype=np.uint8) * 200
-
-        # Menambahkan lantai dan langit
-        frame[0:height//2, :] = (230, 200, 180)  # Langit
-        frame[height//2:, :] = (100, 160, 100)    # Rumput
-
-        # Menambahkan pola agar tracking dan optical flow bekerja baik
-        for gx in range(0, width, 80):
-            cv2.line(frame, (gx, 0), (gx, height), (180, 180, 180), 1)
-
-        # Mengupdate dan menggambar setiap objek
-        for obj in objek_list:
-            obj[0] += obj[2]
-            obj[1] += obj[3]
-            # Pantulkan saat menyentuh tepi
-            if obj[0] - obj[4] <= 0 or obj[0] + obj[4] >= width:
-                obj[2] = -obj[2]
-            if obj[1] - obj[4] <= 0 or obj[1] + obj[4] >= height:
-                obj[3] = -obj[3]
-            # Menggambar objek sebagai lingkaran
-            cv2.circle(frame, (int(obj[0]), int(obj[1])), obj[4], obj[5], -1)
-
-        out.write(frame)
-
-    out.release()
-    print(f"[OK] Video '{filename}' berhasil dibuat ({total_frames} frame, {durasi}s).")
-    return filepath
-
-
-def buat_video_orang_berjalan(filename="video_orang.avi", width=640, height=480, fps=30, durasi=5):
-    """
-    Membuat video sintetis dengan objek mirip orang berjalan.
-    Untuk background subtraction dan motion detection.
-    """
-    filepath = os.path.join(IMAGE_DIR, filename)
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter(filepath, fourcc, fps, (width, height))
-
-    total_frames = fps * durasi
-
-    for i in range(total_frames):
-        # Background statis (ruangan)
-        frame = np.ones((height, width, 3), dtype=np.uint8) * 220
-        # Lantai
-        cv2.rectangle(frame, (0, 350), (width, height), (180, 170, 160), -1)
-        # Dinding pattern
-        for wx in range(0, width, 100):
-            cv2.rectangle(frame, (wx, 0), (wx+2, 350), (200, 200, 200), -1)
-
-        # Orang 1 berjalan dari kiri ke kanan
-        px1 = int((i * 3) % (width + 100)) - 50
-        # Kepala
-        cv2.circle(frame, (px1, 250), 20, (150, 130, 120), -1)
-        # Badan
-        cv2.rectangle(frame, (px1-15, 270), (px1+15, 340), (80, 80, 180), -1)
-        # Kaki (animasi sederhana)
-        leg_offset = int(10 * math.sin(i * 0.3))
-        cv2.line(frame, (px1-5, 340), (px1-5+leg_offset, 380), (60, 60, 60), 4)
-        cv2.line(frame, (px1+5, 340), (px1+5-leg_offset, 380), (60, 60, 60), 4)
-
-        # Orang 2 berjalan dari kanan ke kiri (lebih lambat)
-        px2 = width - int((i * 2) % (width + 100)) + 50
-        cv2.circle(frame, (px2, 260), 18, (130, 120, 110), -1)
-        cv2.rectangle(frame, (px2-12, 278), (px2+12, 340), (180, 80, 80), -1)
-        leg_offset2 = int(8 * math.sin(i * 0.25))
-        cv2.line(frame, (px2-4, 340), (px2-4+leg_offset2, 375), (60, 60, 60), 3)
-        cv2.line(frame, (px2+4, 340), (px2+4-leg_offset2, 375), (60, 60, 60), 3)
-
-        out.write(frame)
-
-    out.release()
-    print(f"[OK] Video '{filename}' berhasil dibuat ({total_frames} frame, {durasi}s).")
-    return filepath
-
-
-def buat_video_panning(filename="video_panning.avi", width=640, height=480, fps=30, durasi=4):
-    """
-    Membuat video simulasi kamera panning (bergerak horizontal).
-    Untuk video stabilization dan global motion estimation.
-    """
-    filepath = os.path.join(IMAGE_DIR, filename)
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter(filepath, fourcc, fps, (width, height))
-
-    # Membuat panorama lebar (2x width)
-    panorama_w = width * 3
-    panorama = np.ones((height, panorama_w, 3), dtype=np.uint8) * 200
-
-    # Menggambar pemandangan di panorama
-    # Langit
-    panorama[0:height//2, :] = (230, 200, 160)
-    # Tanah
-    panorama[height//2:, :] = (80, 140, 80)
-
-    # Menambahkan objek-objek statis ke panorama
-    for tx in range(0, panorama_w, 200):
-        # Pohon
-        cv2.rectangle(panorama, (tx+80, 200), (tx+100, 350), (40, 80, 40), -1)
-        cv2.circle(panorama, (tx+90, 180), 50, (30, 120, 30), -1)
-    for tx in range(0, panorama_w, 300):
-        # Rumah
-        cv2.rectangle(panorama, (tx+130, 250), (tx+230, 350), (60, 60, 180), -1)
-        pts = np.array([[tx+120, 250], [tx+180, 190], [tx+240, 250]], np.int32)
-        cv2.fillPoly(panorama, [pts], (50, 50, 150))
-
-    total_frames = fps * durasi
-    for i in range(total_frames):
-        # Simulasi kamera panning + sedikit goyang (shake)
-        offset_x = int(i * (panorama_w - width) / total_frames)
-        shake_x = int(3 * math.sin(i * 0.5))
-        shake_y = int(2 * math.cos(i * 0.7))
-
-        # Crop dari panorama sesuai posisi kamera
-        x_start = max(0, min(offset_x + shake_x, panorama_w - width))
-        y_start = max(0, min(shake_y, 0))
-
-        frame = panorama[0:height, x_start:x_start+width].copy()
-        out.write(frame)
-
-    out.release()
-    print(f"[OK] Video '{filename}' berhasil dibuat ({total_frames} frame, {durasi}s).")
-    return filepath
-
-
-def buat_frame_pair(filename1="frame_t0.png", filename2="frame_t1.png", width=640, height=480):
-    """
-    Membuat sepasang frame untuk percobaan optical flow statis.
-    Frame kedua memiliki objek yang sedikit bergeser.
-    """
-    # Frame 1: objek di posisi awal
-    frame1 = np.ones((height, width, 3), dtype=np.uint8) * 180
-    # Menambahkan tekstur (kotak-kotak)
-    for i in range(0, height, 40):
-        for j in range(0, width, 40):
-            if (i // 40 + j // 40) % 2 == 0:
-                cv2.rectangle(frame1, (j, i), (j+40, i+40), (160, 160, 160), -1)
-
-    # Menggambar objek
-    cv2.rectangle(frame1, (200, 150), (350, 300), (0, 0, 200), -1)
-    cv2.circle(frame1, (480, 240), 60, (200, 0, 0), -1)
-
-    # Frame 2: objek bergeser
-    frame2 = np.ones((height, width, 3), dtype=np.uint8) * 180
-    for i in range(0, height, 40):
-        for j in range(0, width, 40):
-            if (i // 40 + j // 40) % 2 == 0:
-                cv2.rectangle(frame2, (j, i), (j+40, i+40), (160, 160, 160), -1)
-
-    # Objek bergeser 20px ke kanan dan 10px ke bawah
-    cv2.rectangle(frame2, (220, 160), (370, 310), (0, 0, 200), -1)
-    cv2.circle(frame2, (500, 250), 60, (200, 0, 0), -1)
-
-    path1 = os.path.join(IMAGE_DIR, filename1)
-    path2 = os.path.join(IMAGE_DIR, filename2)
-    cv2.imwrite(path1, frame1)
-    cv2.imwrite(path2, frame2)
-    print(f"[OK] Frame pair '{filename1}' dan '{filename2}' berhasil dibuat.")
-
-
-def buat_gambar_textured(filename="textured_scene.png", width=640, height=480):
-    """
-    Membuat gambar dengan banyak tekstur untuk optical flow yang baik.
-    """
-    img = np.random.randint(100, 200, (height, width, 3), dtype=np.uint8)
-    # Menambahkan noise Gaussian untuk tekstur
-    noise = np.random.randn(height, width, 3) * 20
-    img = np.clip(img.astype(np.float32) + noise, 0, 255).astype(np.uint8)
-    # Blur sedikit
-    img = cv2.GaussianBlur(img, (5, 5), 1.0)
-
-    # Menggambar beberapa objek geometris
-    cv2.rectangle(img, (100, 80), (250, 200), (0, 0, 180), -1)
-    cv2.circle(img, (400, 150), 70, (0, 180, 0), -1)
-    cv2.ellipse(img, (300, 350), (80, 50), 30, 0, 360, (180, 0, 0), -1)
-
-    path = os.path.join(IMAGE_DIR, filename)
-    cv2.imwrite(path, img)
-    print(f"[OK] Gambar '{filename}' berhasil dibuat.")
-
-
-def buat_video_rotasi(filename="video_rotasi.avi", width=640, height=480, fps=30, durasi=4):
-    """
-    Membuat video dengan objek yang berotasi.
-    Untuk analisis rotational motion.
-    """
-    filepath = os.path.join(IMAGE_DIR, filename)
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter(filepath, fourcc, fps, (width, height))
-
-    total_frames = fps * durasi
-    center = (width // 2, height // 2)
-
-    for i in range(total_frames):
-        frame = np.ones((height, width, 3), dtype=np.uint8) * 220
-
-        # Menambahkan grid background
-        for gx in range(0, width, 60):
-            cv2.line(frame, (gx, 0), (gx, height), (200, 200, 200), 1)
-        for gy in range(0, height, 60):
-            cv2.line(frame, (0, gy), (width, gy), (200, 200, 200), 1)
-
-        # Menggambar objek yang berotasi (persegi panjang)
-        angle = i * 3  # 3 derajat per frame
-        rect_size = (150, 80)
-        box = cv2.boxPoints(((center[0], center[1]), rect_size, angle))
-        box = np.int32(box)
-        cv2.fillPoly(frame, [box], (0, 100, 200))
-        cv2.polylines(frame, [box], True, (0, 50, 150), 2)
-
-        # Menambahkan lingkaran kecil yang mengorbit
-        orbit_r = 150
-        ox = int(center[0] + orbit_r * math.cos(math.radians(angle * 2)))
-        oy = int(center[1] + orbit_r * math.sin(math.radians(angle * 2)))
-        cv2.circle(frame, (ox, oy), 15, (0, 200, 0), -1)
-
-        out.write(frame)
-
-    out.release()
-    print(f"[OK] Video '{filename}' berhasil dibuat ({total_frames} frame, {durasi}s).")
-
-
-def buat_video_zoom(filename="video_zoom.avi", width=640, height=480, fps=30, durasi=3):
-    """
-    Membuat video simulasi zoom in/out.
-    Untuk analisis scaling motion.
-    """
-    filepath = os.path.join(IMAGE_DIR, filename)
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter(filepath, fourcc, fps, (width, height))
-
-    total_frames = fps * durasi
-    # Membuat gambar dasar yang lebih besar
-    big_size = max(width, height) * 3
-    base = np.ones((big_size, big_size, 3), dtype=np.uint8) * 200
-
-    # Menggambar pattern di gambar dasar
-    for i in range(0, big_size, 100):
-        for j in range(0, big_size, 100):
-            color = ((i * 37 + j * 53) % 150 + 50, (i * 23 + j * 67) % 150 + 50, (i * 47 + j * 31) % 150 + 50)
-            cv2.rectangle(base, (j, i), (j+80, i+80), color, -1)
-
-    center_x, center_y = big_size // 2, big_size // 2
-    for i in range(total_frames):
-        # Zoom in: crop semakin kecil
-        t = i / total_frames
-        scale = 1.0 + t * 2.0  # zoom dari 1x ke 3x
-        crop_w = int(width / scale)
-        crop_h = int(height / scale)
-
-        x1 = center_x - crop_w // 2
-        y1 = center_y - crop_h // 2
-        crop = base[y1:y1+crop_h, x1:x1+crop_w]
-
-        # Resize crop ke ukuran frame
-        frame = cv2.resize(crop, (width, height), interpolation=cv2.INTER_LINEAR)
-        out.write(frame)
-
-    out.release()
-    print(f"[OK] Video '{filename}' berhasil dibuat ({total_frames} frame, {durasi}s).")
-
+    ok = False
+    for url, label in TEXTURE_URLS:
+        print(f"\n  Mencoba: {label}")
+        ok = download_image(url, textured_path, resize=(640, 480))
+        if ok:
+            break
+    if not ok:
+        print("  [WARN] Semua URL tekstur gagal.")
 
 # ============================================================
-# LANGKAH 3: Generate semua video dan gambar
+# VERIFIKASI AKHIR
 # ============================================================
 
 print("\n" + "=" * 60)
-print("GENERATING ASSETS UNTUK MODUL 09")
+print("VERIFIKASI FILE - MODUL 09")
 print("=" * 60)
 
-# Video utama dengan bola bergerak
-buat_video_bola_bergerak()
+required = [
+    ("video_bola.avi",        "Optical flow, CSRT/KCF tracking, MHI, frame diff"),
+    ("video_orang.avi",       "Background subtraction MOG2/KNN, running avg BG"),
+    ("video_multi_objek.avi", "Multi-object tracking, flow magnitude, motion contour"),
+    ("video_panning.avi",     "Video stabilization"),
+    ("frame_t0.png",          "Optical flow statis, frame interpolation"),
+    ("frame_t1.png",          "Optical flow statis, frame interpolation"),
+    ("textured_scene.png",    "Feature tracking, optical flow test"),
+]
 
-# Video dengan beberapa objek bergerak
-buat_video_multi_objek()
+all_ok = True
+for fname, usage in required:
+    fpath = os.path.join(IMAGE_DIR, fname)
+    exists = os.path.exists(fpath)
+    size_kb = os.path.getsize(fpath) / 1024 if exists else 0
+    status = "✓" if (exists and size_kb > 1) else "✗"
+    mark = "" if (exists and size_kb > 1) else "  ← PERLU DOWNLOAD ULANG"
+    print(f"  [{status}] {fname:<28} {size_kb:>8.1f} KB  | {usage}{mark}")
+    if not (exists and size_kb > 1):
+        all_ok = False
 
-# Video simulasi orang berjalan
-buat_video_orang_berjalan()
-
-# Video kamera panning/goyang
-buat_video_panning()
-
-# Video objek berotasi
-buat_video_rotasi()
-
-# Video efek zoom
-buat_video_zoom()
-
-# Sepasang frame untuk optical flow statis
-buat_frame_pair()
-
-# Gambar bertekstur
-buat_gambar_textured()
-
-# ============================================================
-# LANGKAH 4: Verifikasi semua file
-# ============================================================
-print("\n" + "=" * 60)
-print("VERIFIKASI FILE")
-print("=" * 60)
-
-for f in os.listdir(IMAGE_DIR):
-    filepath = os.path.join(IMAGE_DIR, f)
-    size_kb = os.path.getsize(filepath) / 1024
-    print(f"  [✓] {f} ({size_kb:.1f} KB)")
-
-print(f"\n[SELESAI] Semua asset untuk Modul 09 berhasil dibuat!")
-print(f"[INFO] Folder image: {IMAGE_DIR}")
+print(f"\n{'='*60}")
+if all_ok:
+    print("[SELESAI] Semua asset Modul 09 berhasil didownload!")
+    print("[INFO]    Semua video berasal dari footage nyata (real video).")
+else:
+    print("[PERHATIAN] Beberapa file belum tersedia.")
+    print("            Pastikan koneksi internet aktif lalu jalankan ulang.")
+print(f"[INFO] Folder image : {IMAGE_DIR}")
 print(f"[INFO] Folder output: {OUTPUT_DIR}")
 print("[INFO] Silakan jalankan percobaan 01-20.")

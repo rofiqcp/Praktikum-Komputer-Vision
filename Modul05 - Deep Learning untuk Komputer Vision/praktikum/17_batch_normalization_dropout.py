@@ -352,13 +352,9 @@ if os.path.exists(img_path):
     img = cv2.resize(img, (200, 200))
 
 if img is None:
-    # Membuat gambar sintetis jika gambar tidak ditemukan
-    print("  Gambar tidak ditemukan, membuat gambar sintetis...")
-    img = np.random.randint(50, 200, (200, 200, 3), dtype=np.uint8)
-
-    # Menambahkan pola agar lebih menarik
-    cv2.circle(img, (100, 100), 60, (255, 100, 50), -1)
-    cv2.rectangle(img, (30, 30), (80, 80), (50, 200, 50), -1)
+    print("[ERROR] kucing.jpg tidak ditemukan!")
+    print("        Jalankan download_image.py terlebih dahulu.")
+    exit()
 
 # Membuat figure untuk visualisasi dropout
 fig, axes = plt.subplots(2, 4, figsize=(16, 8))

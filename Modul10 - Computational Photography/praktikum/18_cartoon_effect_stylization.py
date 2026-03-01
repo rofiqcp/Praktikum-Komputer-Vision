@@ -61,25 +61,25 @@ path_img = os.path.join(IMAGE_DIR, "portrait.png")
 # Membaca gambar dalam format BGR
 img = cv2.imread(path_img)
 
-# Memeriksa apakah gambar berhasil dimuat
+# Memeriksa apakah gambar portrait berhasil dimuat; jika tidak, coba scene_pemandangan
 if img is None:
-    # Mencoba gambar alternatif
     path_alt = os.path.join(IMAGE_DIR, "scene_pemandangan.png")
     img = cv2.imread(path_alt)
 
-# Jika masih tidak ditemukan, buat gambar sintetis
+# Jika masih tidak ditemukan, download otomatis
 if img is None:
-    print("[INFO] Gambar tidak ditemukan, membuat gambar sintetis...")
-    # Membuat gambar sintetis berwarna-warni
-    img = np.zeros((400, 500, 3), dtype=np.uint8)
-    # Membuat latar belakang gradient
-    for y in range(400):
-        img[y, :, 0] = int(120 + 80 * y / 400)
-        img[y, :, 1] = int(180 - 80 * y / 400)
-        img[y, :, 2] = int(100 + 50 * y / 400)
-    # Menambahkan bentuk geometris
-    cv2.circle(img, (250, 180), 80, (200, 160, 120), -1)
-    cv2.rectangle(img, (80, 280), (420, 370), (100, 180, 140), -1)
+    print("[WARN] Gambar tidak ditemukan. Menjalankan download_image.py otomatis...")
+    import subprocess as _subp, sys as _sys
+    _dl = os.path.join(os.path.dirname(os.path.abspath(__file__)), "download_image.py")
+    _subp.run([_sys.executable, _dl], check=False)
+    img = cv2.imread(path_img)
+    if img is None:
+        img = cv2.imread(os.path.join(IMAGE_DIR, "scene_pemandangan.png"))
+if img is None:
+    raise FileNotFoundError(
+        "[ERROR] portrait.png / scene_pemandangan.png tidak tersedia.\n"
+        "  Jalankan terlebih dahulu: python download_image.py"
+    )
 
 # Menampilkan informasi gambar
 print(f"[INFO] Ukuran gambar: {img.shape}")

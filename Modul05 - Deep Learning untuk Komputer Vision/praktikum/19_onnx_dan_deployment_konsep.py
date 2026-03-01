@@ -490,14 +490,9 @@ if os.path.exists(img_path):
     img = cv2.resize(img, (200, 200))
 
 if img is None:
-    # Membuat gambar sintetis jika tidak ditemukan
-    print("  Gambar tidak ditemukan, membuat gambar sintetis...")
-    img = np.zeros((200, 200, 3), dtype=np.uint8)
-    # Membuat gradien warna
-    for i in range(200):
-        for j in range(200):
-            img[i, j] = [i % 256, j % 256, (i + j) % 256]
-    cv2.circle(img, (100, 100), 50, (255, 200, 0), -1)
+    print("[ERROR] kucing.jpg tidak ditemukan!")
+    print("        Jalankan download_image.py terlebih dahulu.")
+    exit()
 
 # Membuat figure untuk efek kuantisasi
 fig, axes = plt.subplots(2, 4, figsize=(16, 8))

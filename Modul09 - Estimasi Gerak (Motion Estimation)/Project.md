@@ -66,7 +66,7 @@ Dosen ingin merekam presentasi whiteboard tanpa menangkap gerakan tangan/tubuh. 
 | Komponen | Bobot | Keterangan |
 |----------|-------|------------|
 | Fungsionalitas | 35% | Semua fitur berjalan |
-| Integrasi Percobaan | 20% | Menggunakan konsep ≥5 percobaan |
+| Integrasi Percobaan | 20% | Menggunakan konsep ≥10 percobaan |
 | Kualitas Kode | 15% | Clean, modular |
 | Dokumentasi | 15% | README, screenshot, demo video |
 | Kreativitas | 15% | Fitur tambahan, optimasi |

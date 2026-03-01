@@ -67,35 +67,24 @@ img_portrait = cv2.imread(path_portrait)
 # Membaca depth map sebagai grayscale (1 channel)
 depth_map = cv2.imread(path_depth, cv2.IMREAD_GRAYSCALE)
 
-# Memeriksa apakah gambar portrait berhasil dimuat
+# Memeriksa apakah gambar portrait berhasil dimuat; jika tidak, download otomatis
+if img_portrait is None or depth_map is None:
+    print("[WARN] Gambar tidak ditemukan. Menjalankan download_image.py otomatis...")
+    import subprocess as _subp, sys as _sys
+    _dl = os.path.join(os.path.dirname(os.path.abspath(__file__)), "download_image.py")
+    _subp.run([_sys.executable, _dl], check=False)
+    img_portrait = cv2.imread(path_portrait)
+    depth_map    = cv2.imread(path_depth, cv2.IMREAD_GRAYSCALE)
 if img_portrait is None:
-    # Jika portrait tidak ditemukan, buat gambar sintetis
-    print("[INFO] portrait.png tidak ditemukan, membuat gambar sintetis...")
-    # Membuat gambar sintetis 400x300 dengan latar belakang gradient
-    img_portrait = np.zeros((400, 300, 3), dtype=np.uint8)
-    # Membuat gradient latar belakang (hijau ke biru)
-    for y in range(400):
-        img_portrait[y, :, 0] = int(100 + 80 * y / 400)
-        img_portrait[y, :, 1] = int(150 - 50 * y / 400)
-        img_portrait[y, :, 2] = int(50 + 30 * y / 400)
-    # Menambahkan "wajah" sintetis (lingkaran di tengah)
-    cv2.circle(img_portrait, (150, 160), 70, (180, 160, 140), -1)
-    cv2.circle(img_portrait, (130, 145), 10, (60, 40, 30), -1)
-    cv2.circle(img_portrait, (170, 145), 10, (60, 40, 30), -1)
-    cv2.ellipse(img_portrait, (150, 180), (25, 10), 0, 0, 180, (100, 60, 60), 2)
-
-# Memeriksa apakah depth map berhasil dimuat
+    raise FileNotFoundError(
+        "[ERROR] portrait.png tidak tersedia setelah download.\n"
+        "  Jalankan terlebih dahulu: python download_image.py"
+    )
 if depth_map is None:
-    # Jika depth map tidak ditemukan, buat depth map sintetis
-    print("[INFO] depth_map_portrait.png tidak ditemukan, membuat depth map sintetis...")
-    h, w = img_portrait.shape[:2]
-    # Membuat depth map gradient (atas=jauh, bawah=dekat)
-    depth_map = np.zeros((h, w), dtype=np.uint8)
-    for y in range(h):
-        # Depth dari 30 (jauh) ke 220 (dekat) dari atas ke bawah
-        depth_map[y, :] = int(30 + 190 * y / h)
-    # Membuat area subjek (tengah) memiliki depth tertentu (fokus)
-    cv2.circle(depth_map, (w // 2, int(h * 0.4)), 70, 180, -1)
+    raise FileNotFoundError(
+        "[ERROR] depth_map_portrait.png tidak tersedia setelah download.\n"
+        "  Jalankan terlebih dahulu: python download_image.py"
+    )
 
 # Memastikan depth map memiliki ukuran yang sama dengan portrait
 depth_map = cv2.resize(depth_map, (img_portrait.shape[1], img_portrait.shape[0]))

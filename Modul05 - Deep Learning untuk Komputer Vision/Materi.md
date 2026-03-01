@@ -133,7 +133,147 @@ Format universal untuk model DNN. Export dari PyTorch/Keras → inferensi di ber
 
 ---
 
-## 5.10 Ringkasan
+## 5.10 HOG (Histogram of Oriented Gradients)
+
+### Konsep HOG
+HOG adalah fitur deskriptor yang digunakan untuk deteksi objek, khususnya deteksi pejalan kaki. Proses:
+1. **Gradient computation**: Hitung magnitude dan orientasi gradien setiap piksel.
+2. **Cell histograms**: Bagi gambar ke cells (8×8 piksel), buat histogram orientasi.
+3. **Block normalization**: Normalisasi histogram dalam blok (2×2 cells) untuk invariansi pencahayaan.
+4. **Feature vector**: Gabungkan semua histogram menjadi satu vektor fitur.
+
+### HOG + SVM vs Deep Learning
+| Aspek | HOG + SVM | Deep Learning |
+|-------|-----------|---------------|
+| Training data | Sedikit | Banyak |
+| Kecepatan | Cepat (CPU) | Memerlukan GPU |
+| Akurasi | Baik untuk objek rigid | Lebih baik untuk variasi tinggi |
+| Generalisasi | Terbatas | Sangat baik |
+
+---
+
+## 5.11 Loss Functions
+
+### Cross-Entropy Loss
+Untuk klasifikasi:
+$$L = -\sum_{i} y_i \log(\hat{y}_i)$$
+
+### Mean Squared Error (MSE)
+Untuk regresi:
+$$L = \frac{1}{n}\sum_{i}(y_i - \hat{y}_i)^2$$
+
+### Dice Loss
+Untuk segmentasi, mengukur overlap:
+$$L_{Dice} = 1 - \frac{2|A \cap B|}{|A| + |B|}$$
+
+### Focal Loss
+Mengatasi class imbalance:
+$$L_{FL} = -\alpha_t (1 - p_t)^\gamma \log(p_t)$$
+
+| Loss Function | Kegunaan | Kelebihan |
+|--------------|----------|----------|
+| Cross-Entropy | Klasifikasi | Standar, stabil |
+| MSE | Regresi | Sensitif terhadap outlier |
+| Dice | Segmentasi | Baik untuk class imbalance |
+| Focal | Deteksi | Mengatasi easy vs hard examples |
+
+---
+
+## 5.12 Optimizers
+
+### SGD (Stochastic Gradient Descent)
+$$\theta_{t+1} = \theta_t - \eta \nabla L(\theta_t)$$
+
+### SGD with Momentum (SGDM)
+$$v_t = \beta v_{t-1} + \eta \nabla L(\theta_t)$$
+$$\theta_{t+1} = \theta_t - v_t$$
+
+### Adam (Adaptive Moment Estimation)
+Kombinasi momentum dan adaptive learning rate:
+$$m_t = \beta_1 m_{t-1} + (1 - \beta_1) g_t$$
+$$v_t = \beta_2 v_{t-1} + (1 - \beta_2) g_t^2$$
+$$\theta_{t+1} = \theta_t - \frac{\eta}{\sqrt{\hat{v}_t} + \epsilon} \hat{m}_t$$
+
+### Perbandingan Optimizer
+| Optimizer | Kelebihan | Kekurangan |
+|-----------|-----------|------------|
+| SGD | Sederhana, generalisasi baik | Konvergensi lambat |
+| SGDM | Lebih cepat dari SGD | Perlu tuning momentum |
+| Adam | Konvergensi cepat, adaptif | Bisa kurang generalisasi |
+
+---
+
+## 5.13 Batch Normalization dan Dropout
+
+### Batch Normalization
+Normalisasi aktivasi per mini-batch:
+$$\hat{x}_i = \frac{x_i - \mu_B}{\sqrt{\sigma_B^2 + \epsilon}}$$
+$$y_i = \gamma \hat{x}_i + \beta$$
+
+Keuntungan: training lebih stabil, memungkinkan learning rate lebih tinggi, mengurangi ketergantungan pada inisialisasi weight.
+
+### Dropout
+Secara random menonaktifkan neuron selama training dengan probabilitas $p$:
+- **Training**: Setiap neuron di-drop dengan probabilitas $p$.
+- **Inference**: Semua neuron aktif, output di-scale dengan $(1-p)$.
+
+Efek: Regularisasi yang mencegah overfitting, memaksa jaringan belajar fitur yang lebih robust dan tidak bergantung pada neuron tertentu.
+
+---
+
+## 5.14 Model Evaluation Metrics
+
+### Metrik Klasifikasi
+- **Accuracy**: $\frac{TP + TN}{TP + TN + FP + FN}$
+- **Precision**: $\frac{TP}{TP + FP}$ — seberapa tepat prediksi positif.
+- **Recall**: $\frac{TP}{TP + FN}$ — seberapa lengkap deteksi positif.
+- **F1-Score**: $2 \times \frac{Precision \times Recall}{Precision + Recall}$
+
+### Metrik Deteksi Objek
+- **IoU (Intersection over Union)**: $\frac{|A \cap B|}{|A \cup B|}$
+- **mAP (mean Average Precision)**: Rata-rata AP di semua kelas pada berbagai IoU threshold.
+- **Precision-Recall Curve**: Plot precision vs recall pada berbagai confidence threshold.
+
+### Metrik Segmentasi
+- **Pixel Accuracy**: Persentase piksel yang benar.
+- **Mean IoU (mIoU)**: Rata-rata IoU per kelas.
+- **Dice Coefficient**: $\frac{2|A \cap B|}{|A| + |B|}$
+
+---
+
+## 5.15 ONNX Export dan Deployment
+
+### Pipeline Deployment
+```
+Training (PyTorch/TF) → Export ONNX → Optimasi → Runtime → Deployment
+```
+
+### ONNX Export
+```python
+# PyTorch
+torch.onnx.export(model, dummy_input, "model.onnx")
+
+# TensorFlow/Keras
+import tf2onnx
+tf2onnx.convert.from_keras(model, output_path="model.onnx")
+```
+
+### Optimasi Model untuk Deployment
+- **Quantization**: FP32 → FP16 → INT8 (mengurangi ukuran dan mempercepat inferensi).
+- **Pruning**: Menghapus koneksi/neuron yang tidak penting.
+- **Knowledge Distillation**: Melatih model kecil (student) dari model besar (teacher).
+
+### Runtime Options
+| Runtime | Platform | Kelebihan |
+|---------|----------|----------|
+| ONNX Runtime | Cross-platform | Universal, mudah digunakan |
+| TensorRT | NVIDIA GPU | Optimasi maksimal untuk GPU |
+| OpenVINO | Intel CPU/GPU | Optimasi untuk hardware Intel |
+| TFLite | Mobile | Ringan untuk Android/iOS |
+
+---
+
+## 5.16 Ringkasan
 
 | Konsep | Penjelasan |
 |--------|------------|
@@ -143,7 +283,12 @@ Format universal untuk model DNN. Export dari PyTorch/Keras → inferensi di ber
 | Data Augmentation | Memperbanyak data training secara artifisial |
 | Object Detection | YOLO, Faster R-CNN — lokasi + kelas objek |
 | Segmentation | Semantic (per-piksel), Instance (per-objek) |
-| ONNX | Format model universal untuk deployment |
+| HOG | Fitur deskriptor klasik untuk deteksi objek |
+| Loss Functions | Cross-Entropy, MSE, Dice, Focal Loss |
+| Optimizers | SGD, SGDM, Adam — mengoptimalkan proses training |
+| Batch Norm & Dropout | Teknik regularisasi dan stabilisasi training |
+| Evaluation Metrics | Accuracy, Precision, Recall, F1, mAP, IoU |
+| ONNX & Deployment | Format universal untuk deployment model |
 
 ---
 

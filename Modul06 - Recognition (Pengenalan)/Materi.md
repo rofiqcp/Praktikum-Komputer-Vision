@@ -216,7 +216,108 @@ if results.multi_hand_landmarks:
 
 ---
 
-## 11. Referensi
+## 11. Face Embedding dan Distance Metrics
+
+### 11.1 Konsep Face Embedding
+Face embedding adalah representasi wajah sebagai vektor berdimensi tinggi (biasanya 128-D atau 512-D) dalam ruang Euclidean. Model seperti FaceNet, ArcFace, dan VGG-Face menghasilkan embedding di mana wajah orang yang sama berdekatan dan wajah orang berbeda berjauhan.
+
+### 11.2 Distance Metrics
+
+**Euclidean Distance:**
+$$
+d_E(\mathbf{x}, \mathbf{y}) = \sqrt{\sum_{i=1}^{n} (x_i - y_i)^2}
+$$
+
+**Cosine Distance:**
+$$
+d_C(\mathbf{x}, \mathbf{y}) = 1 - \frac{\mathbf{x} \cdot \mathbf{y}}{\|\mathbf{x}\| \|\mathbf{y}\|}
+$$
+
+- **Euclidean**: Sensitif terhadap magnitude vektor, cocok untuk embedding yang sudah dinormalisasi.
+- **Cosine**: Mengukur sudut antar vektor, invariant terhadap magnitude.
+
+### 11.3 Verifikasi vs Identifikasi
+- **Verifikasi (1:1)**: Bandingkan dua wajah → apakah orang yang sama? Gunakan threshold jarak.
+- **Identifikasi (1:N)**: Cari wajah terdekat dalam database → siapa orang ini?
+
+### 11.4 Threshold Selection
+- **Intra-class distance**: Jarak antar embedding wajah orang yang sama (harus kecil).
+- **Inter-class distance**: Jarak antar embedding wajah orang berbeda (harus besar).
+- Threshold optimal: titik di mana distribusi intra-class dan inter-class terpisah dengan baik.
+
+```python
+from scipy.spatial.distance import euclidean, cosine
+
+# Euclidean distance
+dist_euclidean = euclidean(embedding1, embedding2)
+
+# Cosine distance
+dist_cosine = cosine(embedding1, embedding2)
+
+# Verification
+is_same = dist_euclidean < threshold
+```
+
+---
+
+## 12. Object Tracking untuk Recognition
+
+### 12.1 Konsep Tracking
+Object tracking melacak objek yang sama antar frame video, mempertahankan identitas konsisten. Tracking mengurangi kebutuhan deteksi per frame (komputasi mahal) dengan memprediksi posisi objek berdasarkan frame sebelumnya.
+
+### 12.2 Metode Tracking
+- **Centroid Tracking**: Melacak pusat bounding box, assign berdasarkan jarak minimum.
+- **KCF (Kernelized Correlation Filter)**: Tracking berbasis korelasi di domain Fourier.
+- **CSRT (Channel and Spatial Reliability Tracking)**: Lebih akurat dari KCF, lebih lambat.
+- **SORT/DeepSORT**: Kombinasi Kalman filter + Hungarian algorithm, dengan appearance features.
+
+### 12.3 Multi-Object Tracking Pipeline
+1. **Detection**: Deteksi objek pada frame (setiap N frame).
+2. **Prediction**: Prediksi posisi objek pada frame berikutnya.
+3. **Association**: Cocokkan deteksi baru dengan track yang ada.
+4. **Update**: Perbarui track dengan deteksi yang cocok.
+5. **Management**: Register track baru, deregister track yang hilang.
+
+```python
+# OpenCV Multi-tracker
+trackers = cv2.legacy.MultiTracker_create()
+for bbox in initial_detections:
+    tracker = cv2.legacy.TrackerCSRT_create()
+    trackers.add(tracker, frame, bbox)
+
+# Update tracking
+success, boxes = trackers.update(new_frame)
+```
+
+### 12.4 Tantangan Tracking
+- **Occlusion**: Objek terhalang sementara.
+- **ID Switch**: Identitas tertukar saat objek berdekatan.
+- **Scale Change**: Ukuran objek berubah (mendekat/menjauh).
+- **Re-identification**: Mengenali kembali objek setelah hilang.
+
+---
+
+## 13. Recognition Pipeline Terintegrasi
+
+### 13.1 End-to-End Pipeline
+Pipeline recognition lengkap mengintegrasikan:
+1. **Input**: Gambar atau video stream.
+2. **Detection**: Lokalisasi objek/wajah (Haar, DNN, HOG).
+3. **Preprocessing**: Alignment, normalisasi, resize.
+4. **Feature Extraction**: Embedding atau descriptor.
+5. **Recognition/Classification**: Matching atau klasifikasi.
+6. **Post-processing**: NMS, filtering, confidence thresholding.
+7. **Evaluation**: Metrik performa (accuracy, mAP, ROC).
+
+### 13.2 Pertimbangan Desain
+- **Modularitas**: Setiap komponen dapat diganti independen.
+- **Latency vs Accuracy**: Trade-off antara kecepatan dan akurasi.
+- **Scalability**: Performa saat database bertambah besar.
+- **Error Propagation**: Error di tahap awal mempengaruhi seluruh pipeline.
+
+---
+
+## 14. Referensi
 
 1. Szeliski, R. (2022). *Computer Vision: Algorithms and Applications*, 2nd Ed., Chapter 6 — Recognition.
 2. Viola, P. & Jones, M. (2001). *Rapid Object Detection using a Boosted Cascade of Simple Features*. CVPR.

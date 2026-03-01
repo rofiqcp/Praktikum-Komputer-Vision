@@ -3,7 +3,7 @@
 ---
 
 ## Deskripsi Tugas
-Buat video laporan praktikum yang mendemonstrasikan seluruh materi, 10 percobaan, dan project deep learning. Tunjukkan pemahaman end-to-end: teori → implementasi → aplikasi.
+Buat video laporan praktikum yang mendemonstrasikan seluruh materi, 20 percobaan, dan project deep learning. Tunjukkan pemahaman end-to-end: teori → implementasi → aplikasi.
 
 ---
 
@@ -24,21 +24,31 @@ Buat video laporan praktikum yang mendemonstrasikan seluruh materi, 10 percobaan
 - Deployment: ONNX, quantization.
 - **Wajib**: Gambar/diagram arsitektur CNN + tunjukkan di layar.
 
-### 3. Demo 10 Percobaan (30–40 menit)
+### 3. Demo 20 Percobaan (40–60 menit)
 Demonstrasikan setiap percobaan secara LIVE:
 
 | No | Percobaan | Poin Penting |
-|----|-----------|--------------|
-| 1 | Klasifikasi dengan DNN OpenCV | Load model, preprocessing, top-5 prediksi |
-| 2 | Perbandingan Model Pre-trained | Tabel akurasi + FPS per model |
-| 3 | CNN dengan PyTorch | Arsitektur, training loop, loss curve |
-| 4 | CNN dengan Keras | Arsitektur, training, evaluate |
-| 5 | Transfer Learning | Freeze/unfreeze layers, perbandingan akurasi |
-| 6 | Data Augmentation | Sebelum vs sesudah augmentasi, efek pada akurasi |
-| 7 | Deteksi Objek YOLO | Loading model, deteksi pada gambar statik |
-| 8 | Deteksi Objek Real-time | Demo webcam real-time dengan FPS |
-| 9 | Segmentasi Semantik | Visualisasi overlay segmentasi penuh |
-| 10 | Instance Segmentation + ONNX | Segmentasi per instance, export ONNX, re-inference |
+|----|-----------|---------------|
+| 1 | Klasifikasi dengan DNN OpenCV Blob | Load model, preprocessing, blob creation, top-5 prediksi |
+| 2 | Klasifikasi dengan OpenCV DNN | Inferensi DNN, parsing output, label mapping |
+| 3 | Perbandingan Model Pre-trained | Tabel akurasi + FPS per model |
+| 4 | Visualisasi Arsitektur CNN | Layer-by-layer, feature map visualization |
+| 5 | Fungsi Aktivasi | ReLU, Sigmoid, Tanh — plot dan perbandingan |
+| 6 | Operasi Konvolusi dan Pooling | Filter, stride, padding, pooling demo |
+| 7 | Data Augmentasi Dasar | Sebelum vs sesudah augmentasi, variasi teknik |
+| 8 | Transfer Learning (Konsep) | Freeze/unfreeze layers, perbandingan akurasi |
+| 9 | Backpropagation Visualisasi | Gradient flow, update weight, loss descent |
+| 10 | Deteksi Objek Sliding Window | Window scanning, multi-scale, NMS |
+| 11 | Deteksi Objek dengan HOG | HOG descriptor, people detection, parameter tuning |
+| 12 | YOLO Konsep Grid | Grid overlay, anchor boxes, IoU, NMS |
+| 13 | Semantic Segmentation Manual | Thresholding, color-based, morphology, overlay |
+| 14 | Instance Segmentation (Konsep) | Connected components, watershed, per-instance mask |
+| 15 | Loss Function Visualisasi | MSE, Cross-Entropy, Dice, Focal Loss plot |
+| 16 | Optimizer Visualisasi | SGD vs SGDM vs Adam trajectory, convergence |
+| 17 | Batch Normalization & Dropout | Distribusi aktivasi, efek regularisasi |
+| 18 | Model Evaluasi Metrik | Confusion matrix, PR curve, ROC, mAP |
+| 19 | ONNX dan Deployment | Export, runtime inferensi, quantization |
+| 20 | Proyek Klasifikasi Bentuk | End-to-end: dataset → training → evaluasi → ONNX |
 
 - Tunjukkan kode berjalan di IDE / Jupyter Notebook.
 - Jelaskan setiap langkah dan hasilnya.
@@ -61,7 +71,7 @@ Demonstrasikan setiap percobaan secara LIVE:
 
 | Aspek | Ketentuan |
 |-------|-----------|
-| Durasi | 60–75 menit |
+| Durasi | 75–100 menit |
 | Resolusi | Minimal 1080p |
 | Recording | Screen recording + webcam (picture-in-picture) |
 | Webcam | Wajah terlihat jelas saat menjelaskan |
@@ -77,7 +87,7 @@ Demonstrasikan setiap percobaan secara LIVE:
 |----------|-------|------------|
 | Pembukaan | 5% | Profesional, lengkap |
 | Penjelasan Materi | 15% | Akurat, mendalam, diagram jelas |
-| Demo 10 Percobaan | 40% | Semua berjalan, penjelasan per langkah |
+| Demo 20 Percobaan | 40% | Semua berjalan, penjelasan per langkah |
 | Demo Project | 20% | Fitur lengkap, berjalan baik |
 | Analisis & Kesimpulan | 10% | Kritis, perbandingan kuantitatif |
 | Kualitas Video | 10% | Resolusi, audio, editing |
@@ -87,7 +97,7 @@ Demonstrasikan setiap percobaan secara LIVE:
 |------|-------|
 | Demo di GPU / cloud training | +5 |
 | Perbandingan kuantitatif detail (tabel, plot) | +5 |
-| Video < 45 menit (tidak lengkap) | -10 |
+| Video < 60 menit (tidak lengkap) | -10 |
 | Tidak ada webcam | -5 |
 | Audio tidak jelas | -5 |
 | Percobaan error tanpa penjelasan | -5 per percobaan |

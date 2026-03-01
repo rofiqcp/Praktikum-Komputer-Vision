@@ -87,35 +87,11 @@ print("\n--- 2. Memuat Gambar ---")
 # Memuat gambar pedestrian untuk deteksi
 img_ped = cv2.imread(os.path.join(IMAGE_DIR, "pedestrian.jpg"))
 
-# Memeriksa dan membuat gambar sintetis jika tidak ada
+# Memeriksa apakah gambar berhasil dimuat
 if img_ped is None:
-    # Menampilkan pesan
-    print("  [INFO] pedestrian.jpg tidak ditemukan, membuat gambar sintetis...")
-
-    # Membuat gambar sintetis dengan siluet pejalan kaki
-    img_ped = np.ones((400, 600, 3), dtype=np.uint8) * 180
-
-    # Menggambar siluet orang 1 (kiri)
-    cv2.rectangle(img_ped, (80, 80), (140, 120), (50, 50, 50), -1)   # kepala
-    cv2.rectangle(img_ped, (70, 120), (150, 280), (60, 60, 60), -1)  # badan
-    cv2.rectangle(img_ped, (80, 280), (110, 380), (55, 55, 55), -1)  # kaki kiri
-    cv2.rectangle(img_ped, (120, 280), (150, 380), (55, 55, 55), -1) # kaki kanan
-
-    # Menggambar siluet orang 2 (tengah)
-    cv2.rectangle(img_ped, (270, 100), (330, 140), (45, 45, 45), -1)
-    cv2.rectangle(img_ped, (260, 140), (340, 300), (55, 55, 55), -1)
-    cv2.rectangle(img_ped, (270, 300), (300, 390), (50, 50, 50), -1)
-    cv2.rectangle(img_ped, (310, 300), (340, 390), (50, 50, 50), -1)
-
-    # Menggambar siluet orang 3 (kanan)
-    cv2.rectangle(img_ped, (460, 90), (520, 130), (40, 40, 40), -1)
-    cv2.rectangle(img_ped, (450, 130), (530, 290), (50, 50, 50), -1)
-    cv2.rectangle(img_ped, (460, 290), (490, 385), (45, 45, 45), -1)
-    cv2.rectangle(img_ped, (500, 290), (530, 385), (45, 45, 45), -1)
-
-    # Menambahkan noise latar belakang
-    noise = np.random.randint(0, 20, img_ped.shape, dtype=np.uint8)
-    img_ped = cv2.add(img_ped, noise)
+    print("[ERROR] pedestrian.jpg tidak ditemukan!")
+    print("        Jalankan download_image.py terlebih dahulu.")
+    exit()
 
 # Meresize gambar ke ukuran standar
 img_ped = cv2.resize(img_ped, (600, 400))

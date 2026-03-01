@@ -184,12 +184,118 @@ cv2.circle(img, (150,150), 50, (0,0,255), -1)
 cv2.putText(img, "Hello", (10,30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
 ```
 
-### Resize dan Transformasi Geometri Dasar
+### Resize dan Scaling
 ```python
-resized = cv2.resize(img, (width, height))
-cropped = img[y:y+h, x:x+w]
-flipped = cv2.flip(img, 1)  # 0=vertikal, 1=horizontal, -1=both
+resized = cv2.resize(img, (width, height))                         # Ukuran eksplisit
+resized = cv2.resize(img, None, fx=0.5, fy=0.5)                   # Faktor skala
+resized = cv2.resize(img, (w, h), interpolation=cv2.INTER_LINEAR)  # Dengan interpolasi
 ```
+
+Metode interpolasi:
+| Metode | Kegunaan |
+|--------|----------|
+| `INTER_NEAREST` | Tercepat, untuk upscale piksel art |
+| `INTER_LINEAR` | Default, baik untuk downscale moderat |
+| `INTER_CUBIC` | Lebih halus, lebih lambat |
+| `INTER_AREA` | Terbaik untuk downscale (mengurangi aliasing) |
+| `INTER_LANCZOS4` | Kualitas tinggi untuk upscale |
+
+### Cropping
+Cropping dilakukan dengan slicing array NumPy:
+```python
+cropped = img[y:y+h, x:x+w]          # Crop region (y, x, h, w)
+center_crop = img[cy-r:cy+r, cx-r:cx+r]  # Center crop
+```
+
+### Rotasi Gambar
+```python
+(h, w) = img.shape[:2]
+center = (w // 2, h // 2)
+M = cv2.getRotationMatrix2D(center, angle=45, scale=1.0)
+rotated = cv2.warpAffine(img, M, (w, h))
+```
+
+Matriks rotasi 2D:
+$$R(\theta) = \begin{bmatrix} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{bmatrix}$$
+
+### Flip (Pencerminan)
+```python
+flipped_h = cv2.flip(img, 1)    # Horizontal (cermin kiri-kanan)
+flipped_v = cv2.flip(img, 0)    # Vertikal (cermin atas-bawah)
+flipped_b = cv2.flip(img, -1)   # Keduanya (rotasi 180°)
+```
+
+### Padding dan Border
+```python
+bordered = cv2.copyMakeBorder(img, top, bottom, left, right, borderType)
+```
+
+| Border Type | Deskripsi |
+|-------------|-----------|
+| `BORDER_CONSTANT` | Warna konstan (default hitam) |
+| `BORDER_REPLICATE` | Replikasi piksel tepi |
+| `BORDER_REFLECT` | Refleksi piksel tepi |
+| `BORDER_WRAP` | Wrapping (tiling) |
+
+### Splitting dan Merging Channel
+```python
+b, g, r = cv2.split(img)          # Pisahkan channel BGR
+merged = cv2.merge([b, g, r])     # Gabungkan kembali
+blue_only = np.zeros_like(img)
+blue_only[:,:,0] = b               # Visualisasi channel biru saja
+```
+
+### Blending Dua Gambar
+Alpha blending menggabungkan dua gambar dengan bobot:
+$$I_{blend} = \alpha \cdot I_1 + (1 - \alpha) \cdot I_2 + \gamma$$
+
+```python
+blended = cv2.addWeighted(img1, alpha, img2, 1-alpha, gamma)
+```
+
+### Brightness dan Contrast
+Penyesuaian brightness dan contrast mengikuti transformasi linear:
+$$g(x,y) = \alpha \cdot f(x,y) + \beta$$
+
+di mana $\alpha$ mengontrol **contrast** (gain) dan $\beta$ mengontrol **brightness** (bias).
+
+```python
+adjusted = cv2.convertScaleAbs(img, alpha=1.5, beta=30)
+```
+
+### Histogram
+Histogram gambar menunjukkan distribusi intensitas piksel. Berguna untuk analisis kontras dan exposure:
+```python
+hist = cv2.calcHist([img], [0], None, [256], [0, 256])
+```
+
+Histogram equalization meratakan distribusi intensitas untuk meningkatkan kontras:
+```python
+equalized = cv2.equalizeHist(gray)
+```
+
+### Masking
+Mask adalah gambar biner yang digunakan untuk membatasi operasi pada region tertentu:
+```python
+mask = np.zeros(img.shape[:2], dtype=np.uint8)
+cv2.circle(mask, (cx, cy), radius, 255, -1)   # Mask lingkaran
+masked = cv2.bitwise_and(img, img, mask=mask)  # Terapkan mask
+```
+
+### Format Gambar dan Penyimpanan
+```python
+cv2.imwrite('output.jpg', img, [cv2.IMWRITE_JPEG_QUALITY, 95])
+cv2.imwrite('output.png', img, [cv2.IMWRITE_PNG_COMPRESSION, 3])
+cv2.imwrite('output.bmp', img)
+cv2.imwrite('output.tiff', img)
+```
+
+| Format | Kompresi | Kelebihan | Kekurangan |
+|--------|----------|-----------|------------|
+| JPEG | Lossy | Ukuran kecil, cocok foto | Artefak, tidak ada alpha |
+| PNG | Lossless | Preservasi kualitas, alpha channel | Ukuran lebih besar |
+| BMP | Tidak ada | Tidak ada loss | Ukuran sangat besar |
+| TIFF | Opsional | Fleksibel, high quality | Less portable |
 
 ---
 

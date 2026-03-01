@@ -169,7 +169,7 @@ def buat_label(img, teks, posisi, font_scale=0.7,
                 font_scale, warna_teks, 2, cv2.LINE_AA)
 
 # Membaca gambar dan menambahkan label
-img_berlabel = cv2.imread(os.path.join(IMAGE_DIR, "kucing.jpg"))
+img_berlabel = cv2.imread(os.path.join(IMAGE_DIR, "foto_kucing.jpg"))
 if img_berlabel is not None:
     # Menambahkan beberapa label
     buat_label(img_berlabel, "Kucing Lucu", (50, 50))

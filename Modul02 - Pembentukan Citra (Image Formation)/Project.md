@@ -1,14 +1,14 @@
-# PROJECT MODUL 2: PEMBENTUKAN CITRA
+# PROJECT MODUL 2: PEMBENTUKAN CITRA (IMAGE FORMATION)
 
 ---
 
 ## Deskripsi Umum
 
-Project ini mengintegrasikan seluruh konsep pembentukan citra: transformasi geometri, kalibrasi kamera, proyeksi, koreksi distorsi, dan fotometri. Mahasiswa memilih minimal 1 soal cerita dan mengimplementasikan solusi yang menggunakan minimal 5 konsep percobaan.
+Project ini mengintegrasikan seluruh konsep pembentukan citra dari 20 percobaan: transformasi geometri, kalibrasi kamera, proyeksi, koreksi distorsi, fotometri, interpolasi, image pyramid, remapping, dan pembuatan citra sintetis. Mahasiswa memilih minimal 1 soal cerita dan mengimplementasikan solusi yang menggunakan minimal **10 dari 20 konsep** percobaan.
 
 ---
 
-## Daftar Improvisasi Percobaan (10–20 Pengembangan)
+## Daftar Improvisasi Percobaan (20 Pengembangan)
 
 1. **Panoramic Image Warper** — Warp beberapa gambar menggunakan homografi lalu gabungkan.
 2. **Automated Document Scanner** — Deteksi kontur dokumen, koreksi perspektif otomatis, enhance contrast.
@@ -22,9 +22,14 @@ Project ini mengintegrasikan seluruh konsep pembentukan citra: transformasi geom
 10. **Anti-aliasing Quality Analyzer** — Tool untuk menganalisis dan membandingkan metode anti-aliasing.
 11. **Gamma Correction Auto-Tuner** — Auto-adjust gamma berdasarkan histogram untuk optimasi visual.
 12. **Photo Rectifier** — Koreksi foto bangunan yang miring (keystone correction).
-13. **Multi-view Image Aligner** — Align gambar dari banyak sudut pandang ke satu referensi.
-14. **Rotation Stabilizer** — Stabilkan gambar yang dirotasi/miring menjadi tegak horizontal.
-15. **Scale-Invariant Template Matcher** — Match template pada berbagai skala menggunakan piramida.
+13. **Multi-scale Image Analyzer** — Image pyramid untuk deteksi fitur di berbagai skala.
+14. **Polar Coordinate Image Unwrapper** — Unwrap objek lingkaran (iris, jam, radar) ke koordinat Cartesian.
+15. **Custom Remap Effect Gallery** — Koleksi efek distorsi artistik menggunakan cv2.remap.
+16. **Image Shearing Animation** — Animasi shearing interaktif dengan slider real-time.
+17. **Synthetic Test Pattern Generator** — Generator pola uji kalibrasi kustom (grid, Siemens star, dll.).
+18. **Log/Power Transform HDR Viewer** — Visualisasi HDR image dengan transformasi log/power adaptif.
+19. **Multi-view Image Aligner** — Align gambar dari banyak sudut pandang ke satu referensi.
+20. **Scale-Invariant Template Matcher** — Match template pada berbagai skala menggunakan piramida.
 
 ---
 
@@ -46,7 +51,7 @@ Agen properti ingin membuat virtual tour sederhana dari foto-foto rumah. Buatlah
 Bengkel otomotif ingin mengukur dimensi komponen menggunakan kamera. Buatlah sistem yang: (a) melakukan kalibrasi kamera dengan checkerboard, (b) mengoreksi distorsi lensa, (c) mendeteksi objek referensi skala yang diketahui, (d) menghitung homografi ke bidang datar, (e) mengukur panjang dan lebar objek dalam satuan cm/mm, (f) menampilkan anotasi pengukuran pada gambar, (g) menyimpan laporan pengukuran.
 
 ### Soal 6: Alat Bantu Mapping Drone Sederhana
-Tim surveyor menggunakan drone untuk pemetaan area pertanian. Buatlah tool yang: (a) membaca gambar aerial dari drone, (b) mengoreksi distorsi lensa drone, (c) menerapkan bird's eye view transform, (d) menstitch 2-4 gambar yang overlap, (e) menambahkan grid koordinat, (f) menghitung estimasi luas area, (g) menghasilkan peta mosaik dengan anotasi.
+Tim surveyor menggunakan drone untuk pemetaan area pertanian. Buatlah tool yang: (a) membaca gambar aerial dari drone, (b) mengoreksi distorsi lensa drone, (c) menerapkan bird's eye view transform, (d) menstitch 2–4 gambar yang overlap, (e) menambahkan grid koordinat, (f) menghitung estimasi luas area, (g) menghasilkan peta mosaik dengan anotasi.
 
 ### Soal 7: Sistem Parkir Cerdas Sederhana
 Pengelola parkir mal ingin mendeteksi plat nomor dari CCTV yang dipasang miring. Buatlah sistem prototype yang: (a) membaca gambar dari kamera CCTV (simulasi), (b) mendeteksi dan crop area plat nomor, (c) mengoreksi perspektif plat agar tegak, (d) meningkatkan kontras dengan gamma correction, (e) menyimpan hasil crop plat dengan timestamp, (f) menampilkan log kendaraan masuk, (g) estimasi waktu parkir.
@@ -67,14 +72,21 @@ Mahasiswa fotografi ingin memahami efek berbagai jenis lensa. Buatlah simulator 
 | Komponen | Bobot | Deskripsi |
 |----------|-------|-----------|
 | **Fungsionalitas** | 35% | Semua fitur berjalan dengan benar dan robust |
-| **Integrasi Percobaan** | 20% | Minimal 5 konsep percobaan (transformasi, kalibrasi, dll.) terintegrasi |
+| **Integrasi Percobaan** | 20% | Minimal 10 dari 20 konsep percobaan terintegrasi |
 | **Kualitas Kode** | 15% | Modular, terdokumentasi, penamaan deskriptif |
 | **Dokumentasi** | 15% | README, screenshot, penjelasan alur program |
 | **Kreativitas** | 15% | Fitur tambahan, UI, solusi inovatif |
 
-### Detail Penilaian
-*(Skala 0–100 per komponen, dikalikan bobot)*
+### Detail Penilaian Integrasi
+| Jumlah Konsep | Skor Integrasi |
+|---------------|----------------|
+| 15–20 konsep | 90–100% |
+| 10–14 konsep | 70–89% |
+| 7–9 konsep | 50–69% |
+| 4–6 konsep | 30–49% |
+| < 4 konsep | 0–29% |
 
+### Skala Nilai
 | Range | Grade | Predikat |
 |-------|-------|----------|
 | 90–100 | A | Sangat Memuaskan |

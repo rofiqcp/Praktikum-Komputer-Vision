@@ -240,7 +240,139 @@ img_matches = cv2.drawMatches(img1, kp1, img2, kp2, good_matches, None,
 
 ---
 
-## 10. Referensi
+## 10. Analisis Invariansi Fitur
+
+### 10.1 Invariansi terhadap Rotasi
+Detektor yang baik harus mendeteksi keypoints pada lokasi yang sama meskipun gambar dirotasi. SIFT dan ORB dirancang dengan orientation assignment sehingga deskriptornya invariant terhadap rotasi. Pengujian dilakukan dengan merotasi gambar pada berbagai sudut (0°–360°) dan mengukur konsistensi deteksi.
+
+### 10.2 Invariansi terhadap Skala
+Scale-space based detectors (SIFT, AKAZE) mendeteksi fitur pada berbagai skala melalui pyramid/octave. Keypoints yang terdeteksi pada scale tertentu akan terdeteksi kembali meskipun gambar di-resize (50%, 100%, 200%, 300%). ORB menggunakan scale pyramid sederhana sehingga kurang robust.
+
+### 10.3 Invariansi terhadap Iluminasi
+Perubahan brightness dan contrast secara global mempengaruhi intensitas piksel. Deskriptor yang menggunakan gradien (SIFT) atau perbandingan biner (ORB, AKAZE) cenderung lebih robust karena tidak bergantung pada nilai absolut intensitas.
+
+Strategi preprocessing untuk meningkatkan ketahanan:
+- Normalisasi histogram atau CLAHE.
+- Gamma correction.
+- Konversi ke ruang warna yang memisahkan luminance (LAB, HSV).
+
+---
+
+## 11. Properti dan Perbandingan Deskriptor
+
+### 11.1 Dimensionalitas dan Tipe Data
+
+| Deskriptor | Dimensi | Tipe Data | Ukuran per Keypoint |
+|------------|---------|-----------|---------------------|
+| SIFT | 128 | float32 | 512 bytes |
+| ORB | 32 | uint8 (binary) | 32 bytes |
+| AKAZE | Variabel | uint8 (binary) | ~61 bytes |
+
+### 11.2 Metrik Jarak
+- **L2 Norm**: Digunakan untuk float descriptor (SIFT). $d = \sqrt{\sum (a_i - b_i)^2}$
+- **Hamming Distance**: Digunakan untuk binary descriptor (ORB, AKAZE). Menghitung jumlah bit yang berbeda via XOR.
+
+### 11.3 Metrik Evaluasi Deskriptor
+- **Matching Score**: Jumlah correct matches / total matches.
+- **Recall at Precision X**: Berapa banyak true matches ditemukan pada precision tertentu.
+- **Trade-off Speed vs Accuracy**: Binary descriptors jauh lebih cepat namun bisa kurang diskriminatif pada scene kompleks.
+
+---
+
+## 12. Content-Based Image Retrieval (CBIR)
+
+### 12.1 Pendekatan Direct Matching
+Cocokkan deskriptor query terhadap setiap gambar di database. Similarity score = jumlah good matches. Sederhana tetapi lambat untuk database besar ($O(N)$ per query).
+
+### 12.2 Bag of Visual Words (BoVW)
+1. Ekstrak deskriptor dari semua gambar training.
+2. Cluster menggunakan K-Means → visual vocabulary (codebook).
+3. Representasikan setiap gambar sebagai histogram frekuensi visual words.
+4. Cocokkan berdasarkan jarak histogram (chi-squared, cosine similarity).
+
+### 12.3 Inverted Index
+Struktur data yang memetakan setiap visual word ke daftar gambar yang mengandungnya → mempercepat retrieval secara signifikan, mirip search engine teks.
+
+```python
+# Contoh sederhana image retrieval
+sift = cv2.SIFT_create()
+for query in queries:
+    kp_q, desc_q = sift.detectAndCompute(query, None)
+    scores = {}
+    for name, desc_db in database.items():
+        matches = bf.knnMatch(desc_q, desc_db, k=2)
+        good = [m for m, n in matches if m.distance < 0.75 * n.distance]
+        scores[name] = len(good)
+    ranking = sorted(scores.items(), key=lambda x: -x[1])
+```
+
+---
+
+## 13. Augmented Reality dengan Marker Detection
+
+### 13.1 Pipeline AR Berbasis Fitur
+1. **Deteksi**: Temukan fitur pada marker referensi dan frame kamera.
+2. **Matching**: Cocokkan fitur marker ↔ frame.
+3. **Homography**: Estimasi transformasi perspektif marker → frame.
+4. **Warping**: Transformasi konten overlay menggunakan homography.
+5. **Blending**: Gabungkan overlay dengan frame asli (alpha blending).
+
+### 13.2 Stabilisasi Overlay
+Jitter pada estimasi homography frame-by-frame bisa dikurangi dengan:
+- Temporal smoothing (rata-rata homography beberapa frame terakhir).
+- Kalman filtering pada parameter homography.
+- Minimum inlier threshold sebelum update homography.
+
+```python
+# Warp overlay ke posisi marker pada scene
+h, w = marker.shape[:2]
+pts_marker = np.float32([[0,0],[w,0],[w,h],[0,h]]).reshape(-1,1,2)
+pts_scene = cv2.perspectiveTransform(pts_marker, H)
+overlay_warped = cv2.warpPerspective(overlay_img, H, (scene.shape[1], scene.shape[0]))
+```
+
+---
+
+## 14. Keypoint Repeatability Metrics
+
+### 14.1 Definisi Repeatability
+
+$$
+\text{Repeatability Rate} = \frac{|\{(k_1, k_2) : \|T(k_1) - k_2\| < \epsilon\}|}{\min(|K_1|, |K_2|)}
+$$
+
+Di mana $K_1, K_2$ adalah set keypoints dari gambar asli dan transformasi, $T$ adalah transformasi geometris, dan $\epsilon$ adalah toleransi lokasi (biasanya 3–5 piksel).
+
+### 14.2 Faktor yang Mempengaruhi Repeatability
+- **Tipe transformasi**: Rotasi, skala, perubahan viewpoint, blur, noise.
+- **Intensitas transformasi**: Repeatability umumnya menurun seiring meningkatnya derajat transformasi.
+- **Threshold detektor**: Threshold yang lebih rendah menghasilkan lebih banyak keypoints tetapi repeatability bisa menurun.
+- **Resolusi gambar**: Gambar resolusi tinggi cenderung memiliki repeatability lebih baik.
+
+---
+
+## 15. Strategi Multi-Image Matching
+
+### 15.1 Pairwise Matching
+Cocokkan setiap pasangan gambar secara independen. Kompleksitas $O(n^2)$ untuk $n$ gambar.
+
+### 15.2 Feature Tracks
+Rangkaian fitur yang berkorespondensi melintasi beberapa gambar:
+- Fitur $f$ di gambar 1 cocok dengan $f'$ di gambar 2 dan $f''$ di gambar 3.
+- Track yang panjang dan konsisten menunjukkan fitur yang reliable.
+- Digunakan dalam Structure from Motion (SfM) dan visual SLAM.
+
+### 15.3 Graph-Based Matching
+- Setiap gambar = node, setiap pasangan dengan matches yang cukup = edge.
+- Bobot edge = jumlah inlier matches.
+- Connected components menunjukkan kelompok gambar yang terhubung.
+
+### 15.4 Vocabulary Tree
+Untuk matching skala besar, vocabulary tree memungkinkan retrieval cepat pasangan gambar yang berpotensi overlap sebelum melakukan matching detail — mengurangi kompleksitas dari $O(n^2)$ menjadi mendekati $O(n \log n)$.
+
+---
+
+## 16. Referensi
 
 1. Szeliski, R. (2022). *Computer Vision: Algorithms and Applications*, 2nd Ed., Chapter 7.
 2. Harris, C. & Stephens, M. (1988). *A Combined Corner and Edge Detector*. Alvey Vision Conference.

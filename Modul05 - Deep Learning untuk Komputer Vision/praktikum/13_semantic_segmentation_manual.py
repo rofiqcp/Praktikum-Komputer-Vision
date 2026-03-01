@@ -91,51 +91,9 @@ img = cv2.imread(os.path.join(IMAGE_DIR, "scene_outdoor.jpg"))
 
 # Memeriksa apakah gambar berhasil dimuat
 if img is None:
-    # Mencoba alternatif
-    img = cv2.imread(os.path.join(IMAGE_DIR, "gedung.jpg"))
-    if img is None:
-        # Membuat gambar sintetis scene outdoor
-        print("  [INFO] Membuat gambar sintetis scene outdoor...")
-        img = np.zeros((400, 600, 3), dtype=np.uint8)
-
-        # Menggambar langit (biru)
-        img[:150, :] = [230, 180, 130]  # BGR: biru muda
-
-        # Menggambar awan putih
-        cv2.ellipse(img, (150, 60), (80, 30), 0, 0, 360, (255, 255, 255), -1)
-        cv2.ellipse(img, (400, 80), (100, 35), 0, 0, 360, (250, 250, 250), -1)
-
-        # Menggambar vegetasi (hijau)
-        img[150:250, :] = [30, 130, 30]  # BGR: hijau
-
-        # Menambahkan variasi pada vegetasi
-        for i in range(20):
-            x = np.random.randint(0, 600)
-            y = np.random.randint(150, 250)
-            radius = np.random.randint(10, 30)
-            hijau = np.random.randint(80, 180)
-            cv2.circle(img, (x, y), radius, (20, hijau, 20), -1)
-
-        # Menggambar jalan (abu-abu)
-        pts_jalan = np.array([[150, 400], [450, 400],
-                              [500, 250], [100, 250]], np.int32)
-        cv2.fillPoly(img, [pts_jalan], (100, 100, 100))
-
-        # Menggambar bangunan
-        cv2.rectangle(img, (50, 180), (120, 310), (140, 140, 160), -1)
-        cv2.rectangle(img, (480, 170), (570, 310), (150, 130, 130), -1)
-
-        # Menambahkan noise ringan
-        noise = np.random.randint(0, 15, img.shape, dtype=np.uint8)
-        img = cv2.add(img, noise)
-
-# Meresize gambar
-img = cv2.resize(img, (600, 400))
-
-# Menampilkan informasi gambar
-print(f"  Ukuran gambar: {img.shape}")
-print(f"  Tipe data    : {img.dtype}")
-
+    print("[ERROR] Gambar scene_outdoor.jpg dan gedung.jpg tidak ditemukan!")
+    print("        Jalankan download_image.py terlebih dahulu.")
+    exit()
 # ============================================================
 # 3. Segmentasi berbasis warna (BGR thresholding)
 # ============================================================

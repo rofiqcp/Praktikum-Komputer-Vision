@@ -39,8 +39,8 @@ print("=" * 60)
 # 1. Membaca gambar berwarna
 # ============================================================
 
-# Membaca gambar warna-warni yang memiliki banyak warna berbeda
-img_bgr = cv2.imread(os.path.join(IMAGE_DIR, "warna_warni.png"))
+# Membaca foto bunga berwarna-warni untuk demonstrasi konversi ruang warna
+img_bgr = cv2.imread(os.path.join(IMAGE_DIR, "foto_bunga2.jpg"))
 
 # Memeriksa apakah gambar berhasil dimuat
 if img_bgr is None:

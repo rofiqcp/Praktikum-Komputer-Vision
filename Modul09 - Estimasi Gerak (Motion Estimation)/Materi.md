@@ -203,7 +203,398 @@ $$
 
 ---
 
-## 10. Referensi
+## 10. Magnitude dan Arah Optical Flow
+
+### 10.1 Analisis Kuantitatif Vektor Flow
+Setiap piksel pada dense optical flow memiliki komponen horizontal $u$ dan vertikal $v$. Dari dua komponen ini, kita dapat menghitung **magnitude** (kecepatan) dan **arah** (direction) pergerakan.
+
+### 10.2 Perhitungan Magnitude dan Arah
+**Magnitude** menunjukkan seberapa besar perpindahan piksel:
+
+$$
+\text{magnitude} = \sqrt{u^2 + v^2}
+$$
+
+**Arah** menunjukkan ke mana piksel bergerak:
+
+$$
+\theta = \arctan2(v, u)
+$$
+
+Di mana $\theta$ dalam radian, dengan rentang $[-\pi, \pi]$.
+
+### 10.3 Visualisasi HSV
+Representasi HSV sangat efektif untuk menampilkan magnitude dan arah secara bersamaan:
+- **Hue** = arah gerakan (warna menunjukkan ke mana objek bergerak).
+- **Saturation** = 255 (penuh, agar warna terlihat jelas).
+- **Value** = magnitude (area yang bergerak cepat lebih terang).
+
+```python
+# Hitung dense optical flow
+flow = cv2.calcOpticalFlowFarneback(prev_gray, gray, None,
+                                      0.5, 3, 15, 3, 5, 1.2, 0)
+
+# Konversi ke magnitude dan arah
+mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
+
+# Buat visualisasi HSV
+hsv = np.zeros((*prev_gray.shape, 3), dtype=np.uint8)
+hsv[..., 0] = ang * 180 / np.pi / 2      # Hue: arah (0-180 untuk OpenCV)
+hsv[..., 1] = 255                          # Saturation: penuh
+hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)  # Value: magnitude
+
+rgb_flow = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+```
+
+### 10.4 Statistik Flow
+Analisis statistik dari magnitude dan arah memberikan informasi kuantitatif tentang gerakan dalam scene:
+
+- **Histogram magnitude**: Distribusi kecepatan piksel — berguna untuk menentukan threshold gerakan.
+- **Rata-rata magnitude**: Indikator umum seberapa banyak gerakan dalam frame.
+- **Arah dominan**: Arah gerakan utama, dihitung dari histogram arah atau circular mean.
+
+```python
+# Statistik magnitude
+mean_mag = np.mean(mag)
+max_mag = np.max(mag)
+
+# Threshold: hanya piksel yang bergerak signifikan
+motion_mask = mag > 2.0  # threshold magnitude
+
+# Arah dominan dari piksel yang bergerak
+dominant_angles = ang[motion_mask]
+hist_ang, bins = np.histogram(dominant_angles, bins=36, range=(0, 2*np.pi))
+dominant_direction = bins[np.argmax(hist_ang)]
+```
+
+---
+
+## 11. Feature Trajectory Tracking
+
+### 11.1 Tracking Jangka Panjang
+Berbeda dengan optical flow antar dua frame, **feature trajectory tracking** melacak titik-titik fitur secara kontinu melintasi banyak frame. Ini menghasilkan lintasan (trajectory) yang merepresentasikan jalur pergerakan objek dari waktu ke waktu.
+
+### 11.2 Siklus Hidup Track
+Setiap fitur yang dilacak memiliki siklus hidup:
+
+1. **Detection**: Fitur baru dideteksi menggunakan corner detector (e.g., `goodFeaturesToTrack`).
+2. **Tracking**: Posisi fitur diestimasi di frame berikutnya menggunakan Lucas-Kanade.
+3. **Loss**: Fitur hilang jika status tracking gagal atau keluar dari frame.
+4. **Re-detection**: Fitur baru dideteksi untuk menggantikan yang hilang.
+
+### 11.3 Akumulasi Trajectory
+```python
+# Inisialisasi
+tracks = []  # list of trajectory, setiap trajectory = list of (x, y)
+detect_interval = 5  # re-detect setiap N frame
+
+p0 = cv2.goodFeaturesToTrack(old_gray, maxCorners=200, qualityLevel=0.01, minDistance=10)
+
+# Inisialisasi tracks dari titik awal
+for p in p0:
+    tracks.append([tuple(p.ravel())])
+
+frame_idx = 0
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    if len(tracks) > 0:
+        # Ambil titik terakhir dari setiap track
+        p0 = np.float32([tr[-1] for tr in tracks]).reshape(-1, 1, 2)
+        p1, status, err = cv2.calcOpticalFlowPyrLK(old_gray, gray, p0, None,
+                                                     winSize=(15, 15), maxLevel=2)
+
+        # Update tracks yang berhasil
+        new_tracks = []
+        for tr, (x, y), st in zip(tracks, p1.reshape(-1, 2), status.ravel()):
+            if st == 1:
+                tr.append((x, y))
+                new_tracks.append(tr)
+        tracks = new_tracks
+
+    # Re-detect fitur secara periodik
+    if frame_idx % detect_interval == 0:
+        p_new = cv2.goodFeaturesToTrack(gray, maxCorners=200, qualityLevel=0.01, minDistance=10)
+        if p_new is not None:
+            for p in p_new:
+                tracks.append([tuple(p.ravel())])
+
+    old_gray = gray.copy()
+    frame_idx += 1
+```
+
+### 11.4 Analisis Trajectory
+Dari trajectory yang terkumpul, berbagai metrik dapat dihitung:
+
+- **Panjang lintasan (path length)**: Total jarak yang ditempuh fitur.
+
+$$
+L = \sum_{i=1}^{N-1} \sqrt{(x_{i+1} - x_i)^2 + (y_{i+1} - y_i)^2}
+$$
+
+- **Smoothness**: Seberapa halus lintasan, diukur dari variasi arah antar segmen.
+- **Kecepatan rata-rata**: $\bar{v} = L / N$ (piksel per frame).
+
+```python
+def trajectory_length(traj):
+    length = 0
+    for i in range(1, len(traj)):
+        dx = traj[i][0] - traj[i-1][0]
+        dy = traj[i][1] - traj[i-1][1]
+        length += np.sqrt(dx**2 + dy**2)
+    return length
+```
+
+---
+
+## 12. Perbandingan Metode Background Subtraction
+
+### 12.1 Overview Metode
+Terdapat beberapa metode background subtraction yang umum digunakan, masing-masing dengan kelebihan dan kekurangan.
+
+### 12.2 Frame Differencing
+Metode paling sederhana: menghitung perbedaan absolut antar frame berturut-turut.
+
+$$
+M(x, y) = |I_t(x, y) - I_{t-1}(x, y)| > \theta
+$$
+
+- **Kelebihan**: Sangat cepat, mudah diimplementasi.
+- **Kekurangan**: Tidak menangkap objek diam, sensitif terhadap noise.
+
+### 12.3 Running Average
+Background diestimasi sebagai rata-rata bergerak eksponensial:
+
+$$
+B_{t+1}(x, y) = \alpha \cdot I_t(x, y) + (1 - \alpha) \cdot B_t(x, y)
+$$
+
+- **Kelebihan**: Adaptif terhadap perubahan pencahayaan gradual.
+- **Kekurangan**: Parameter $\alpha$ harus di-tuning; objek diam lama akan masuk ke background.
+
+### 12.4 MOG2 (Mixture of Gaussians)
+Setiap piksel dimodelkan sebagai campuran $K$ distribusi Gaussian. Distribusi yang paling stabil dianggap background.
+
+- **Kelebihan**: Menangani scene dinamis (daun bergoyang, air), deteksi shadow.
+- **Kekurangan**: Lebih lambat, memerlukan lebih banyak memori.
+
+### 12.5 KNN (K-Nearest Neighbors)
+Background model berbasis sampel historis. Piksel diklasifikasi berdasarkan jarak ke $K$ sampel terdekat.
+
+- **Kelebihan**: Baik untuk scene dengan background bergerak, shadow detection.
+- **Kekurangan**: Konsumsi memori tinggi.
+
+### 12.6 Tabel Perbandingan
+
+| Kriteria | Frame Diff | Running Avg | MOG2 | KNN |
+|----------|-----------|-------------|------|-----|
+| **Kecepatan** | Sangat cepat | Cepat | Sedang | Sedang |
+| **Akurasi** | Rendah | Sedang | Tinggi | Tinggi |
+| **Robustness noise** | Rendah | Sedang | Tinggi | Tinggi |
+| **Shadow handling** | Tidak | Tidak | Ya | Ya |
+| **Background dinamis** | Tidak | Sebagian | Ya | Ya |
+| **Memori** | Minimal | Rendah | Sedang | Tinggi |
+
+### 12.7 Kapan Menggunakan Setiap Metode
+- **Frame Differencing**: Prototipe cepat, deteksi gerakan kasar, resource terbatas.
+- **Running Average**: Scene dengan pencahayaan berubah gradual, kamera statis.
+- **MOG2**: Aplikasi umum surveillance, scene outdoor dengan background dinamis.
+- **KNN**: Mirip MOG2, alternatif saat MOG2 kurang baik pada scene tertentu.
+
+```python
+# Perbandingan dalam kode
+methods = {
+    'MOG2': cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=16, detectShadows=True),
+    'KNN': cv2.createBackgroundSubtractorKNN(history=500, dist2Threshold=400, detectShadows=True),
+}
+
+# Frame Differencing manual
+prev_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
+curr_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+diff_mask = cv2.absdiff(prev_gray, curr_gray)
+_, frame_diff = cv2.threshold(diff_mask, 30, 255, cv2.THRESH_BINARY)
+
+# Running Average
+alpha = 0.05
+bg_model = np.float32(prev_gray)
+cv2.accumulateWeighted(curr_gray, bg_model, alpha)
+running_avg_mask = cv2.absdiff(curr_gray, cv2.convertScaleAbs(bg_model))
+_, running_avg_mask = cv2.threshold(running_avg_mask, 30, 255, cv2.THRESH_BINARY)
+```
+
+---
+
+## 13. Deteksi Gerakan Berbasis Contour
+
+### 13.1 Dari Motion Mask ke Deteksi Objek
+Background subtraction menghasilkan **motion mask** (binary image). Langkah selanjutnya adalah mengidentifikasi objek individual dari mask tersebut menggunakan analisis contour.
+
+### 13.2 Pipeline Deteksi
+Pipeline lengkap dari background subtraction hingga deteksi objek:
+
+1. **Background Subtraction**: Hasilkan foreground mask.
+2. **Morphological Operations**: Bersihkan noise dan isi lubang.
+3. **Find Contours**: Temukan kontur objek.
+4. **Bounding Rectangle**: Gambar kotak pembatas di sekitar objek.
+
+```python
+# 1. Background subtraction
+fgbg = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=50, detectShadows=True)
+fgmask = fgbg.apply(frame)
+
+# Hilangkan shadow (shadow bernilai 127 di MOG2)
+_, fgmask = cv2.threshold(fgmask, 200, 255, cv2.THRESH_BINARY)
+
+# 2. Morphological operations
+kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_OPEN, kernel)   # hilangkan noise kecil
+fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_CLOSE, kernel)  # isi lubang
+
+# 3. Find contours
+contours, _ = cv2.findContours(fgmask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+# 4. Filter dan gambar bounding box
+min_area = 500  # minimum area dalam piksel
+for cnt in contours:
+    area = cv2.contourArea(cnt)
+    if area > min_area:
+        x, y, w, h = cv2.boundingRect(cnt)
+        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+```
+
+### 13.3 Filtering Objek
+Tidak semua contour adalah objek yang relevan. Beberapa teknik filtering:
+
+- **Area filtering**: Abaikan contour dengan area terlalu kecil (noise) atau terlalu besar (seluruh frame).
+- **Aspect ratio filtering**: Rasio $w/h$ — misalnya manusia memiliki rasio tertentu ($0.3 < w/h < 0.8$).
+- **Solidity**: Rasio area contour terhadap convex hull area → menghilangkan bentuk tidak wajar.
+
+```python
+for cnt in contours:
+    area = cv2.contourArea(cnt)
+    if area < 500 or area > 50000:
+        continue
+
+    x, y, w, h = cv2.boundingRect(cnt)
+    aspect_ratio = w / h
+    if aspect_ratio < 0.2 or aspect_ratio > 5.0:
+        continue
+
+    # Solidity check
+    hull = cv2.convexHull(cnt)
+    hull_area = cv2.contourArea(hull)
+    solidity = area / hull_area if hull_area > 0 else 0
+    if solidity < 0.3:
+        continue
+
+    cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+```
+
+### 13.4 Counting dan Centroid Tracking
+Untuk menghitung jumlah objek bergerak dan melacak posisinya:
+
+```python
+object_count = 0
+centroids = []
+
+for cnt in contours:
+    area = cv2.contourArea(cnt)
+    if area > min_area:
+        object_count += 1
+        M = cv2.moments(cnt)
+        if M["m00"] > 0:
+            cx = int(M["m10"] / M["m00"])
+            cy = int(M["m01"] / M["m00"])
+            centroids.append((cx, cy))
+            cv2.circle(frame, (cx, cy), 5, (0, 0, 255), -1)
+
+print(f"Jumlah objek terdeteksi: {object_count}")
+```
+
+---
+
+## 14. Estimasi Kecepatan Objek
+
+### 14.1 Dari Perpindahan Piksel ke Kecepatan Nyata
+Optical flow dan object tracking menghasilkan perpindahan dalam satuan **piksel per frame**. Untuk mendapatkan kecepatan dalam satuan dunia nyata (m/s, km/h), diperlukan **kalibrasi** yang menghubungkan koordinat piksel dengan koordinat dunia nyata.
+
+### 14.2 Kalibrasi: Pixels per Meter
+Kalibrasi dilakukan dengan mengukur jarak yang diketahui dalam scene:
+
+1. Tentukan dua titik dalam gambar yang jaraknya diketahui di dunia nyata.
+2. Hitung jarak dalam piksel antara kedua titik tersebut.
+3. Rasio memberikan **pixels per meter (ppm)**.
+
+$$
+\text{ppm} = \frac{\text{jarak piksel antara dua titik}}{\text{jarak dunia nyata (meter)}}
+$$
+
+### 14.3 Formula Kecepatan
+Dengan kalibrasi dan frame rate yang diketahui:
+
+$$
+v = \frac{d_{\text{pixel}}}{\text{ppm}} \times \text{fps}
+$$
+
+di mana:
+- $d_{\text{pixel}}$ = perpindahan objek dalam piksel antar frame
+- $\text{ppm}$ = pixels per meter (dari kalibrasi)
+- $\text{fps}$ = frame rate video
+- $v$ = kecepatan dalam meter per detik
+
+Untuk konversi ke km/h: $v_{\text{km/h}} = v \times 3.6$
+
+```python
+# Parameter kalibrasi
+known_distance_meters = 5.0      # jarak referensi di dunia nyata
+known_distance_pixels = 200.0    # jarak referensi dalam piksel
+ppm = known_distance_pixels / known_distance_meters  # pixels per meter
+
+fps = cap.get(cv2.CAP_PROP_FPS)
+
+# Hitung kecepatan dari perpindahan centroid
+prev_centroid = (100, 200)
+curr_centroid = (115, 205)
+
+dx = curr_centroid[0] - prev_centroid[0]
+dy = curr_centroid[1] - prev_centroid[1]
+displacement_pixels = np.sqrt(dx**2 + dy**2)
+
+# Kecepatan dalam m/s
+speed_mps = (displacement_pixels / ppm) * fps
+
+# Konversi ke km/h
+speed_kmh = speed_mps * 3.6
+print(f"Kecepatan: {speed_mps:.2f} m/s ({speed_kmh:.2f} km/h)")
+```
+
+### 14.4 Smoothing Kecepatan
+Estimasi kecepatan per-frame bisa noisy. Gunakan **moving average** untuk smoothing:
+
+```python
+from collections import deque
+
+speed_buffer = deque(maxlen=10)  # buffer 10 frame terakhir
+
+speed_buffer.append(speed_mps)
+smoothed_speed = np.mean(speed_buffer)
+```
+
+### 14.5 Limitasi dan Asumsi
+Estimasi kecepatan berbasis piksel memiliki beberapa keterbatasan penting:
+
+- **Perspektif**: Objek yang lebih jauh dari kamera tampak bergerak lebih lambat — kalibrasi hanya valid pada satu bidang (plane).
+- **Gerakan kamera**: Jika kamera bergerak, perlu kompensasi ego-motion terlebih dahulu.
+- **Akurasi tracking**: Error dalam deteksi/tracking menghasilkan noise pada estimasi kecepatan.
+- **Single-plane assumption**: Kalibrasi pixels-per-meter hanya akurat jika semua objek bergerak pada bidang yang sama (e.g., permukaan jalan).
+- **Occlusion**: Objek yang terhalang dapat menyebabkan lompatan posisi dan kecepatan palsu.
+
+---
+
+## 15. Referensi
 
 1. Szeliski, R. (2022). *Computer Vision: Algorithms and Applications*, 2nd Ed., Chapter 9.
 2. Lucas, B. & Kanade, T. (1981). *An Iterative Image Registration Technique with an Application to Stereo Vision*. IJCAI.

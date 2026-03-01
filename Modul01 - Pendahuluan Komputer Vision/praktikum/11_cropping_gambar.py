@@ -30,7 +30,7 @@ print("PERCOBAAN 11: CROPPING GAMBAR")
 print("=" * 60)
 
 # Membaca gambar pemandangan
-img = cv2.imread(os.path.join(IMAGE_DIR, "pemandangan.jpg"))
+img = cv2.imread(os.path.join(IMAGE_DIR, "foto_alam2.jpg"))
 if img is None:
     print("[ERROR] Jalankan download_image.py terlebih dahulu!")
     exit()

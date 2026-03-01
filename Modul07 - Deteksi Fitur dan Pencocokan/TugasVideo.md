@@ -3,7 +3,7 @@
 ---
 
 ## Deskripsi Tugas
-Buat video laporan praktikum yang mendemonstrasikan seluruh materi, 10 percobaan, dan project feature detection & matching.
+Buat video laporan praktikum yang mendemonstrasikan seluruh materi, 20 percobaan, dan project feature detection & matching.
 
 ---
 
@@ -13,7 +13,7 @@ Buat video laporan praktikum yang mendemonstrasikan seluruh materi, 10 percobaan
 - Perkenalan: Nama, NIM, kelas, modul.
 - Overview singkat topik Feature Detection & Matching.
 
-### 2. Penjelasan Materi (10–15 menit)
+### 2. Penjelasan Materi (15–20 menit)
 - Corner detection: Harris, Shi-Tomasi — formula dan interpretasi.
 - Scale-space dan blob detection: LoG, DoG.
 - Detektor modern: SIFT, ORB, AKAZE, FAST — arsitektur dan perbedaan.
@@ -21,7 +21,7 @@ Buat video laporan praktikum yang mendemonstrasikan seluruh materi, 10 percobaan
 - Geometric verification: Homography + RANSAC.
 - **Wajib**: Diagram/slide perbandingan detektor + pipeline matching.
 
-### 3. Demo 10 Percobaan (30–40 menit)
+### 3. Demo 20 Percobaan (50–65 menit)
 
 | No | Percobaan | Poin Penting |
 |----|-----------|--------------|
@@ -34,7 +34,17 @@ Buat video laporan praktikum yang mendemonstrasikan seluruh materi, 10 percobaan
 | 7 | FLANN + Ratio Test | Ratio threshold sweep |
 | 8 | Homography + RANSAC | Inlier/outlier visual, warped overlay |
 | 9 | Object Detection via Features | Template detection di scene |
-| 10 | Real-World Pipeline | Full evaluation: P/R/F1 per method |
+| 10 | Feature Invariance Rotasi | Keypoint consistency di berbagai sudut rotasi |
+| 11 | Feature Invariance Skala | Keypoint consistency di berbagai ukuran skala |
+| 12 | Feature Invariance Iluminasi | Robustness terhadap brightness/contrast/gamma |
+| 13 | Perbandingan Deskriptor | SIFT vs ORB vs AKAZE: dimensi, speed, akurasi |
+| 14 | Geometric Verification Detail | RANSAC tuning, inlier analysis, reprojection error |
+| 15 | Image Retrieval | Database indexing + query retrieval |
+| 16 | AR Marker Detection | Marker detection + homography overlay |
+| 17 | Keypoint Repeatability | Repeatability rate di berbagai transformasi |
+| 18 | Multi-Image Matching | Feature tracks across 3+ gambar |
+| 19 | Feature Matching Pipeline | Class-based modular pipeline |
+| 20 | Proyek Feature Matching App | Aplikasi lengkap + evaluasi |
 
 - Jalankan kode LIVE.
 - Tunjukkan objek fisik (buku, kartu) saat demo matching/detection.
@@ -55,7 +65,7 @@ Buat video laporan praktikum yang mendemonstrasikan seluruh materi, 10 percobaan
 
 | Aspek | Ketentuan |
 |-------|-----------|
-| Durasi | 60–75 menit |
+| Durasi | 90–120 menit |
 | Resolusi | Minimal 1080p |
 | Recording | Screen recording + webcam (picture-in-picture) |
 | Webcam | Wajah terlihat jelas, tunjukkan objek fisik saat demo |
@@ -71,7 +81,7 @@ Buat video laporan praktikum yang mendemonstrasikan seluruh materi, 10 percobaan
 |----------|-------|------------|
 | Pembukaan | 5% | Profesional, lengkap |
 | Penjelasan Materi | 15% | Akurat, diagram jelas |
-| Demo 10 Percobaan | 40% | Semua berjalan, parameter tuning |
+| Demo 20 Percobaan | 40% | Semua berjalan, parameter tuning |
 | Demo Project | 20% | Fitur lengkap, berjalan baik |
 | Analisis & Kesimpulan | 10% | Kritis, perbandingan kuantitatif |
 | Kualitas Video | 10% | Resolusi, audio, editing |
@@ -81,7 +91,7 @@ Buat video laporan praktikum yang mendemonstrasikan seluruh materi, 10 percobaan
 |------|-------|
 | Demo real-time dengan objek fisik | +5 |
 | Tabel perbandingan komprehensif (semua detektor+matcher) | +5 |
-| Video < 45 menit | -10 |
+| Video < 60 menit | -10 |
 | Tidak ada webcam | -5 |
 | Audio tidak jelas | -5 |
 | Percobaan error tanpa penjelasan | -5 per percobaan |

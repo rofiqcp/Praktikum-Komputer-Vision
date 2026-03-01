@@ -66,7 +66,7 @@ Seniman digital ingin tool kreasi seni berbasis foto. Buatlah: (a) style transfe
 | Komponen | Bobot | Keterangan |
 |----------|-------|------------|
 | Fungsionalitas | 35% | Semua fitur berjalan |
-| Integrasi Percobaan | 20% | Menggunakan konsep ≥5 percobaan |
+| Integrasi Percobaan | 20% | Menggunakan konsep ≥10 percobaan |
 | Kualitas Kode | 15% | Clean, modular |
 | Dokumentasi | 15% | README, screenshot, comparison |
 | Kreativitas | 15% | Fitur tambahan, UI, visual output |

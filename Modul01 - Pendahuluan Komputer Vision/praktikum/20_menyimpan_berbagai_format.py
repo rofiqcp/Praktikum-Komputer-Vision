@@ -30,7 +30,7 @@ print("PERCOBAAN 20: MENYIMPAN GAMBAR BERBAGAI FORMAT")
 print("=" * 60)
 
 # Membaca gambar
-img = cv2.imread(os.path.join(IMAGE_DIR, "kucing.jpg"))
+img = cv2.imread(os.path.join(IMAGE_DIR, "lena.jpg"))
 if img is None:
     print("[ERROR] Jalankan download_image.py terlebih dahulu!")
     exit()

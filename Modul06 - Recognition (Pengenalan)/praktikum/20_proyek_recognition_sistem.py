@@ -213,7 +213,7 @@ print("\n[INFO] Menguji face recognition...")
 face_test_results = []
 
 # Mendefinisikan gambar test wajah
-face_test_files = ["wajah_single.jpg", "wajah_kacamata.jpg", "wajah_group.jpg"]
+face_test_files = ["wajah_single.jpg", "wajah_kacamata.jpg", "wajah_grup.jpg"]
 
 # Menguji setiap gambar test
 for test_file in face_test_files:
@@ -656,7 +656,7 @@ def deteksi_teks_morfologi(image):
 
 # Menguji deteksi teks pada gambar
 print("\n[INFO] Menguji deteksi teks...")
-text_test_files = ["teks_dokumen.jpg", "teks_plat.jpg", "scene_outdoor.jpg"]
+text_test_files = ["teks_printed.jpg", "teks_scene.jpg", "scene_outdoor.jpg"]
 text_results = []
 
 # Menguji setiap gambar
@@ -867,7 +867,7 @@ def analisis_gesture(skin_mask):
 
 # Menguji gesture classification
 print("\n[INFO] Menguji gesture classification...")
-gesture_test_files = ["tangan_buka.jpg", "tangan_tutup.jpg", "tangan_peace.jpg"]
+gesture_test_files = ["tangan_open.jpg", "tangan_fist.jpg", "tangan_peace.jpg"]
 gesture_results = []
 
 # Menguji setiap gambar

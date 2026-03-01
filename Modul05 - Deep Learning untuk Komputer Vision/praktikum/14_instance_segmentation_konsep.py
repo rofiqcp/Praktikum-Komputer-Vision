@@ -88,63 +88,57 @@ print("""
 """)
 
 # ============================================================
-# 2. Membuat atau memuat gambar dengan banyak objek
+# 2. Memuat gambar asli untuk instance segmentation
 # ============================================================
-print("\n--- 2. Menyiapkan Gambar dengan Banyak Objek ---")
+print("\n--- 2. Memuat Gambar Asli ---")
 
-# Membuat gambar sintetis dengan berbagai objek untuk demonstrasi
-img_sintetis = np.ones((500, 700, 3), dtype=np.uint8) * 240
+# Memuat gambar asli dari dataset (prioritas: lingkaran, lalu gambar lain)
+img_sintetis = None
+dataset_path = os.path.join(DATASET_DIR, "lingkaran")
+if os.path.exists(dataset_path):
+    file_list = glob.glob(os.path.join(dataset_path, "*.*"))
+    file_list = [f for f in file_list if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    if len(file_list) > 0:
+        img_sintetis = cv2.imread(file_list[0])
+        if img_sintetis is not None:
+            img_sintetis = cv2.resize(img_sintetis, (700, 500))
+            print(f"  [OK] Gambar dimuat dari dataset: {os.path.basename(file_list[0])}")
 
-# Mendefinisikan objek-objek yang akan digambar
+# Fallback: gunakan gambar kucing atau bunga dari IMAGE_DIR
+if img_sintetis is None:
+    for fn in ["kucing.jpg", "bunga.jpg", "scene_indoor.jpg", "augmentasi_sample.jpg"]:
+        img_sintetis = cv2.imread(os.path.join(IMAGE_DIR, fn))
+        if img_sintetis is not None:
+            img_sintetis = cv2.resize(img_sintetis, (700, 500))
+            print(f"  [OK] Gambar dimuat: {fn}")
+            break
+
+if img_sintetis is None:
+    print("[ERROR] Tidak ada gambar asli ditemukan!")
+    print("        Jalankan download_image.py terlebih dahulu.")
+    exit()
+
+# Mendefinisikan objek_list sebagai placeholder
 objek_list = []
 
-# Menggambar 3 lingkaran merah (kelas: lingkaran)
-cv2.circle(img_sintetis, (100, 120), 45, (0, 0, 200), -1)
-objek_list.append({"kelas": "lingkaran", "warna_asli": (0, 0, 200)})
-cv2.circle(img_sintetis, (350, 100), 55, (0, 0, 180), -1)
-objek_list.append({"kelas": "lingkaran", "warna_asli": (0, 0, 180)})
-cv2.circle(img_sintetis, (580, 150), 40, (0, 0, 220), -1)
-objek_list.append({"kelas": "lingkaran", "warna_asli": (0, 0, 220)})
-
-# Menggambar 3 persegi hijau (kelas: persegi)
-cv2.rectangle(img_sintetis, (40, 250), (140, 350), (0, 180, 0), -1)
-objek_list.append({"kelas": "persegi", "warna_asli": (0, 180, 0)})
-cv2.rectangle(img_sintetis, (280, 230), (400, 340), (0, 200, 0), -1)
-objek_list.append({"kelas": "persegi", "warna_asli": (0, 200, 0)})
-cv2.rectangle(img_sintetis, (500, 260), (620, 370), (0, 160, 0), -1)
-objek_list.append({"kelas": "persegi", "warna_asli": (0, 160, 0)})
-
-# Menggambar 2 segitiga biru (kelas: segitiga)
-pts1 = np.array([[180, 450], [130, 380], [230, 380]], np.int32)
-cv2.fillPoly(img_sintetis, [pts1], (200, 0, 0))
-objek_list.append({"kelas": "segitiga", "warna_asli": (200, 0, 0)})
-
-pts2 = np.array([[470, 470], (420, 390), (520, 390)], np.int32)
-cv2.fillPoly(img_sintetis, [pts2], (180, 0, 0))
-objek_list.append({"kelas": "segitiga", "warna_asli": (180, 0, 0)})
-
-# Menambahkan noise ringan
-noise = np.random.randint(0, 10, img_sintetis.shape, dtype=np.uint8)
+# Menambahkan noise ringan sebagai pre-processing deterministik
+noise = np.random.randint(0, 5, img_sintetis.shape, dtype=np.uint8)
 img_sintetis = cv2.add(img_sintetis, noise)
 
 # Mencoba memuat gambar dari dataset juga
 img_dataset = None
-dataset_path = os.path.join(DATASET_DIR, "lingkaran")
 if os.path.exists(dataset_path):
     # Mencari gambar pertama di folder lingkaran
-    file_list = glob.glob(os.path.join(dataset_path, "*.*"))
-    file_list = [f for f in file_list if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
-    if len(file_list) > 0:
-        img_dataset = cv2.imread(file_list[0])
+    file_list2 = glob.glob(os.path.join(dataset_path, "*.*"))
+    file_list2 = [f for f in file_list2 if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    if len(file_list2) > 1:
+        img_dataset = cv2.imread(file_list2[1])
         if img_dataset is not None:
             img_dataset = cv2.resize(img_dataset, (200, 200))
 
 # Menampilkan informasi gambar
-print(f"  Gambar sintetis     : {img_sintetis.shape}")
-print(f"  Jumlah objek dibuat : {len(objek_list)}")
-print(f"    - Lingkaran: 3")
-print(f"    - Persegi  : 3")
-print(f"    - Segitiga : 2")
+print(f"  Ukuran gambar   : {img_sintetis.shape}")
+print("  (Gambar asli digunakan untuk demonstrasi instance segmentation)")
 
 # ============================================================
 # 3. Instance segmentation berbasis kontur

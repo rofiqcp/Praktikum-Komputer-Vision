@@ -96,35 +96,9 @@ if img is None:
     if img is None:
         img = cv2.imread(os.path.join(IMAGE_DIR, "mobil.jpg"))
         if img is None:
-            # Membuat gambar sintetis dengan objek-objek
-            print("  [INFO] Membuat gambar sintetis dengan objek...")
-            img = np.ones((448, 448, 3), dtype=np.uint8) * 200
-
-            # Menggambar sky (langit biru muda)
-            img[:150, :] = [230, 200, 150]
-
-            # Menggambar road (jalan abu-abu)
-            img[300:, :] = [100, 100, 100]
-
-            # Menggambar "mobil" merah
-            cv2.rectangle(img, (50, 280), (150, 340), (0, 0, 200), -1)
-            cv2.rectangle(img, (70, 260), (130, 280), (0, 0, 180), -1)
-
-            # Menggambar "mobil" biru
-            cv2.rectangle(img, (250, 290), (370, 360), (200, 50, 0), -1)
-            cv2.rectangle(img, (280, 270), (340, 290), (180, 40, 0), -1)
-
-            # Menggambar "orang"
-            cv2.rectangle(img, (180, 200), (210, 240), (60, 60, 60), -1)
-            cv2.rectangle(img, (175, 240), (215, 320), (80, 80, 80), -1)
-
-            # Menggambar "pohon"
-            cv2.rectangle(img, (380, 150), (410, 300), (30, 100, 30), -1)
-            cv2.circle(img, (395, 130), 40, (20, 150, 20), -1)
-
-            # Menambahkan noise
-            noise = np.random.randint(0, 15, img.shape, dtype=np.uint8)
-            img = cv2.add(img, noise)
+            print("[ERROR] Gambar scene_traffic.jpg, scene_outdoor.jpg, dan mobil.jpg tidak ditemukan!")
+            print("        Jalankan download_image.py terlebih dahulu.")
+            exit()
 
 # Meresize gambar ke ukuran YOLO standar (448x448)
 img = cv2.resize(img, (448, 448))

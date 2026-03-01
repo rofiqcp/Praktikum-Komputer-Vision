@@ -28,8 +28,8 @@ print("PERCOBAAN 16: BLENDING DUA GAMBAR")
 print("=" * 60)
 
 # Membaca dua gambar
-img1 = cv2.imread(os.path.join(IMAGE_DIR, "kucing.jpg"))
-img2 = cv2.imread(os.path.join(IMAGE_DIR, "pemandangan.jpg"))
+img1 = cv2.imread(os.path.join(IMAGE_DIR, "foto_malam.jpg"))
+img2 = cv2.imread(os.path.join(IMAGE_DIR, "foto_siang.jpg"))
 
 # Fallback jika gambar kedua tidak ada
 if img1 is None:

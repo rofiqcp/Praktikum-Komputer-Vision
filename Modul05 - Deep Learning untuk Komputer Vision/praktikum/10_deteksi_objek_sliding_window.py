@@ -89,20 +89,9 @@ if img is None:
     # Mencoba memuat gambar alternatif
     img = cv2.imread(os.path.join(IMAGE_DIR, "gedung.jpg"))
     if img is None:
-        # Membuat gambar sintetis dengan beberapa objek jika tidak ada gambar
-        print("  [INFO] Membuat gambar sintetis dengan objek-objek...")
-        img = np.ones((400, 600, 3), dtype=np.uint8) * 200
-
-        # Menggambar beberapa persegi sebagai "objek"
-        cv2.rectangle(img, (50, 50), (130, 130), (0, 0, 200), -1)
-        cv2.rectangle(img, (200, 150), (280, 230), (0, 0, 180), -1)
-        cv2.rectangle(img, (400, 80), (480, 160), (0, 0, 220), -1)
-        cv2.rectangle(img, (300, 280), (380, 360), (0, 0, 190), -1)
-        cv2.rectangle(img, (100, 300), (180, 380), (0, 0, 210), -1)
-
-        # Menambahkan noise latar belakang untuk realisme
-        noise = np.random.randint(0, 30, img.shape, dtype=np.uint8)
-        img = cv2.add(img, noise)
+        print("[ERROR] Gambar scene_outdoor.jpg dan gedung.jpg tidak ditemukan!")
+        print("        Jalankan download_image.py terlebih dahulu.")
+        exit()
 
 # Meresize gambar agar ukurannya konsisten
 img = cv2.resize(img, (600, 400))

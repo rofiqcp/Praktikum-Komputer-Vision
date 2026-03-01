@@ -3,7 +3,7 @@
 ---
 
 ## Deskripsi Tugas
-Buat video laporan yang mendemonstrasikan seluruh materi, 10 percobaan, dan project SfM & Depth Estimation. Fokus pada visualisasi 3D dan depth maps.
+Buat video laporan yang mendemonstrasikan seluruh materi, 20 percobaan, dan project SfM & Depth Estimation. Fokus pada visualisasi 3D dan depth maps.
 
 ---
 
@@ -22,20 +22,30 @@ Buat video laporan yang mendemonstrasikan seluruh materi, 10 percobaan, dan proj
 - Monocular depth: MiDaS, limitasi.
 - **Wajib**: Diagram epipolar geometry + SfM pipeline + stereo pipeline.
 
-### 3. Demo 10 Percobaan (30–40 menit)
+### 3. Demo 20 Percobaan (40–60 menit)
 
 | No | Percobaan | Poin Penting |
 |----|-----------|--------------|
 | 1 | Feature Matching Multi-View | Matches antar 5 view |
 | 2 | Fundamental Matrix | Epipolar lines visualization |
 | 3 | Essential Matrix + Pose | R, t recovery |
-| 4 | Triangulasi 3D | 3D point cloud plot |
-| 5 | Visual Odometry | Trajectory plot |
-| 6 | Stereo Calibration | Checkerboard, parameters |
+| 4 | Epipolar Lines | Visualisasi geometri epipolar |
+| 5 | Triangulasi 3D | 3D point cloud plot |
+| 6 | Stereo Calibration | Checkerboard, K, dist, R, T |
 | 7 | Stereo Rectification | Horizontal alignment verification |
 | 8 | Block Matching | Disparity map, parameter tuning |
 | 9 | SGBM | BM vs SGBM comparison |
-| 10 | Monocular Depth | MiDaS on multiple images |
+| 10 | Monocular Depth | Depth cues, MiDaS fallback |
+| 11 | Disparity to Depth | Z=f*B/d, reprojectImageTo3D |
+| 12 | BM vs SGBM Comparison | Timing, coverage, multi-scene |
+| 13 | WLS Filter Disparity | Post-processing, smoothing |
+| 14 | Point Cloud from Depth | 3D scatter, colored points |
+| 15 | PnP Pose Estimation | solvePnP methods comparison |
+| 16 | Stereo Matching Realtime | FPS measurement, video |
+| 17 | Depth Colorization | Colormaps, overlay, contour |
+| 18 | Baseline Effect | MAE/RMSE, near vs far |
+| 19 | Depth Segmentation | Threshold, connected components |
+| 20 | Multi-View Reconstruction | Full SfM pipeline, point cloud |
 
 - Tunjukkan checkerboard fisik dan proses kalibrasi.
 - Tunjukkan gambar 3D dari berbagai angle.
@@ -55,7 +65,7 @@ Buat video laporan yang mendemonstrasikan seluruh materi, 10 percobaan, dan proj
 
 | Aspek | Ketentuan |
 |-------|-----------|
-| Durasi | 60–75 menit |
+| Durasi | 75–100 menit |
 | Resolusi | Minimal 1080p |
 | Recording | Screen recording + webcam |
 | Webcam | Tunjukkan checkerboard + objek saat capture |
@@ -71,7 +81,7 @@ Buat video laporan yang mendemonstrasikan seluruh materi, 10 percobaan, dan proj
 |----------|-------|------------|
 | Pembukaan | 5% | Profesional |
 | Penjelasan Materi | 15% | Akurat, diagram epipolar |
-| Demo 10 Percobaan | 40% | Semua berjalan, 3D visualization |
+| Demo 20 Percobaan | 40% | Semua berjalan, 3D visualization |
 | Demo Project | 20% | Fitur lengkap |
 | Analisis & Kesimpulan | 10% | Kritis |
 | Kualitas Video | 10% | Resolusi, audio |

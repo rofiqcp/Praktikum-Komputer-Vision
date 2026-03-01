@@ -28,7 +28,7 @@ print("PERCOBAAN 13: FLIP GAMBAR (PENCERMINAN)")
 print("=" * 60)
 
 # Membaca gambar berwarna
-img = cv2.imread(os.path.join(IMAGE_DIR, "kucing.jpg"))
+img = cv2.imread(os.path.join(IMAGE_DIR, "foto_arsitektur.jpg"))
 if img is None:
     print("[ERROR] Jalankan download_image.py terlebih dahulu!")
     exit()

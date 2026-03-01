@@ -153,79 +153,12 @@ if dataset_ada:
             # Folder kategori tidak ditemukan
             print(f"  Kategori '{kat}': folder tidak ditemukan")
 
-# Jika dataset kosong atau tidak ditemukan, buat gambar sintetis
+# Jika dataset kosong atau tidak ditemukan, tampilkan error
 if len(semua_gambar) < 10:
-    print("\n  Dataset tidak cukup, membuat gambar sintetis...")
-
-    # Mengatur random seed
-    np.random.seed(42)
-
-    # Membuat gambar sintetis untuk setiap kategori
-    for idx_kat, kat in enumerate(kategori_bentuk):
-        # Membuat 20 gambar per kategori
-        for i in range(20):
-            # Membuat gambar kosong dengan background acak
-            bg_color = np.random.randint(200, 255, 3).tolist()
-            img = np.ones((IMG_SIZE, IMG_SIZE, 3), dtype=np.uint8)
-            img[:, :] = bg_color
-
-            # Mendefinisikan parameter acak
-            center = (IMG_SIZE // 2 + np.random.randint(-5, 6),
-                      IMG_SIZE // 2 + np.random.randint(-5, 6))
-            color = (np.random.randint(0, 150),
-                     np.random.randint(0, 150),
-                     np.random.randint(0, 150))
-            size = np.random.randint(15, 25)
-
-            if kat == 'lingkaran':
-                # Menggambar lingkaran
-                cv2.circle(img, center, size, color, -1)
-            elif kat == 'persegi':
-                # Menggambar persegi
-                pt1 = (center[0] - size, center[1] - size)
-                pt2 = (center[0] + size, center[1] + size)
-                cv2.rectangle(img, pt1, pt2, color, -1)
-            elif kat == 'segitiga':
-                # Menggambar segitiga
-                pts = np.array([
-                    [center[0], center[1] - size],
-                    [center[0] - size, center[1] + size],
-                    [center[0] + size, center[1] + size]
-                ], np.int32)
-                cv2.fillPoly(img, [pts], color)
-            elif kat == 'bintang':
-                # Menggambar bintang (polygon)
-                angles_outer = np.linspace(0, 2 * np.pi, 5, endpoint=False) - np.pi / 2
-                angles_inner = angles_outer + np.pi / 5
-                pts_star = []
-                for a_out, a_in in zip(angles_outer, angles_inner):
-                    pts_star.append([int(center[0] + size * np.cos(a_out)),
-                                    int(center[1] + size * np.sin(a_out))])
-                    pts_star.append([int(center[0] + size * 0.4 * np.cos(a_in)),
-                                    int(center[1] + size * 0.4 * np.sin(a_in))])
-                pts_star = np.array(pts_star, np.int32)
-                cv2.fillPoly(img, [pts_star], color)
-            elif kat == 'segi_enam':
-                # Menggambar segi enam
-                angles_hex = np.linspace(0, 2 * np.pi, 6, endpoint=False)
-                pts_hex = np.array([
-                    [int(center[0] + size * np.cos(a)),
-                     int(center[1] + size * np.sin(a))]
-                    for a in angles_hex
-                ], np.int32)
-                cv2.fillPoly(img, [pts_hex], color)
-
-            # Menambahkan noise ringan
-            noise = np.random.randint(0, 15, img.shape, dtype=np.uint8)
-            img = cv2.add(img, noise)
-
-            # Menyimpan gambar dan label
-            semua_gambar.append(img)
-            semua_label.append(idx_kat)
-            semua_nama_file.append(f"sintetis_{kat}_{i:02d}.png")
-
-    # Menampilkan jumlah gambar sintetis dibuat
-    print(f"  Total gambar sintetis dibuat: {len(semua_gambar)}")
+    print("\n[ERROR] Dataset tidak cukup (kurang dari 10 gambar)!")
+    print("        Jalankan download_image.py terlebih dahulu untuk mengunduh")
+    print("        gambar asli ke folder image/dataset/{kategori}/.")
+    exit()
 
 # Mengkonversi list ke array NumPy
 semua_gambar = np.array(semua_gambar)

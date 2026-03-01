@@ -4,12 +4,21 @@
 
 ## Tujuan Praktikum
 1. Memahami dan mengimplementasikan face detection (Haar Cascade dan DNN).
-2. Mengimplementasikan face recognition (LBPH, FaceNet/DeepFace).
-3. Mengimplementasikan object recognition dan classification.
-4. Melakukan OCR (Optical Character Recognition) pada berbagai tipe citra.
-5. Mengimplementasikan pedestrian dan vehicle detection.
-6. Mengimplementasikan hand gesture recognition.
-7. Memahami evaluation metrics untuk recognition tasks.
+2. Mengimplementasikan face recognition (LBPH, Eigenfaces).
+3. Memahami face landmark detection dan aplikasinya.
+4. Melakukan OCR preprocessing dan recognition (Tesseract).
+5. Mengimplementasikan scene text detection.
+6. Mengimplementasikan pedestrian dan vehicle detection.
+7. Mengimplementasikan hand gesture recognition menggunakan MediaPipe.
+8. Mengimplementasikan object classification dengan Bag of Visual Words (BoVW).
+9. Memahami scene recognition dan spatial pyramid matching.
+10. Memahami face embedding dan distance metrics untuk verifikasi/identifikasi.
+11. Menghitung dan menganalisis classification metrics (accuracy, precision, recall, F1).
+12. Menghitung dan menganalisis detection metrics (IoU, mAP).
+13. Menganalisis ROC curve dan AUC untuk recognition systems.
+14. Mengimplementasikan multi-face tracking.
+15. Membangun recognition pipeline lengkap (detection + recognition + evaluation).
+16. Mengembangkan proyek recognition sistem terintegrasi.
 
 ---
 
@@ -308,13 +317,304 @@ Evaluasi kuantitatif sangat penting untuk membandingkan model dan memilih pendek
 
 ---
 
+## Percobaan 11: Hand Gesture Recognition (MediaPipe)
+
+### Tujuan
+Mengenali gestur tangan menggunakan MediaPipe hand landmarks dan mengimplementasikan finger counting.
+
+### Dasar Teori
+MediaPipe Hands mendeteksi 21 landmark 3D per tangan secara real-time. Dengan menganalisis posisi relatif landmark (tip vs PIP joint), kita dapat menentukan jari mana yang terangkat dan mengklasifikasikan gestur tangan.
+
+### Langkah Kerja
+1. Install dan import MediaPipe Hands.
+2. Load gambar tangan dan deteksi 21 landmarks.
+3. Visualisasikan landmarks dan connections pada gambar.
+4. Implementasikan logika finger counting berdasarkan posisi tip vs PIP.
+5. Uji finger counting untuk angka 0-5 pada satu tangan.
+6. Definisikan 5 gestur berbeda (fist, open palm, thumbs up, peace, pointing).
+7. Buat classifier rule-based berdasarkan status jari.
+8. Uji gesture recognition pada gambar dengan background bervariasi.
+9. Hitung akurasi gesture recognition pada 20 gambar uji.
+10. Tampilkan hasil deteksi dengan label gesture dan confidence.
+
+### Analisis Percobaan 11
+- Berapa akurasi finger counting pada berbagai posisi tangan?
+- Gesture mana yang paling sulit dikenali? Mengapa?
+- Bagaimana background mempengaruhi akurasi deteksi?
+- Apa keterbatasan pendekatan rule-based untuk gesture recognition?
+
+---
+
+## Percobaan 12: Object Classification — Bag of Visual Words (BoVW)
+
+### Tujuan
+Mengimplementasikan klasifikasi objek menggunakan pipeline Bag of Visual Words: SIFT → KMeans → Histogram → SVM.
+
+### Dasar Teori
+BoVW menganalogikan gambar dengan dokumen teks. Keypoint descriptor (SIFT) dikelompokkan menjadi "visual words" menggunakan KMeans clustering. Setiap gambar direpresentasikan sebagai histogram frekuensi visual words, lalu diklasifikasi dengan SVM.
+
+### Langkah Kerja
+1. Siapkan dataset minimal 3 kategori objek, 20+ gambar per kategori.
+2. Ekstrak SIFT keypoints dan descriptors dari seluruh gambar.
+3. Gabungkan semua descriptors dan lakukan KMeans clustering (k=50).
+4. Bangun histogram visual words untuk setiap gambar.
+5. Bagi dataset: 70% training, 30% testing.
+6. Train SVM classifier pada histogram training.
+7. Predict test set dan hitung akurasi.
+8. Buat dan visualisasikan confusion matrix.
+9. Variasikan jumlah cluster (k=25, 50, 100) dan bandingkan akurasi.
+10. Bandingkan hasil SVM dengan KNN classifier.
+
+### Analisis Percobaan 12
+- Berapa nilai k optimal untuk visual vocabulary?
+- Bagaimana akurasi SVM dibandingkan KNN?
+- Pada kategori mana classifier paling sering salah? Mengapa?
+- Apa kelemahan utama pendekatan BoVW?
+
+---
+
+## Percobaan 13: Scene Recognition
+
+### Tujuan
+Mengimplementasikan scene recognition menggunakan konsep spatial pyramid matching.
+
+### Dasar Teori
+Scene recognition mengklasifikasikan keseluruhan scene (indoor, outdoor, pantai, hutan, dll). Spatial Pyramid Matching membagi gambar menjadi grid bertingkat (1×1, 2×2, 4×4) dan menghitung histogram fitur per cell, menghasilkan representasi yang mempertahankan informasi spasial.
+
+### Langkah Kerja
+1. Siapkan dataset scene minimal 4 kategori (indoor, outdoor, pantai, kota).
+2. Ekstrak fitur global (color histogram, texture) dari setiap gambar.
+3. Implementasikan spatial pyramid: bagi gambar menjadi grid 1×1, 2×2, 4×4.
+4. Hitung histogram fitur per cell di setiap level.
+5. Gabungkan histogram dengan bobot per level (weighted concatenation).
+6. Train SVM classifier pada fitur spatial pyramid.
+7. Evaluasi pada test set dan hitung akurasi.
+8. Bandingkan akurasi spatial pyramid vs histogram global (tanpa grid).
+9. Visualisasikan contoh prediksi benar dan salah per kategori.
+10. Buat confusion matrix dan analisis pola kesalahan.
+
+### Analisis Percobaan 13
+- Berapa peningkatan akurasi spatial pyramid dibandingkan histogram global?
+- Kategori scene mana yang paling mudah/sulit dikenali?
+- Level pyramid mana yang paling berkontribusi?
+- Apa keterbatasan pendekatan ini untuk scene yang ambigu?
+
+---
+
+## Percobaan 14: Face Embedding Distance
+
+### Tujuan
+Menghitung jarak antar face embedding untuk verifikasi dan identifikasi wajah.
+
+### Dasar Teori
+Face embedding memetakan wajah ke vektor dalam ruang berdimensi tinggi. Jarak antar embedding (Euclidean, Cosine) menentukan kemiripan wajah. Threshold jarak digunakan untuk verifikasi (apakah dua wajah orang yang sama?) dan identifikasi (siapa pemilik wajah?).
+
+### Langkah Kerja
+1. Siapkan dataset wajah minimal 5 orang, 5 foto per orang.
+2. Ekstrak face embedding (128-D atau 512-D) dari setiap gambar wajah.
+3. Hitung jarak Euclidean antar embedding intra-class (orang sama).
+4. Hitung jarak Euclidean antar embedding inter-class (orang berbeda).
+5. Hitung jarak Cosine untuk perbandingan.
+6. Visualisasikan distribusi jarak intra-class vs inter-class.
+7. Tentukan threshold optimal untuk verifikasi dari distribusi.
+8. Implementasikan face verification: input 2 wajah → same/different.
+9. Implementasikan face identification: input wajah → identitas terdekat.
+10. Evaluasi akurasi verifikasi dan identifikasi pada test set.
+
+### Analisis Percobaan 14
+- Berapa threshold jarak optimal untuk verifikasi?
+- Seberapa terpisah distribusi intra-class vs inter-class?
+- Metrik jarak mana (Euclidean vs Cosine) yang lebih diskriminatif?
+- Pada kondisi apa verifikasi gagal (false accept/reject)?
+
+---
+
+## Percobaan 15: Evaluasi — Classification Metrics
+
+### Tujuan
+Menghitung dan memvisualisasikan classification metrics secara detail: accuracy, precision, recall, F1, dan confusion matrix.
+
+### Dasar Teori
+Classification metrics mengukur performa model klasifikasi. Accuracy mengukur proporsi prediksi benar. Precision mengukur ketepatan prediksi positif. Recall mengukur kemampuan menangkap seluruh positif. F1-score adalah harmonic mean precision dan recall. Confusion matrix menunjukkan distribusi prediksi per kelas.
+
+### Langkah Kerja
+1. Siapkan data prediksi dan ground truth dari percobaan sebelumnya.
+2. Hitung accuracy secara manual dan dengan scikit-learn.
+3. Hitung precision per kelas (macro, micro, weighted).
+4. Hitung recall per kelas (macro, micro, weighted).
+5. Hitung F1-score per kelas dan rata-rata.
+6. Buat confusion matrix dan visualisasikan dengan heatmap.
+7. Analisis kelas dengan precision tinggi tapi recall rendah (dan sebaliknya).
+8. Implementasikan classification report lengkap.
+9. Bandingkan metrik dari 2+ model/metode berbeda dalam tabel.
+10. Visualisasikan perbandingan metrik antar model dalam bar chart.
+
+### Analisis Percobaan 15
+- Model/metode mana yang memiliki F1-score tertinggi?
+- Apakah ada kelas yang precision-nya sangat berbeda dari recall-nya?
+- Pada kasus apa macro vs weighted average berbeda signifikan?
+- Metrik mana yang paling relevan untuk use case recognition?
+
+---
+
+## Percobaan 16: Evaluasi — Detection Metrics
+
+### Tujuan
+Menghitung dan memvisualisasikan detection metrics: IoU, precision-recall curve, dan mAP.
+
+### Dasar Teori
+Detection metrics mengukur performa model deteksi objek. IoU (Intersection over Union) mengukur overlap antara predicted dan ground truth bounding box. Precision-Recall curve menunjukkan trade-off deteksi. mAP (mean Average Precision) adalah metrik standar untuk evaluasi object detection.
+
+### Langkah Kerja
+1. Siapkan data bounding box prediksi dan ground truth dari percobaan deteksi.
+2. Implementasikan fungsi IoU untuk dua bounding box.
+3. Hitung IoU untuk setiap pasangan prediksi-ground truth.
+4. Klasifikasikan deteksi sebagai TP/FP berdasarkan IoU threshold (0.5).
+5. Hitung precision dan recall pada berbagai confidence threshold.
+6. Plot precision-recall curve.
+7. Hitung AP (Average Precision) dari PR curve.
+8. Ulangi untuk IoU threshold berbeda (0.5, 0.75).
+9. Hitung mAP sebagai rata-rata AP per kelas.
+10. Bandingkan mAP antar metode deteksi (Haar vs DNN, HOG vs YOLO).
+
+### Analisis Percobaan 16
+- Berapa mAP@0.5 dan mAP@0.75 untuk setiap metode?
+- Pada confidence threshold berapa trade-off precision-recall optimal?
+- Metode deteksi mana yang memiliki IoU rata-rata tertinggi?
+- Bagaimana perbedaan performa pada IoU ketat (0.75) vs longgar (0.5)?
+
+---
+
+## Percobaan 17: Recognition ROC Curve
+
+### Tujuan
+Menganalisis ROC curve, menghitung AUC, dan melakukan threshold tuning untuk recognition systems.
+
+### Dasar Teori
+ROC (Receiver Operating Characteristic) curve menunjukkan trade-off antara True Positive Rate (sensitivity) dan False Positive Rate (1-specificity). AUC (Area Under Curve) mengukur kemampuan diskriminatif model secara keseluruhan. Pemilihan threshold optimal bergantung pada trade-off TPR vs FPR sesuai kebutuhan aplikasi.
+
+### Langkah Kerja
+1. Kumpulkan similarity score dan label (match/non-match) dari face recognition.
+2. Hitung TPR dan FPR pada berbagai threshold.
+3. Plot ROC curve.
+4. Hitung AUC (Area Under Curve).
+5. Tentukan EER (Equal Error Rate) — titik di mana FAR = FRR.
+6. Plot FAR vs FRR curve dan tandai titik EER.
+7. Analisis threshold optimal untuk skenario high-security (minimize FAR).
+8. Analisis threshold optimal untuk skenario convenience (maximize TPR).
+9. Bandingkan ROC curve dari 2+ metode recognition.
+10. Buat tabel ringkasan: AUC, EER, threshold optimal per metode.
+
+### Analisis Percobaan 17
+- Metode mana yang memiliki AUC tertinggi?
+- Berapa EER masing-masing metode?
+- Bagaimana threshold berbeda untuk skenario keamanan vs kenyamanan?
+- Apakah AUC konsisten dengan pengamatan kualitatif?
+
+---
+
+## Percobaan 18: Multi-Face Tracking
+
+### Tujuan
+Mengimplementasikan multi-face tracking: deteksi wajah dan pelacakan antar frame pada video.
+
+### Dasar Teori
+Multi-face tracking menggabungkan face detection dengan object tracking untuk melacak identitas wajah secara konsisten antar frame video. Tracker (KCF, CSRT, atau centroid-based) mempertahankan identitas objek antara deteksi, mengurangi kebutuhan deteksi per frame.
+
+### Langkah Kerja
+1. Siapkan video atau webcam feed dengan beberapa wajah bergerak.
+2. Jalankan face detection pada frame pertama.
+3. Inisialisasi tracker (cv2.TrackerCSRT atau centroid tracker) untuk setiap wajah.
+4. Pada frame berikutnya, update semua tracker.
+5. Re-detect wajah setiap N frame untuk menangani wajah baru/hilang.
+6. Assign ID unik untuk setiap wajah yang dilacak.
+7. Tampilkan bounding box + ID pada setiap frame.
+8. Handle kasus wajah masuk/keluar frame (register/deregister).
+9. Hitung dan tampilkan jumlah wajah aktif per frame.
+10. Evaluasi konsistensi tracking (apakah ID stabil untuk wajah yang sama?).
+
+### Analisis Percobaan 18
+- Seberapa stabil ID tracking untuk wajah yang sama?
+- Pada kondisi apa tracker kehilangan target?
+- Berapa interval re-detection optimal (N frame)?
+- Bagaimana performa tracking saat wajah saling overlap?
+
+---
+
+## Percobaan 19: Recognition Pipeline Lengkap
+
+### Tujuan
+Membangun pipeline recognition lengkap yang mengintegrasikan detection, recognition, dan evaluation.
+
+### Dasar Teori
+Pipeline recognition lengkap menggabungkan tahap detection (menemukan objek), recognition (mengidentifikasi objek), dan evaluation (mengukur performa). Pipeline yang terintegrasi memungkinkan end-to-end processing dari input gambar/video hingga output hasil recognition dengan metrik evaluasi.
+
+### Langkah Kerja
+1. Definisikan pipeline: input → detection → preprocessing → recognition → output.
+2. Implementasikan modul detection (face detection DNN).
+3. Implementasikan modul preprocessing (alignment, resize, normalization).
+4. Implementasikan modul recognition (face recognition LBPH/embedding).
+5. Implementasikan modul evaluation (classification metrics).
+6. Integrasikan semua modul dalam satu pipeline function.
+7. Jalankan pipeline pada dataset test.
+8. Hitung metrik end-to-end (akurasi keseluruhan pipeline).
+9. Identifikasi bottleneck: modul mana yang paling mempengaruhi error?
+10. Visualisasikan hasil pipeline step-by-step untuk beberapa contoh.
+
+### Analisis Percobaan 19
+- Berapa akurasi end-to-end pipeline?
+- Modul mana yang menjadi bottleneck utama?
+- Bagaimana error di detection stage mempengaruhi recognition?
+- Apa yang bisa ditingkatkan untuk memperbaiki performa pipeline?
+
+---
+
+## Percobaan 20: Proyek Recognition Sistem
+
+### Tujuan
+Membangun sistem recognition lengkap sebagai proyek akhir yang mengintegrasikan seluruh konsep dari modul ini.
+
+### Dasar Teori
+Proyek akhir mengintegrasikan seluruh komponen: face detection, face recognition, object classification, text recognition, gesture recognition, tracking, dan evaluation metrics. Sistem harus dirancang modular, teruji, dan terdokumentasi dengan baik.
+
+### Langkah Kerja
+1. Tentukan domain aplikasi (absensi, keamanan, OCR, dll).
+2. Rancang arsitektur sistem: input → processing → output.
+3. Implementasikan modul detection sesuai domain.
+4. Implementasikan modul recognition/classification sesuai domain.
+5. Implementasikan database/storage untuk data reference.
+6. Implementasikan user interface sederhana (OpenCV GUI atau command-line).
+7. Integrasikan semua modul menjadi sistem utuh.
+8. Uji sistem pada skenario realistis.
+9. Hitung metrik evaluasi lengkap (accuracy, precision, recall, F1, atau mAP).
+10. Dokumentasikan arsitektur, hasil, dan analisis dalam laporan.
+
+### Analisis Percobaan 20
+- Apakah sistem berjalan end-to-end sesuai desain?
+- Berapa akurasi/metrik keseluruhan sistem?
+- Apa kekuatan dan kelemahan sistem yang dibangun?
+- Bagaimana sistem dapat dikembangkan lebih lanjut?
+
+---
+
 ## Kesimpulan
 Tuliskan kesimpulan berdasarkan:
 1. Perbandingan metode klasik vs deep learning untuk face detection.
-2. Perbandingan LBPH vs DeepFace untuk face recognition.
-3. Efektivitas BoVW untuk object classification.
-4. Performa OCR dan faktor yang mempengaruhinya.
-5. Evaluasi metrics dan pemilihan metode terbaik.
+2. Perbandingan LBPH vs Eigenfaces untuk face recognition.
+3. Efektivitas face landmark detection dan aplikasinya.
+4. Performa OCR dan faktor yang mempengaruhinya (preprocessing, resolusi, bahasa).
+5. Efektivitas scene text detection end-to-end.
+6. Perbandingan pedestrian detection (HOG vs DNN) dan vehicle detection.
+7. Performa hand gesture recognition dengan MediaPipe.
+8. Efektivitas BoVW untuk object classification.
+9. Kemampuan scene recognition dengan spatial pyramid matching.
+10. Analisis face embedding distance untuk verifikasi dan identifikasi.
+11. Evaluasi classification metrics dan perbandingan antar model.
+12. Evaluasi detection metrics (IoU, mAP) dan implikasi threshold.
+13. Analisis ROC/AUC dan pemilihan threshold optimal.
+14. Multi-face tracking dan konsistensi pelacakan.
+15. Efektivitas pipeline recognition terintegrasi.
+16. Refleksi keseluruhan: pemilihan metode terbaik untuk berbagai skenario recognition.
 
 ---
 

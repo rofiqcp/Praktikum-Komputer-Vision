@@ -8,7 +8,17 @@
 3. Membandingkan teknik blending (feather, multi-band, Poisson).
 4. Mengimplementasikan cylindrical dan spherical projection.
 5. Memahami exposure compensation dan seam finding.
-6. Membangun panorama multi-image.
+6. Membangun panorama multi-image dan real-time stitching interaktif.
+7. Mengimplementasikan auto-cropping panorama untuk menghilangkan border hitam.
+8. Memahami homography estimation secara mendalam (RANSAC, dekomposisi, analisis error).
+9. Mengimplementasikan image registration menggunakan ECC dan feature-based.
+10. Mendalami Laplacian pyramid blending per level secara detail.
+11. Mengimplementasikan gain compensation manual dan histogram matching.
+12. Mengevaluasi kualitas stitching menggunakan metrik PSNR dan SSIM.
+13. Memahami panorama loop closure dan distribusi error.
+14. Mengimplementasikan document alignment dan stitching.
+15. Membangun pipeline panorama lengkap berbasis class.
+16. Mengembangkan aplikasi panorama maker dengan berbagai mode.
 
 ---
 
@@ -309,13 +319,301 @@ Real-time stitching memerlukan pipeline yang dioptimalkan: fitur cepat (ORB), li
 
 ---
 
+## Percobaan 11: Panorama Cropping dan Auto-crop
+
+### Tujuan
+Mengimplementasikan auto-cropping untuk menghilangkan border hitam pada hasil panorama.
+
+### Dasar Teori
+Hasil stitching sering memiliki border hitam tidak beraturan. Auto-crop menggunakan thresholding, deteksi kontur, operasi morfologi, dan pendekatan maximum inscribed rectangle untuk mendapatkan panorama bersih tanpa area hitam.
+
+### Langkah Kerja
+1. Load hasil panorama dari percobaan sebelumnya (yang memiliki border hitam).
+2. Konversi ke grayscale dan terapkan threshold untuk memisahkan konten dari border hitam.
+3. Terapkan operasi morfologi (closing) untuk menutup gap kecil pada mask.
+4. Temukan kontur terbesar dari mask hasil threshold.
+5. Hitung bounding rectangle dari kontur → crop sederhana.
+6. Implementasikan maximum inscribed rectangle (largest rect tanpa piksel hitam di dalamnya).
+7. Bandingkan hasil: bounding rect crop vs max inscribed rect crop.
+8. Uji pada beberapa panorama dengan shape border berbeda.
+9. Tambahkan padding opsional setelah crop (margin putih/hitam).
+10. Tampilkan before/after crop + persentase area yang terpotong.
+
+### Analisis Percobaan 11
+- Seberapa efektif threshold-based cropping menghilangkan border hitam?
+- Apa perbedaan visual antara bounding rect vs max inscribed rect?
+- Berapa persen area gambar yang hilang akibat cropping?
+- Pada kasus apa max inscribed rect jauh lebih kecil dari bounding rect?
+
+---
+
+## Percobaan 12: Homography Estimation dan Visualisasi
+
+### Tujuan
+Memahami homography estimation secara mendalam: 4-point DLT, RANSAC, dekomposisi, dan analisis error.
+
+### Dasar Teori
+Homography $H$ (matriks 3×3, 8 DOF) memetakan titik dari satu bidang ke bidang lain. Estimasi membutuhkan minimal 4 korespondensi titik (DLT). RANSAC memfilter outlier secara robust. Dekomposisi $H$ mengungkapkan rotasi, translasi, dan normal bidang.
+
+### Langkah Kerja
+1. Load 2 gambar overlapping dan deteksi fitur (SIFT) + match (FLANN + ratio test).
+2. Estimasi homography menggunakan DLT (Direct Linear Transform) 4-point minimal.
+3. Estimasi homography menggunakan RANSAC → bandingkan dengan DLT.
+4. Visualisasikan inlier (hijau) dan outlier (merah) pada gambar matches.
+5. Hitung reprojection error per titik korespondensi.
+6. Plot distribusi reprojection error (histogram).
+7. Dekomposisi homography menggunakan `cv2.decomposeHomographyMat()`.
+8. Visualisasikan efek homography: warp grid dan lihat deformasi.
+9. Uji robustness: tambahkan noise pada matches → amati perubahan H.
+10. Bandingkan homography dari SIFT vs ORB vs AKAZE matches.
+
+### Analisis Percobaan 12
+- Berapa reprojection error rata-rata untuk DLT vs RANSAC?
+- Berapa persen outlier yang berhasil difilter RANSAC?
+- Apa informasi yang didapat dari dekomposisi homography?
+- Bagaimana noise pada matches mempengaruhi stabilitas homography?
+
+---
+
+## Percobaan 13: Image Registration (Penyelarasan Gambar)
+
+### Tujuan
+Mengimplementasikan image registration menggunakan ECC (Enhanced Correlation Coefficient) dan membandingkan dengan feature-based.
+
+### Dasar Teori
+ECC algorithm menemukan transformasi optimal yang memaksimalkan korelasi antara template dan gambar target. Mendukung mode translasi, euclidean, affine, dan homography. Berbeda dengan feature-based yang diskrit, ECC bekerja pada level piksel secara iteratif.
+
+### Langkah Kerja
+1. Load 2 gambar yang sedikit bergeser (translasi kecil).
+2. Implementasikan ECC registration dengan mode `MOTION_TRANSLATION`.
+3. Uji mode `MOTION_EUCLIDEAN` (translasi + rotasi).
+4. Uji mode `MOTION_AFFINE` (6 DOF).
+5. Uji mode `MOTION_HOMOGRAPHY` (8 DOF).
+6. Bandingkan warp matrix hasil ECC dari setiap mode.
+7. Implementasikan feature-based registration (SIFT + homography) pada gambar yang sama.
+8. Bandingkan akurasi ECC vs feature-based: overlay registered images.
+9. Uji pada gambar dengan perubahan brightness → amati robustness.
+10. Ukur waktu komputasi per mode dan bandingkan.
+
+### Analisis Percobaan 13
+- Mode ECC mana yang paling sesuai untuk translasi murni?
+- Bagaimana perbandingan akurasi ECC vs feature-based?
+- Apakah ECC robust terhadap perubahan brightness?
+- Kapan ECC lebih tepat digunakan dibanding feature-based dan sebaliknya?
+
+---
+
+## Percobaan 14: Laplacian Pyramid Blending Detail
+
+### Tujuan
+Mengimplementasikan Laplacian pyramid blending secara detail langkah demi langkah.
+
+### Dasar Teori
+Multi-band blending memisahkan gambar menjadi band frekuensi melalui Laplacian pyramid. Setiap level diblend menggunakan mask Gaussian pyramid. Rekonstruksi menghasilkan transisi halus karena frekuensi rendah dan tinggi diblend secara terpisah.
+
+### Langkah Kerja
+1. Load 2 gambar overlapping dan buat mask binary (kiri/kanan).
+2. Bangun Gaussian pyramid (5 level) dari kedua gambar.
+3. Bangun Laplacian pyramid dari Gaussian pyramid → visualisasikan setiap level.
+4. Bangun Gaussian pyramid dari mask.
+5. Blend Laplacian di setiap level: `L_blend = mask * L1 + (1-mask) * L2`.
+6. Rekonstruksi gambar dari blended Laplacian pyramid.
+7. Tampilkan hasil per tahap: Gaussian levels, Laplacian levels, blended levels, final.
+8. Variasikan jumlah level (2, 3, 5, 7) → bandingkan kualitas blending.
+9. Bandingkan dengan simple alpha blending dan feather blending.
+10. Uji pada gambar dengan perbedaan exposure besar di area overlap.
+
+### Analisis Percobaan 14
+- Bagaimana setiap level Laplacian pyramid menyimpan informasi frekuensi?
+- Berapa level optimal untuk blending?
+- Mengapa Laplacian blending lebih baik dari alpha blending biasa?
+- Apa efek jumlah level terlalu sedikit vs terlalu banyak?
+
+---
+
+## Percobaan 15: Gain Compensation Manual
+
+### Tujuan
+Mengimplementasikan gain compensation secara manual untuk menyesuaikan exposure antar gambar.
+
+### Dasar Teori
+Gain compensation menyesuaikan brightness setiap gambar agar konsisten. Dapat dilakukan secara global (satu gain per gambar), per-channel (R, G, B terpisah), atau di ruang warna LAB. CLAHE dan histogram matching memberikan pendekatan adaptif.
+
+### Langkah Kerja
+1. Siapkan 3 gambar overlapping dengan exposure sengaja berbeda.
+2. Implementasikan global gain compensation: hitung ratio brightness di overlap.
+3. Implementasikan per-channel gain: kompensasi R, G, B secara independen.
+4. Implementasikan kompensasi di ruang warna LAB (hanya channel L).
+5. Terapkan CLAHE pada setiap gambar sebelum stitching.
+6. Implementasikan histogram matching: sesuaikan histogram gambar ke gambar referensi.
+7. Stitch dengan masing-masing metode compensation → bandingkan visual.
+8. Zoom ke area overlap → evaluasi konsistensi warna.
+9. Ukur standard deviation brightness di area overlap untuk setiap metode.
+10. Buat tabel perbandingan: metode, visual quality (1–5), color consistency, waktu.
+
+### Analisis Percobaan 15
+- Metode compensation mana yang menghasilkan warna paling konsisten?
+- Apakah per-channel lebih baik dari global gain?
+- Kapan CLAHE lebih tepat dibanding gain compensation?
+- Bagaimana histogram matching menangani perbedaan white balance?
+
+---
+
+## Percobaan 16: Evaluasi Kualitas Stitching (PSNR, SSIM)
+
+### Tujuan
+Mengimplementasikan metrik evaluasi kualitas stitching: PSNR, SSIM, difference map, dan edge alignment.
+
+### Dasar Teori
+Kualitas stitching dapat dievaluasi secara kuantitatif. PSNR mengukur rasio signal-to-noise, SSIM mengukur kemiripan struktural. Difference map menunjukkan area dengan perbedaan besar, dan edge alignment mengukur kesinambungan tepi di seam.
+
+### Langkah Kerja
+1. Siapkan area overlap dari 2 gambar yang sudah di-warp (ground truth overlap).
+2. Hitung PSNR antara area overlap gambar 1 dan gambar 2.
+3. Hitung SSIM menggunakan `skimage.metrics.structural_similarity`.
+4. Buat difference map (absolute difference) dan visualisasikan dengan colormap.
+5. Deteksi edge pada kedua gambar di area seam → hitung edge alignment score.
+6. Bandingkan metrik untuk berbagai metode blending: no blend, feather, multi-band.
+7. Bandingkan metrik untuk panorama dengan vs tanpa exposure compensation.
+8. Buat fungsi evaluasi lengkap yang menghitung semua metrik sekaligus.
+9. Uji pada 3 dataset berbeda → rata-rata metrik per metode.
+10. Visualisasikan hasil: bar chart perbandingan metrik per metode.
+
+### Analisis Percobaan 16
+- Metode blending mana yang menghasilkan PSNR dan SSIM tertinggi?
+- Apakah PSNR dan SSIM selalu berkorelasi dengan persepsi visual?
+- Seberapa besar pengaruh exposure compensation terhadap metrik kualitas?
+- Area mana pada difference map yang menunjukkan perbedaan terbesar?
+
+---
+
+## Percobaan 17: Panorama Loop Closure
+
+### Tujuan
+Memahami dan mengimplementasikan loop closure untuk panorama 360° untuk mengurangi drift akumulatif.
+
+### Dasar Teori
+Pada panorama 360°, chain homography mengakumulasi error sehingga gambar pertama dan terakhir tidak align sempurna (drift). Loop closure mendeteksi overlap antara gambar awal dan akhir, kemudian mendistribusikan error secara merata ke seluruh chain.
+
+### Langkah Kerja
+1. Load 6+ gambar yang membentuk loop (gambar pertama dan terakhir overlap).
+2. Stitch tanpa loop closure → amati drift antara ujung pertama dan terakhir.
+3. Deteksi overlap antara gambar pertama dan terakhir (feature matching).
+4. Hitung homography "penutup" loop: $H_{N \to 1}$.
+5. Hitung accumulated drift: $H_{drift} = H_{N \to 1} \cdot H_{(N-1) \to N} \cdot \ldots \cdot H_{1 \to 2}$.
+6. Distribusikan error secara merata: interpolasi koreksi ke setiap homography.
+7. Stitch ulang dengan homography yang sudah dikoreksi.
+8. Bandingkan visual: tanpa vs dengan loop closure.
+9. Ukur reprojection error sebelum dan sesudah loop closure.
+10. Visualisasikan posisi kamera sebelum dan sesudah koreksi.
+
+### Analisis Percobaan 17
+- Seberapa besar drift yang terjadi tanpa loop closure?
+- Apakah distribusi error merata efektif mengurangi drift?
+- Berapa banyak gambar minimal agar loop closure signifikan?
+- Apa limitasi pendekatan distribusi error linier?
+
+---
+
+## Percobaan 18: Document Alignment dan Stitching
+
+### Tujuan
+Mengimplementasikan alignment dan stitching khusus untuk dokumen (buku, whiteboard, receipt panjang).
+
+### Dasar Teori
+Document stitching berbeda dari panorama alam karena memerlukan perspective correction (dokumen harus rectangular), alignment yang presisi, dan biasanya stacking vertikal. Feature-based matching dikombinasikan dengan edge detection untuk alignment optimal.
+
+### Langkah Kerja
+1. Ambil 2–3 foto bagian dokumen/whiteboard yang overlapping.
+2. Terapkan perspective correction pada setiap foto (4-point transform).
+3. Konversi ke grayscale dan enhance contrast.
+4. Deteksi fitur dan match antar bagian dokumen.
+5. Estimasi transformasi (biasanya translasi + sedikit rotasi).
+6. Stitch secara vertikal (top-to-bottom) untuk dokumen panjang.
+7. Stitch secara horizontal untuk whiteboard lebar.
+8. Terapkan binarization (Otsu/adaptive) pada hasil stitching.
+9. Bandingkan hasil: feature-based vs template matching untuk alignment.
+10. Export hasil sebagai gambar high-res dan simulasikan output PDF.
+
+### Analisis Percobaan 18
+- Apa tantangan khusus stitching dokumen vs panorama alam?
+- Seberapa penting perspective correction untuk hasil stitching dokumen?
+- Metode alignment mana yang lebih akurat untuk teks/dokumen?
+- Bagaimana kualitas teks di area overlap setelah stitching?
+
+---
+
+## Percobaan 19: Panorama Pipeline Lengkap
+
+### Tujuan
+Membangun pipeline panorama lengkap berbasis class yang mengintegrasikan seluruh teknik.
+
+### Dasar Teori
+Pipeline panorama lengkap menggabungkan: feature detection → matching → homography estimation → exposure compensation → warping → seam finding → blending → cropping. Implementasi berbasis class memungkinkan modularitas dan konfigurasi fleksibel.
+
+### Langkah Kerja
+1. Buat class `PanoramaPipeline` dengan method untuk setiap tahap.
+2. Implementasikan `detect_and_match()`: SIFT/ORB + ratio test.
+3. Implementasikan `estimate_homography()`: RANSAC + validasi.
+4. Implementasikan `compensate_exposure()`: gain compensation.
+5. Implementasikan `warp_images()`: cylindrical/planar, tentukan canvas.
+6. Implementasikan `find_seams()`: GraphCut seam finding.
+7. Implementasikan `blend_images()`: multi-band blending.
+8. Implementasikan `crop_result()`: auto-crop border hitam.
+9. Jalankan pipeline end-to-end pada 5 gambar → panorama final.
+10. Tambahkan logging: waktu per tahap, jumlah fitur, error metrics.
+
+### Analisis Percobaan 19
+- Tahap mana yang paling memakan waktu dalam pipeline?
+- Apakah urutan compensate → warp → seam → blend optimal?
+- Bagaimana modularitas class membantu debugging?
+- Apa perbedaan hasil pipeline lengkap vs OpenCV Stitcher API?
+
+---
+
+## Percobaan 20: Proyek Panorama Maker App
+
+### Tujuan
+Mengembangkan aplikasi panorama maker lengkap dengan mode auto, manual, fast, batch processing, dan quality report.
+
+### Dasar Teori
+Aplikasi panorama yang robust memerlukan beberapa mode untuk menangani berbagai skenario: mode auto (full pipeline), mode manual (user memilih pasangan dan parameter), mode fast (pipeline minimal untuk kecepatan). Batch processing dan quality report melengkapi fitur produksi.
+
+### Langkah Kerja
+1. Buat struktur aplikasi: main menu dengan pilihan mode (auto/manual/fast).
+2. **Mode Auto**: Implementasikan full pipeline otomatis (deteksi urutan, stitch semua).
+3. **Mode Manual**: User memilih pasangan gambar, preview matches, adjust parameter.
+4. **Mode Fast**: Pipeline minimal (ORB + simple blend, tanpa seam finding).
+5. Implementasikan batch processing: input folder → stitch semua set → output folder.
+6. Implementasikan quality report: PSNR, SSIM, waktu, jumlah fitur per panorama.
+7. Tambahkan preview sebelum save (resize untuk display).
+8. Implementasikan export: save panorama dengan metadata (resolusi, metode, waktu).
+9. Uji aplikasi pada 3 dataset berbeda dengan ketiga mode.
+10. Dokumentasikan: screenshot setiap mode, tabel perbandingan kecepatan vs kualitas.
+
+### Analisis Percobaan 20
+- Mode mana yang memberikan trade-off terbaik antara kualitas dan kecepatan?
+- Apakah batch processing berhasil menangani dataset dengan variasi?
+- Seberapa informatif quality report untuk menilai hasil?
+- Fitur apa yang paling penting untuk user experience aplikasi panorama?
+
+---
+
 ## Kesimpulan
 Tuliskan kesimpulan berdasarkan:
 1. Pipeline stitching: dari manual ke automatic (OpenCV Stitcher).
-2. Perbandingan blending: feather vs multi-band.
+2. Perbandingan blending: feather vs multi-band vs Laplacian pyramid detail.
 3. Perbandingan projection: planar vs cylindrical vs spherical.
 4. Efek bundle adjustment dan exposure compensation.
-5. Rekomendasi pipeline optimal untuk berbagai skenario.
+5. Teknik auto-cropping dan post-processing panorama.
+6. Homography estimation: metode, dekomposisi, dan analisis error.
+7. Image registration: ECC vs feature-based.
+8. Gain compensation manual dan teknik histogram matching.
+9. Evaluasi kualitas stitching: PSNR, SSIM, dan metrik lainnya.
+10. Panorama loop closure dan distribusi error.
+11. Document alignment dan stitching untuk kasus khusus.
+12. Pipeline panorama lengkap dan aplikasi panorama maker.
+13. Rekomendasi pipeline optimal untuk berbagai skenario.
 
 ---
 

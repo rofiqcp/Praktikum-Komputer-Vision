@@ -46,9 +46,9 @@ print("=" * 60)
 print("PERCOBAAN 1: LOADING DAN MENAMPILKAN GAMBAR")
 print("=" * 60)
 
-# Membaca gambar kucing dalam mode warna penuh (3 channel: Blue, Green, Red)
+# Membaca foto kucing asli dalam mode warna penuh (3 channel: Blue, Green, Red)
 # cv2.IMREAD_COLOR (1) = baca sebagai gambar berwarna, abaikan transparansi
-img_color = cv2.imread(os.path.join(IMAGE_DIR, "kucing.jpg"), cv2.IMREAD_COLOR)
+img_color = cv2.imread(os.path.join(IMAGE_DIR, "foto_kucing.jpg"), cv2.IMREAD_COLOR)
 
 # Memeriksa apakah gambar berhasil dimuat (tidak None)
 if img_color is None:
@@ -65,8 +65,8 @@ print(f"  - Tipe data: {img_color.dtype}")  # uint8 (0-255)
 # cv2.IMREAD_GRAYSCALE (0) = konversi ke abu-abu saat loading
 # ============================================================
 
-# Membaca gambar yang sama dalam mode grayscale (abu-abu)
-img_gray = cv2.imread(os.path.join(IMAGE_DIR, "kucing.jpg"), cv2.IMREAD_GRAYSCALE)
+# Membaca foto kucing yang sama dalam mode grayscale (abu-abu)
+img_gray = cv2.imread(os.path.join(IMAGE_DIR, "foto_kucing.jpg"), cv2.IMREAD_GRAYSCALE)
 
 # Menampilkan informasi gambar grayscale
 print(f"\n[INFO] Gambar grayscale berhasil dimuat.")
@@ -78,8 +78,8 @@ print(f"  - Tipe data: {img_gray.dtype}")
 # cv2.IMREAD_UNCHANGED (-1) = baca apa adanya termasuk alpha
 # ============================================================
 
-# Membaca gambar PNG yang mungkin memiliki alpha channel
-img_unchanged = cv2.imread(os.path.join(IMAGE_DIR, "warna_warni.png"), cv2.IMREAD_UNCHANGED)
+# Membaca foto bunga berwarna (PNG output dari kamera biasanya tidak ada alpha channel)
+img_unchanged = cv2.imread(os.path.join(IMAGE_DIR, "foto_bunga2.jpg"), cv2.IMREAD_UNCHANGED)
 
 # Menampilkan informasi gambar unchanged
 print(f"\n[INFO] Gambar unchanged berhasil dimuat.")
@@ -132,14 +132,14 @@ print(f"\n[OUTPUT] Hasil disimpan di: {output_path}")
 # Menampilkan gambar di jendela OpenCV (hanya bekerja jika ada GUI)
 try:
     # cv2.imshow(nama_jendela, gambar) - menampilkan gambar di jendela
-    cv2.imshow("Gambar Berwarna", img_color)
-    cv2.imshow("Gambar Grayscale", img_gray)
+#     cv2.imshow("Gambar Berwarna", img_color)  # (disabled for batch execution)
+#     cv2.imshow("Gambar Grayscale", img_gray)  # (disabled for batch execution)
 
-    # cv2.waitKey(0) - menunggu sampai user menekan tombol apapun
+    # cv2.waitKey(1) - menunggu sampai user menekan tombol apapun
     # Parameter 0 = tunggu tanpa batas waktu
     # Parameter 1000 = tunggu 1000ms (1 detik)
     print("\n[INFO] Tekan tombol apapun pada jendela gambar untuk menutup...")
-    cv2.waitKey(3000)  # Tunggu 3 detik atau sampai tombol ditekan
+    cv2.waitKey(1)  # Tunggu 3 detik atau sampai tombol ditekan
 
     # cv2.destroyAllWindows() - menutup semua jendela yang dibuat oleh OpenCV
     cv2.destroyAllWindows()

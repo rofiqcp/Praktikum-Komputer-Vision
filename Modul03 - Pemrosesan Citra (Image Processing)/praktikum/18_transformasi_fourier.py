@@ -24,7 +24,7 @@ IMAGE_DIR = os.path.join(SCRIPT_DIR, "image")
 OUTPUT_DIR = os.path.join(SCRIPT_DIR, "output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-img = cv2.imread(os.path.join(IMAGE_DIR, "spektrum.png"), cv2.IMREAD_GRAYSCALE)
+img = cv2.imread(os.path.join(IMAGE_DIR, "kota.jpg"), cv2.IMREAD_GRAYSCALE)
 if img is None:
     print("[ERROR] Jalankan download_image.py!"); exit()
 img = cv2.resize(img, (512, 512))

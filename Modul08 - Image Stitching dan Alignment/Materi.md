@@ -197,7 +197,201 @@ seam_finder = cv2.detail.GraphCutSeamFinder('COST_COLOR')
 
 ---
 
-## 10. Referensi
+## 10. Auto-Cropping Panorama
+
+### 10.1 Masalah Border Hitam
+Hasil stitching selalu memiliki area hitam (piksel tanpa data) karena warping menghasilkan bentuk non-rectangular. Border ini harus dihilangkan untuk panorama yang presentable.
+
+### 10.2 Teknik Auto-Crop
+
+#### Threshold + Bounding Rectangle
+1. Konversi panorama ke grayscale.
+2. Threshold untuk membuat binary mask (konten = putih, border = hitam).
+3. Temukan kontur terbesar → `cv2.boundingRect()` → crop.
+
+#### Maximum Inscribed Rectangle
+Cari rectangle terbesar yang sepenuhnya berada di dalam area konten (tanpa piksel hitam):
+- Pendekatan berbasis dynamic programming.
+- Menghasilkan crop yang lebih ketat tapi tanpa border hitam sama sekali.
+
+#### Morfologi untuk Refinement
+Operasi closing (`cv2.morphologyEx`) menutup gap kecil pada mask sebelum kontur detection, meningkatkan akurasi cropping.
+
+```python
+gray = cv2.cvtColor(panorama, cv2.COLOR_BGR2GRAY)
+_, thresh = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY)
+kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+x, y, w, h = cv2.boundingRect(max(contours, key=cv2.contourArea))
+cropped = panorama[y:y+h, x:x+w]
+```
+
+---
+
+## 11. Homography: Dekomposisi dan Analisis
+
+### 11.1 Dekomposisi Homography
+Homography $H$ dapat didekomposisi menjadi komponen rotasi $R$, translasi $\mathbf{t}$, dan normal bidang $\mathbf{n}$:
+
+$$
+H = R + \mathbf{t} \cdot \mathbf{n}^T
+$$
+
+OpenCV menyediakan `cv2.decomposeHomographyMat(H, K)` yang mengembalikan hingga 4 solusi.
+
+### 11.2 Reprojection Error
+Kualitas homography diukur dengan reprojection error:
+$$
+e = \frac{1}{N} \sum_{i=1}^{N} \|x'_i - H \cdot x_i\|^2
+$$
+
+Error rendah menunjukkan estimasi yang akurat. Distribusi error membantu mengidentifikasi outlier.
+
+### 11.3 Analisis Outlier
+- Inlier: titik dengan error < threshold (biasanya 3–5 piksel).
+- RANSAC secara iteratif memilih subset random, estimasi $H$, dan menghitung inlier.
+- Rasio inlier/total menunjukkan kualitas matches.
+
+---
+
+## 12. Image Registration (ECC Algorithm)
+
+### 12.1 Konsep
+Image registration menyelaraskan dua gambar menggunakan optimasi intensitas piksel, bukan fitur diskrit. ECC (Enhanced Correlation Coefficient) memaksimalkan korelasi antara template dan warped image.
+
+### 12.2 Model Transformasi
+ECC mendukung beberapa motion model:
+- **Translation** (2 DOF): Pergeseran $dx, dy$.
+- **Euclidean** (3 DOF): Translasi + rotasi.
+- **Affine** (6 DOF): Termasuk scaling dan shearing.
+- **Homography** (8 DOF): Transformasi perspektif penuh.
+
+### 12.3 Implementasi
+```python
+warp_mode = cv2.MOTION_EUCLIDEAN
+warp_matrix = np.eye(2, 3, dtype=np.float32)
+criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 1000, 1e-6)
+cc, warp_matrix = cv2.findTransformECC(template_gray, target_gray, warp_matrix, warp_mode, criteria)
+```
+
+### 12.4 ECC vs Feature-based
+| Aspek | ECC | Feature-based |
+|-------|-----|---------------|
+| Input | Piksel (intensitas) | Keypoints + descriptors |
+| Akurasi | Sub-pixel | Bergantung pada fitur |
+| Kecepatan | Lambat (iteratif) | Cepat |
+| Robustness | Sensitif inisialisasi | Robust terhadap perubahan besar |
+| Use case | Perubahan kecil | Perubahan perspektif besar |
+
+---
+
+## 13. Laplacian Pyramid Blending (Detail)
+
+### 13.1 Gaussian Pyramid
+Gaussian pyramid dibangun dengan repeated downsampling:
+$$
+G_l = \text{reduce}(G_{l-1}) = \text{downsample}(\text{blur}(G_{l-1}))
+$$
+
+### 13.2 Laplacian Pyramid
+Laplacian pyramid menyimpan detail (perbedaan antara level Gaussian):
+$$
+L_l = G_l - \text{expand}(G_{l+1})
+$$
+
+Setiap level menyimpan band frekuensi tertentu: level rendah = frekuensi tinggi (detail), level tinggi = frekuensi rendah (struktur).
+
+### 13.3 Proses Blending
+1. Bangun Laplacian pyramid $LA$ dan $LB$ dari gambar A dan B.
+2. Bangun Gaussian pyramid $GM$ dari mask.
+3. Blend per level: $LC_l = GM_l \cdot LA_l + (1 - GM_l) \cdot LB_l$.
+4. Rekonstruksi: $R_l = LC_l + \text{expand}(R_{l+1})$.
+
+### 13.4 Keunggulan
+- Frekuensi rendah (warna, brightness) diblend secara luas → transisi halus.
+- Frekuensi tinggi (tepi, tekstur) diblend secara lokal → detail tajam.
+- Hasil lebih alami dibanding alpha blending sederhana.
+
+---
+
+## 14. Metrik Kualitas Stitching
+
+### 14.1 PSNR (Peak Signal-to-Noise Ratio)
+$$
+\text{PSNR} = 10 \cdot \log_{10}\left(\frac{MAX^2}{MSE}\right)
+$$
+
+PSNR tinggi menunjukkan perbedaan kecil. Untuk area overlap, PSNR > 30 dB dianggap baik.
+
+### 14.2 SSIM (Structural Similarity Index)
+$$
+\text{SSIM}(x, y) = \frac{(2\mu_x\mu_y + C_1)(2\sigma_{xy} + C_2)}{(\mu_x^2 + \mu_y^2 + C_1)(\sigma_x^2 + \sigma_y^2 + C_2)}
+$$
+
+SSIM mengukur kemiripan struktural (luminance, contrast, structure). Rentang [0, 1], dimana 1 = identik.
+
+### 14.3 Difference Map
+Visualisasi absolute difference antara area overlap sebelum dan sesudah blending:
+```python
+diff = cv2.absdiff(overlap1, overlap2)
+heatmap = cv2.applyColorMap(diff, cv2.COLORMAP_JET)
+```
+
+### 14.4 Edge Alignment
+Mengukur kesinambungan tepi di seam line menggunakan Canny edge detection. Tepi yang terputus di seam menunjukkan alignment buruk.
+
+---
+
+## 15. Loop Closure dalam Panorama
+
+### 15.1 Masalah Drift
+Pada panorama 360°, chain homography mengakumulasi error:
+$$
+H_{1 \to N} = H_{(N-1) \to N} \cdot \ldots \cdot H_{2 \to 3} \cdot H_{1 \to 2}
+$$
+
+Idealnya, setelah lingkaran penuh kembali ke gambar 1, transformasi akumulasi harus identitas. Perbedaan dari identitas = drift.
+
+### 15.2 Deteksi Loop
+Feature matching antara gambar pertama dan terakhir mendeteksi loop. Jika ditemukan cukup banyak matches, loop closure dapat dilakukan.
+
+### 15.3 Distribusi Error
+Drift didistribusikan secara merata ke setiap pasangan homography menggunakan interpolasi:
+$$
+H'_i = H_i \cdot \Delta H_i, \quad \Delta H_i = H_{drift}^{i/N}
+$$
+
+Pendekatan ini analog dengan bundle adjustment sederhana khusus untuk loop.
+
+---
+
+## 16. Document Stitching
+
+### 16.1 Perbedaan dengan Panorama Alam
+- Dokumen memerlukan perspektif yang benar (rectangular).
+- Transformasi biasanya translasi + sedikit rotasi (bukan homography penuh).
+- Stitching biasanya vertikal (halaman panjang) atau horizontal (whiteboard lebar).
+
+### 16.2 Pipeline Document Stitching
+1. **Perspective Correction**: 4-point transform untuk membuat dokumen rectangular.
+2. **Enhancement**: Contrast enhancement, sharpening.
+3. **Feature Matching**: Pada bagian overlap teks/konten.
+4. **Alignment**: Estimasi translasi vertikal/horizontal.
+5. **Stacking**: Gabungkan secara vertikal atau horizontal.
+6. **Post-processing**: Binarization, cropping, cleanup.
+
+### 16.3 Perspective Correction
+```python
+pts = np.float32([[x1,y1], [x2,y2], [x3,y3], [x4,y4]])
+dst = np.float32([[0,0], [w,0], [w,h], [0,h]])
+M = cv2.getPerspectiveTransform(pts, dst)
+warped = cv2.warpPerspective(img, M, (w, h))
+```
+
+---
+
+## 17. Referensi
 
 1. Szeliski, R. (2022). *Computer Vision: Algorithms and Applications*, 2nd Ed., Chapter 8.
 2. Brown, M. & Lowe, D. (2007). *Automatic Panoramic Image Stitching using Invariant Features*. IJCV.

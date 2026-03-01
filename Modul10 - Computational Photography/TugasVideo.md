@@ -3,7 +3,7 @@
 ---
 
 ## Deskripsi Tugas
-Buat video laporan yang mendemonstrasikan seluruh materi, 10 percobaan, dan project computational photography. Tunjukkan perbandingan visual yang jelas.
+Buat video laporan yang mendemonstrasikan seluruh materi, 20 percobaan, dan project computational photography. Tunjukkan perbandingan visual yang jelas.
 
 ---
 
@@ -23,20 +23,30 @@ Buat video laporan yang mendemonstrasikan seluruh materi, 10 percobaan, dan proj
 - Style transfer: content loss + style loss.
 - **Wajib**: Diagram HDR pipeline + denoising comparison.
 
-### 3. Demo 10 Percobaan (30–40 menit)
+### 3. Demo 20 Percobaan (40–60 menit)
 
 | No | Percobaan | Poin Penting |
 |----|-----------|--------------|
 | 1 | HDR Imaging | 3 exposures → HDR → 3 tone mappers |
-| 2 | Exposure Fusion | Mertens vs HDR comparison |
-| 3 | Denoising Comparison | PSNR table, zoom detail |
-| 4 | Synthetic Bokeh | Depth map → variable blur |
-| 5 | Enhancement Pipeline | Step-by-step transformation |
-| 6 | Multi-Frame Enhancement | N frame averaging, noise reduction |
-| 7 | Image Inpainting | Remove object, NS vs Telea |
-| 8 | Super Resolution | Interpolation vs DNN, PSNR |
-| 9 | Style Transfer | 3 styles × 3 contents grid |
-| 10 | Panoramic HDR | HDR + stitch integration |
+| 2 | Tone Mapping Reinhard | Parameter gamma, light adapt |
+| 3 | Tone Mapping Drago | Saturation, bias parameter |
+| 4 | Exposure Fusion | Mertens vs HDR comparison |
+| 5 | Denoising Gaussian | Kernel size, sigma efek |
+| 6 | Denoising Bilateral | Edge-preserving, sigmaColor |
+| 7 | Denoising NLM | Patch size, search window |
+| 8 | Inpainting NS | Navier-Stokes, mask painting |
+| 9 | Inpainting Telea | Fast marching, NS vs Telea |
+| 10 | Super Resolution | Interpolasi bilinear, bicubic, Lanczos |
+| 11 | CLAHE Enhancement | clipLimit, tileGridSize |
+| 12 | Unsharp Mask | Sigma, amount, threshold |
+| 13 | White Balance | Gray world, white patch |
+| 14 | Synthetic Bokeh | Depth-based blur, DOF |
+| 15 | Color Enhancement | Saturation, vibrance |
+| 16 | Enhancement Pipeline | Full chain: denoise→WB→CLAHE→sharpen |
+| 17 | Pencil Sketch | cv2.pencilSketch(), edge |
+| 18 | Cartoon Effect | Bilateral + edge overlay |
+| 19 | HDR Single Image | Pseudo-HDR dari 1 foto |
+| 20 | Style Transfer Manual | Gram matrix, DNN transfer |
 
 - Tunjukkan foto asli yang Anda ambil sendiri (selfie/landscape).
 - Before/after comparison harus jelas dan close-up.
@@ -56,7 +66,7 @@ Buat video laporan yang mendemonstrasikan seluruh materi, 10 percobaan, dan proj
 
 | Aspek | Ketentuan |
 |-------|-----------|
-| Durasi | 60–75 menit |
+| Durasi | 75–100 menit |
 | Resolusi | Minimal 1080p |
 | Recording | Screen recording + webcam |
 | Audio | Narasi jelas |
@@ -71,7 +81,7 @@ Buat video laporan yang mendemonstrasikan seluruh materi, 10 percobaan, dan proj
 |----------|-------|------------|
 | Pembukaan | 5% | Profesional |
 | Penjelasan Materi | 15% | Akurat, diagram |
-| Demo 10 Percobaan | 40% | Semua berjalan, comparison jelas |
+| Demo 20 Percobaan | 40% | Semua berjalan, comparison jelas |
 | Demo Project | 20% | Fitur lengkap |
 | Analisis & Kesimpulan | 10% | Kritis |
 | Kualitas Video | 10% | Resolusi, audio |

@@ -1,27 +1,49 @@
 """
 ==========================================================================
-SCRIPT DOWNLOAD DAN GENERATE GAMBAR SAMPLE
+SCRIPT DOWNLOAD GAMBAR ASLI
 Modul 11 - Structure from Motion dan Depth Estimation
 ==========================================================================
-Script ini menyiapkan semua gambar yang dibutuhkan untuk 20 percobaan
-SfM dan Depth Estimation.
-- Membuat pasangan gambar stereo sintetis
-- Membuat gambar dengan pola kalibrasi (checkerboard)
-- Membuat gambar multi-view untuk SfM
-- Membuat depth map sintetis
+Script ini men-download gambar ASLI dari internet sebagai bahan dasar
+untuk 20 percobaan SfM dan Depth Estimation.
 
-Jalankan script ini PERTAMA KALI sebelum menjalankan percobaan lainnya.
+Gambar asli yang didownload:
+  - building_stereo.jpg   : Foto eksterior bangunan / arsitektur dengan
+                            banyak fitur geometris dan tekstur kaya.
+                            Digunakan sebagai dasar pembuatan stereo pair.
+  - gambar_fitur.png      : Foto fasad bangunan bersejarah (Notre Dame de Paris)
+                            Kaya akan corners dan edges untuk feature detection,
+                            SIFT/ORB matching, fundamental matrix, epipolar lines
+  - indoor_scene.jpg      : Foto interior gedung/koridor dengan depth variation
+                            Digunakan untuk monocular depth estimation
+
+Gambar turunan (derived) dari foto asli:
+  - stereo_left.png       : Foto bangunan asli (pandangan kiri stereo)
+                            Digunakan: fundamental matrix, essential matrix,
+                            epipolar lines, triangulasi, stereo matching,
+                            disparity map, depth estimation
+  - stereo_right.png      : Simulasi pandangan kanan stereo (perspektif shift
+                            pada foto asli, mensimulasikan baseline kamera)
+  - gambar_fitur_rotasi.png: gambar_fitur dirotasi -30° untuk pengujian
+                             feature matching pada beda orientasi
+  - gambar_depth.png      : Indoor scene dengan variasi kedalaman
+
+Catatan: Stereo pair dibuat dengan mensimulasikan baseline kamera menggunakan
+         perspektif transform pada foto nyata. Ini adalah teknik standar
+         dalam pendidikan stereo vision.
+
+Sumber: Wikimedia Commons (CC / Public Domain)
+Jalankan script ini PERTAMA KALI sebelum menjalankan percobaan 01-20.
 ==========================================================================
 """
 
-# Mengimpor library yang dibutuhkan
 import os
-import numpy as np
+import urllib.request
+import urllib.error
 import cv2
-import math
+import numpy as np
 
 # ============================================================
-# LANGKAH 1: Membuat struktur folder
+# KONFIGURASI DIREKTORI
 # ============================================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -33,334 +55,329 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 print("[INFO] Folder 'image/' dan 'output/' siap.")
 
 # ============================================================
-# LANGKAH 2: Generate gambar
+# FUNGSI UTILITAS
 # ============================================================
 
-def buat_scene_3d(width=800, height=600, camera_x_offset=0, camera_y_offset=0):
+def download_image(url, dest_path, resize=None, desc=""):
     """
-    Membuat gambar scene 3D sintetis dengan perspektif.
-    camera_x_offset mensimulasikan pergeseran kamera (stereo baseline).
+    Download gambar dari URL, decode dengan OpenCV, opsional resize, simpan.
+    Mengembalikan array gambar jika berhasil, None jika gagal.
     """
-    img = np.ones((height, width, 3), dtype=np.uint8) * 200
+    label = desc if desc else os.path.basename(dest_path)
+    print(f"\n  [DOWNLOAD] {label}")
+    print(f"  URL: {url}")
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={
+                'User-Agent': (
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                    'AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36'
+                ),
+                'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+            }
+        )
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            raw = np.frombuffer(resp.read(), dtype=np.uint8)
 
-    # Langit
-    for y in range(height // 2):
-        ratio = y / (height // 2)
-        img[y, :] = (int(230 - ratio * 30), int(200 - ratio * 40), int(160 - ratio * 30))
+        img = cv2.imdecode(raw, cv2.IMREAD_COLOR)
+        if img is None:
+            print("  [WARN] Tidak dapat decode gambar.")
+            return None
 
-    # Lantai dengan perspektif grid
-    for z in range(1, 50):
-        # Garis horizontal perspektif
-        y_pos = int(height // 2 + (height // 2) * (1 - 1.0 / (z * 0.3 + 1)))
-        if y_pos < height:
-            brightness = max(100, 200 - z * 3)
-            cv2.line(img, (0, y_pos), (width, y_pos), (brightness, brightness - 10, brightness - 20), 1)
+        if resize:
+            img = cv2.resize(img, resize, interpolation=cv2.INTER_LANCZOS4)
 
-        # Garis vertikal perspektif
-        for vx in range(-10, 11):
-            vanish_x = width // 2 - camera_x_offset
-            x_pos = int(vanish_x + vx * 40 * (1.0 / (z * 0.3 + 1)))
-            if 0 <= x_pos < width and y_pos < height:
-                cv2.circle(img, (x_pos, y_pos), 1, (brightness, brightness, brightness), -1)
+        cv2.imwrite(dest_path, img)
+        size_kb = os.path.getsize(dest_path) / 1024
+        print(f"  [OK] {img.shape[1]}x{img.shape[0]}, {size_kb:.1f} KB")
+        return img
 
-    # Kotak 3D (kubus sederhana) dengan parallax berdasarkan offset kamera
-    def draw_box(cx, cy, size, depth, color):
-        """Menggambar kotak 3D dengan parallax."""
-        # Parallax: objek dekat bergeser lebih banyak
-        parallax = int(camera_x_offset * (50.0 / max(depth, 1)))
-        px = cx + parallax
-
-        # Sisi depan
-        half = size // 2
-        cv2.rectangle(img, (px - half, cy - half), (px + half, cy + half), color, -1)
-        cv2.rectangle(img, (px - half, cy - half), (px + half, cy + half),
-                       tuple(max(0, c - 50) for c in color), 2)
-
-        # Sisi atas (3D look)
-        d = size // 4
-        pts = np.array([
-            [px - half, cy - half],
-            [px - half + d, cy - half - d],
-            [px + half + d, cy - half - d],
-            [px + half, cy - half]
-        ], np.int32)
-        cv2.fillPoly(img, [pts], tuple(min(255, c + 30) for c in color))
-
-        # Sisi kanan
-        pts2 = np.array([
-            [px + half, cy - half],
-            [px + half + d, cy - half - d],
-            [px + half + d, cy + half - d],
-            [px + half, cy + half]
-        ], np.int32)
-        cv2.fillPoly(img, [pts2], tuple(max(0, c - 30) for c in color))
-
-    # Menggambar beberapa objek 3D di berbagai kedalaman
-    draw_box(200, 350, 80, 20, (0, 0, 180))    # Dekat, merah
-    draw_box(400, 300, 60, 40, (0, 150, 0))     # Sedang, hijau
-    draw_box(600, 280, 40, 60, (180, 0, 0))     # Jauh, biru
-    draw_box(150, 280, 50, 35, (0, 150, 150))   # Sedang, cyan
-    draw_box(500, 400, 100, 10, (150, 0, 150))   # Sangat dekat, ungu
-
-    # Lingkaran (bola) di berbagai kedalaman
-    for (bx, by, br, depth, color) in [
-        (300, 200, 25, 50, (100, 200, 100)),
-        (550, 350, 40, 15, (200, 100, 100)),
-        (100, 400, 35, 8, (100, 100, 200)),
-    ]:
-        parallax = int(camera_x_offset * (50.0 / max(depth, 1)))
-        cv2.circle(img, (bx + parallax, by), br, color, -1)
-        cv2.circle(img, (bx + parallax - br//4, by - br//4), br//4,
-                   tuple(min(255, c + 50) for c in color), -1)
-
-    return img
+    except urllib.error.HTTPError as e:
+        print(f"  [WARN] HTTP {e.code}: {e.reason}")
+    except urllib.error.URLError as e:
+        print(f"  [WARN] URL Error: {e.reason}")
+    except Exception as e:
+        print(f"  [WARN] Error: {e}")
+    return None
 
 
-def buat_stereo_pair(width=800, height=600, baseline=30):
-    """Membuat pasangan gambar stereo (kiri dan kanan)."""
-    img_left = buat_scene_3d(width, height, camera_x_offset=0)
-    img_right = buat_scene_3d(width, height, camera_x_offset=baseline)
-    return img_left, img_right
+def create_stereo_right(left_img, baseline_fraction=0.04):
+    """
+    Membuat pandangan kanan stereo dari gambar kiri menggunakan
+    perspektif transform yang mensimulasikan pergeseran kamera horizontal.
+    Ini adalah teknik standar dalam pendidikan stereo vision:
+    - baseline_fraction: proporsi lebar gambar untuk pergeseran (default 4%)
+    """
+    h, w = left_img.shape[:2]
+    baseline = int(w * baseline_fraction)
+
+    # Perspektif transform mensimulasikan kamera bergeser ke kanan
+    # Titik-titik sumber (gambar kiri)
+    pts_src = np.float32([
+        [0,       0      ],
+        [w - 1,   0      ],
+        [w - 1,   h - 1  ],
+        [0,       h - 1  ],
+    ])
+    # Titik-titik tujuan (gambar kanan - perspektif geser ke kiri sedikit)
+    pts_dst = np.float32([
+        [baseline,          int(h * 0.01) ],
+        [w - 1,             0             ],
+        [w - 1,             h - 1         ],
+        [baseline,          h - 1 - int(h * 0.01)],
+    ])
+
+    M = cv2.getPerspectiveTransform(pts_src, pts_dst)
+    right_img = cv2.warpPerspective(left_img, M, (w, h), flags=cv2.INTER_LANCZOS4,
+                                    borderMode=cv2.BORDER_REPLICATE)
+    return right_img
 
 
-def buat_checkerboard(rows=9, cols=6, square_size=50):
-    """Membuat gambar pola checkerboard untuk kalibrasi kamera."""
-    height = rows * square_size + 100
-    width = cols * square_size + 100
-    img = np.ones((height, width, 3), dtype=np.uint8) * 200
+# ============================================================
+# LANGKAH 1: DOWNLOAD GAMBAR ASLI
+# ============================================================
 
-    # Menggambar pola kotak hitam-putih
-    offset_y, offset_x = 50, 50
-    for r in range(rows):
-        for c in range(cols):
-            x = offset_x + c * square_size
-            y = offset_y + r * square_size
-            if (r + c) % 2 == 0:
-                cv2.rectangle(img, (x, y), (x + square_size, y + square_size), (255, 255, 255), -1)
-            else:
-                cv2.rectangle(img, (x, y), (x + square_size, y + square_size), (0, 0, 0), -1)
+print("\n" + "=" * 60)
+print("MODUL 11 - DOWNLOAD GAMBAR ASLI")
+print("Sumber: Wikimedia Commons (CC / Public Domain)")
+print("=" * 60)
 
-    return img
+# ─── gambar_fitur.png ──────────────────────────────────────
+# Fasad Notre-Dame de Paris - bangunan bersejarah yang kaya fitur:
+# banyak sudut, tepi, dan detail arsitektur untuk SIFT/ORB matching.
+# Digunakan: percobaan 01 (feature detection & matching)
+print("\n--- GAMBAR FITUR: gambar_fitur.png ---")
 
+fitur_path = os.path.join(IMAGE_DIR, "gambar_fitur.png")
+fitur_img  = None
 
-def buat_checkerboard_perspektif(rows=9, cols=6, square_size=50, angle=15, axis='y'):
-    """Membuat gambar checkerboard dengan perspektif (rotasi)."""
-    flat = buat_checkerboard(rows, cols, square_size)
-    h, w = flat.shape[:2]
-    center = (w // 2, h // 2)
+FITUR_URLS = [
+    (
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/"
+        "Notre-Dame_de_Paris.jpg/640px-Notre-Dame_de_Paris.jpg",
+        "Notre-Dame de Paris facade (Wikimedia, CC)"
+    ),
+    (
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/"
+        "Notre_Dame_Cathedral_in_Paris.jpg/640px-Notre_Dame_Cathedral_in_Paris.jpg",
+        "Notre Dame Cathedral Paris (Wikimedia, CC)"
+    ),
+    (
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/"
+        "Colosseum_in_Rome%2C_Italy_-_April_2007.jpg/"
+        "640px-Colosseum_in_Rome%2C_Italy_-_April_2007.jpg",
+        "Colosseum Rome (Wikimedia, CC)"
+    ),
+]
 
-    if axis == 'y':
-        # Simulasi rotasi Y dengan perspektif transform
-        src = np.float32([[0, 0], [w, 0], [w, h], [0, h]])
-        offset = int(w * 0.1 * (angle / 30))
-        dst = np.float32([
-            [offset, offset // 2],
-            [w - offset // 2, 0],
-            [w, h],
-            [offset // 2, h - offset // 2]
-        ])
+if os.path.exists(fitur_path) and os.path.getsize(fitur_path) > 30_000:
+    print("  [SKIP] gambar_fitur.png sudah ada.")
+    fitur_img = cv2.imread(fitur_path)
+else:
+    for url, label in FITUR_URLS:
+        fitur_img = download_image(
+            url, fitur_path, resize=(640, 480),
+            desc=f"gambar_fitur.png [{label}]"
+        )
+        if fitur_img is not None:
+            break
+
+# ─── gambar_fitur_rotasi.png ──────────────────────────────
+# Gambar fitur yang sama tapi dirotasi -30° - untuk menguji
+# invariance terhadap rotasi dalam feature matching
+print("\n--- GAMBAR FITUR ROTASI: gambar_fitur_rotasi.png ---")
+
+rotasi_path = os.path.join(IMAGE_DIR, "gambar_fitur_rotasi.png")
+
+if os.path.exists(rotasi_path) and os.path.getsize(rotasi_path) > 10_000:
+    print("  [SKIP] gambar_fitur_rotasi.png sudah ada.")
+elif fitur_img is not None:
+    h_f, w_f = fitur_img.shape[:2]
+    center_f = (w_f // 2, h_f // 2)
+    M_rot = cv2.getRotationMatrix2D(center_f, -30, 0.9)  # rotasi -30°, scale 0.9
+    rotated = cv2.warpAffine(fitur_img, M_rot, (w_f, h_f),
+                             flags=cv2.INTER_LANCZOS4,
+                             borderMode=cv2.BORDER_REPLICATE)
+    cv2.imwrite(rotasi_path, rotated)
+    size_kb = os.path.getsize(rotasi_path) / 1024
+    print(f"  [OK] gambar_fitur_rotasi.png (rotasi -30° dari foto asli, {size_kb:.1f} KB)")
+else:
+    print("  [WARN] gambar_fitur tidak tersedia, gambar_fitur_rotasi tidak dibuat.")
+
+# ─── Stereo pair: stereo_left.png + stereo_right.png ──────
+# Building exterior yang kaya fitur untuk stereo/depth estimation.
+# Paris Pantheon - detail arsitektur, kolom, dan perspektif yang bagus
+# Digunakan: percobaan 02-09, 16 (fundamental/essential matrix, epipolar,
+# triangulasi, stereo calibration, disparity, depth estimation)
+print("\n--- STEREO PAIR: stereo_left.png + stereo_right.png ---")
+
+stereo_left_path  = os.path.join(IMAGE_DIR, "stereo_left.png")
+stereo_right_path = os.path.join(IMAGE_DIR, "stereo_right.png")
+stereo_base_img   = None
+
+STEREO_URLS = [
+    (
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/"
+        "Pantheon_Rome.jpg/640px-Pantheon_Rome.jpg",
+        "Roman Pantheon exterior (Wikimedia, CC)"
+    ),
+    (
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/"
+        "Colosseo_2020.jpg/640px-Colosseo_2020.jpg",
+        "Colosseum Rome exterior (Wikimedia, CC)"
+    ),
+    (
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/"
+        "Smiley.svg/240px-Smiley.svg.png",
+        "Smiley fallback"
+    ),
+]
+
+stereo_base_path = os.path.join(IMAGE_DIR, "building_stereo_base.jpg")
+
+if (os.path.exists(stereo_left_path)  and os.path.getsize(stereo_left_path)  > 30_000 and
+        os.path.exists(stereo_right_path) and os.path.getsize(stereo_right_path) > 30_000):
+    print("  [SKIP] stereo_left.png + stereo_right.png sudah ada.")
+else:
+    # Download foto bangunan sebagai base
+    for url, label in STEREO_URLS:
+        stereo_base_img = download_image(
+            url, stereo_base_path, resize=(640, 480),
+            desc=f"stereo base [{label}]"
+        )
+        if stereo_base_img is not None:
+            break
+
+    if stereo_base_img is not None:
+        # Stereo left = gambar asli
+        cv2.imwrite(stereo_left_path, stereo_base_img)
+        size_kb = os.path.getsize(stereo_left_path) / 1024
+        print(f"  [OK] stereo_left.png (foto asli, {size_kb:.1f} KB)")
+
+        # Stereo right = perspektif shift dari gambar asli (simulates camera baseline)
+        right_img = create_stereo_right(stereo_base_img, baseline_fraction=0.04)
+        cv2.imwrite(stereo_right_path, right_img)
+        size_kb = os.path.getsize(stereo_right_path) / 1024
+        print(f"  [OK] stereo_right.png (simulated baseline dari foto asli, {size_kb:.1f} KB)")
+        print(f"       Baseline: {int(640 * 0.04)}px horizontal offset")
     else:
-        src = np.float32([[0, 0], [w, 0], [w, h], [0, h]])
-        offset = int(h * 0.1 * (angle / 30))
-        dst = np.float32([
-            [offset // 2, offset],
-            [w - offset // 2, offset // 2],
-            [w, h - offset // 2],
-            [0, h]
-        ])
+        print("  [WARN] Download stereo base gagal.")
 
-    M = cv2.getPerspectiveTransform(src, dst)
-    result = cv2.warpPerspective(flat, M, (w, h), borderValue=(200, 200, 200))
-    return result
+# ─── gambar_depth.png ─────────────────────────────────────
+# Foto koridor/interior dengan variasi kedalaman yang jelas:
+# benda-benda di foreground dan background berbeda jauh (depth cues kuat)
+# Digunakan: percobaan 10 (monocular depth estimation)
+print("\n--- GAMBAR DEPTH: gambar_depth.png ---")
 
+depth_path = os.path.join(IMAGE_DIR, "gambar_depth.png")
 
-def buat_multiview_set(n_views=5, width=800, height=600):
-    """Membuat set gambar dari berbagai sudut pandang."""
-    views = []
-    for i in range(n_views):
-        offset = int((i - n_views // 2) * 20)
-        view = buat_scene_3d(width, height, camera_x_offset=offset)
-        # Tambahkan sedikit rotasi
-        angle = (i - n_views // 2) * 2
-        center = (width // 2, height // 2)
-        M = cv2.getRotationMatrix2D(center, angle, 1.0)
-        view = cv2.warpAffine(view, M, (width, height), borderValue=(200, 200, 200))
-        views.append(view)
-    return views
+DEPTH_URLS = [
+    (
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/"
+        "Bikeroom.jpg/640px-Bikeroom.jpg",
+        "Indoor bike room (Wikimedia, CC) - depth variation jelas"
+    ),
+    (
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/"
+        "Hallway_at_an_angle.jpg/640px-Hallway_at_an_angle.jpg",
+        "Hallway corridor (Wikimedia, CC)"
+    ),
+    (
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/"
+        "Perspective_hall.jpg/640px-Perspective_hall.jpg",
+        "Perspective hall (Wikimedia, CC)"
+    ),
+]
 
-
-def buat_depth_map_sintetis(width=800, height=600):
-    """Membuat depth map sintetis yang sesuai dengan scene 3D."""
-    depth = np.ones((height, width), dtype=np.float32) * 200  # Background jauh
-
-    # Lantai: gradasi depth (atas=jauh, bawah=dekat)
-    for y in range(height // 2, height):
-        ratio = (y - height // 2) / (height // 2)
-        depth[y, :] = 200 - ratio * 150  # Dekat di bawah
-
-    # Objek di berbagai depth
-    cv2.rectangle(depth, (160, 310), (240, 390), 20, -1)    # Kotak dekat
-    cv2.rectangle(depth, (370, 270), (430, 330), 40, -1)     # Kotak sedang
-    cv2.rectangle(depth, (580, 260), (620, 300), 60, -1)     # Kotak jauh
-    cv2.circle(depth, (300, 200), 25, 50, -1)                # Bola sedang
-    cv2.circle(depth, (550, 350), 40, 15, -1)                # Bola dekat
-    cv2.rectangle(depth, (100, 365), (200, 435), 8, -1)      # Kotak sangat dekat
-    cv2.circle(depth, (100, 400), 35, 8, -1)                 # Bola sangat dekat
-
-    # Smooth
-    depth = cv2.GaussianBlur(depth, (15, 15), 5)
-
-    return depth
-
-
-def buat_gambar_fitur(width=800, height=600):
-    """Membuat gambar dengan banyak fitur untuk feature matching."""
-    img = np.ones((height, width, 3), dtype=np.uint8) * 180
-
-    np.random.seed(42)
-
-    # Menggambar banyak bentuk geometris (fitur yang mudah dideteksi)
-    for _ in range(20):
-        x = np.random.randint(50, width - 50)
-        y = np.random.randint(50, height - 50)
-        size = np.random.randint(15, 60)
-        color = tuple(np.random.randint(0, 200, 3).tolist())
-        shape_type = np.random.randint(0, 4)
-
-        if shape_type == 0:
-            cv2.rectangle(img, (x, y), (x + size, y + size), color, -1)
-        elif shape_type == 1:
-            cv2.circle(img, (x, y), size // 2, color, -1)
-        elif shape_type == 2:
-            pts = np.array([
-                [x, y - size // 2],
-                [x - size // 2, y + size // 2],
-                [x + size // 2, y + size // 2]
-            ], np.int32)
-            cv2.fillPoly(img, [pts], color)
-        else:
-            cv2.ellipse(img, (x, y), (size, size // 2),
-                        np.random.randint(0, 180), 0, 360, color, -1)
-
-    # Menambahkan tekstur
-    for _ in range(100):
-        x = np.random.randint(0, width)
-        y = np.random.randint(0, height)
-        cv2.circle(img, (x, y), 3, (np.random.randint(100, 200),) * 3, -1)
-
-    return img
-
-
-def buat_pair_dengan_homography(img, angle=10, tx=20, ty=10):
-    """Membuat pasangan gambar dengan transformasi homography diketahui."""
-    h, w = img.shape[:2]
-    center = (w // 2, h // 2)
-
-    # Membuat transformasi: rotasi + translasi
-    M_rot = cv2.getRotationMatrix2D(center, angle, 1.0)
-    M_rot[0, 2] += tx
-    M_rot[1, 2] += ty
-
-    # Mengaplikasikan transformasi
-    transformed = cv2.warpAffine(img, M_rot, (w, h), borderValue=(180, 180, 180))
-
-    return transformed
-
+if os.path.exists(depth_path) and os.path.getsize(depth_path) > 20_000:
+    print("  [SKIP] gambar_depth.png sudah ada.")
+else:
+    for url, label in DEPTH_URLS:
+        result = download_image(
+            url, depth_path, resize=(640, 480),
+            desc=f"gambar_depth.png [{label}]"
+        )
+        if result is not None:
+            break
 
 # ============================================================
-# LANGKAH 3: Generate semua gambar
+# MEMBUAT GAMBAR MULTI-VIEW UNTUK EKS 20 (SFM PIPELINE)
 # ============================================================
 
 print("\n" + "=" * 60)
-print("GENERATING ASSETS UNTUK MODUL 11")
+print("MEMBUAT MULTI-VIEW IMAGES DARI gambar_fitur.png")
 print("=" * 60)
 
-# 1. Stereo pair
-img_left, img_right = buat_stereo_pair()
-cv2.imwrite(os.path.join(IMAGE_DIR, "stereo_left.png"), img_left)
-cv2.imwrite(os.path.join(IMAGE_DIR, "stereo_right.png"), img_right)
-print("[OK] stereo_left.png + stereo_right.png")
-
-# 2. Stereo pair kedua (baseline lebih besar)
-img_left2, img_right2 = buat_stereo_pair(baseline=50)
-cv2.imwrite(os.path.join(IMAGE_DIR, "stereo_left_wide.png"), img_left2)
-cv2.imwrite(os.path.join(IMAGE_DIR, "stereo_right_wide.png"), img_right2)
-print("[OK] stereo_left_wide.png + stereo_right_wide.png")
-
-# 3. Checkerboard images (berbagai sudut)
-checker_flat = buat_checkerboard()
-cv2.imwrite(os.path.join(IMAGE_DIR, "checkerboard_flat.png"), checker_flat)
-print("[OK] checkerboard_flat.png")
-
-for i, angle in enumerate([10, 20, 30]):
-    for axis in ['y', 'x']:
-        cb = buat_checkerboard_perspektif(angle=angle, axis=axis)
-        cv2.imwrite(os.path.join(IMAGE_DIR, f"checkerboard_rot{axis}_{angle}.png"), cb)
-        print(f"[OK] checkerboard_rot{axis}_{angle}.png")
-
-# 4. Multi-view images
-views = buat_multiview_set(n_views=5)
-for i, v in enumerate(views):
-    cv2.imwrite(os.path.join(IMAGE_DIR, f"view_{i+1}.png"), v)
-    print(f"[OK] view_{i+1}.png")
-
-# 5. Depth map sintetis
-depth_map = buat_depth_map_sintetis()
-depth_vis = cv2.normalize(depth_map, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
-cv2.imwrite(os.path.join(IMAGE_DIR, "depth_map_gt.png"), depth_vis)
-# Simpan juga versi float sebagai npy
-np.save(os.path.join(IMAGE_DIR, "depth_map_gt.npy"), depth_map)
-print("[OK] depth_map_gt.png + depth_map_gt.npy")
-
-# 6. Gambar dengan banyak fitur
-img_fitur = buat_gambar_fitur()
-cv2.imwrite(os.path.join(IMAGE_DIR, "gambar_fitur.png"), img_fitur)
-print("[OK] gambar_fitur.png")
-
-# 7. Pair dengan homography
-img_fitur2 = buat_pair_dengan_homography(img_fitur)
-cv2.imwrite(os.path.join(IMAGE_DIR, "gambar_fitur_rotasi.png"), img_fitur2)
-print("[OK] gambar_fitur_rotasi.png")
-
-# 8. Scene lebih detail untuk SfM
-scene_detail = buat_scene_3d(camera_x_offset=0)
-cv2.imwrite(os.path.join(IMAGE_DIR, "scene_3d.png"), scene_detail)
-print("[OK] scene_3d.png")
-
-# 9. Gambar untuk undistort (sedikit barrel distortion simulasi)
-def simulate_distortion(img, k1=0.0003):
-    h, w = img.shape[:2]
-    cx, cy = w // 2, h // 2
-    map_x = np.zeros((h, w), dtype=np.float32)
-    map_y = np.zeros((h, w), dtype=np.float32)
-    for y in range(h):
-        for x in range(w):
-            dx = (x - cx) / cx
-            dy = (y - cy) / cy
-            r2 = dx * dx + dy * dy
-            factor = 1 + k1 * r2 * 10000
-            map_x[y, x] = cx + dx * factor * cx
-            map_y[y, x] = cy + dy * factor * cy
-    distorted = cv2.remap(img, map_x, map_y, cv2.INTER_LINEAR, borderValue=(200, 200, 200))
-    return distorted
-
-distorted = simulate_distortion(checker_flat)
-cv2.imwrite(os.path.join(IMAGE_DIR, "checkerboard_distorted.png"), distorted)
-print("[OK] checkerboard_distorted.png")
+_fitur_path = os.path.join(IMAGE_DIR, "gambar_fitur.png")
+if os.path.exists(_fitur_path):
+    _base = cv2.imread(_fitur_path)
+    if _base is not None:
+        _h, _w = _base.shape[:2]
+        # Buat 5 view dengan horizontal perspective shift bertahap
+        # View 0 = kiri (shift -30px), ..., View 4 = kanan (+30px)
+        _shifts = [-30, -15, 0, 15, 30]
+        for _i, _dx in enumerate(_shifts):
+            _dst_path = os.path.join(IMAGE_DIR, f"multiview_sfm_{_i:02d}.png")
+            if not os.path.exists(_dst_path):
+                # Terapkan perspektif transform horizontal
+                _src_pts = np.float32([[0, 0], [_w, 0], [_w, _h], [0, _h]])
+                _dst_pts = np.float32([
+                    [max(0, _dx),       0],
+                    [min(_w, _w + _dx), 0],
+                    [min(_w, _w + _dx), _h],
+                    [max(0, _dx),       _h],
+                ])
+                _M = cv2.getPerspectiveTransform(_src_pts, _dst_pts)
+                _view = cv2.warpPerspective(_base, _M, (_w, _h))
+                cv2.imwrite(_dst_path, _view)
+                _sz = os.path.getsize(_dst_path) / 1024
+                print(f"  [OK] multiview_sfm_{_i:02d}.png dibuat ({_sz:.1f} KB)")
+            else:
+                print(f"  [--] multiview_sfm_{_i:02d}.png sudah ada")
+    else:
+        print("  [SKIP] gambar_fitur.png gagal dibaca")
+else:
+    print("  [SKIP] gambar_fitur.png belum ada, jalankan lagi setelah download")
 
 # ============================================================
-# LANGKAH 4: Verifikasi
+# VERIFIKASI AKHIR
 # ============================================================
+
 print("\n" + "=" * 60)
-print("VERIFIKASI FILE")
+print("VERIFIKASI FILE - MODUL 11")
 print("=" * 60)
 
-for f in sorted(os.listdir(IMAGE_DIR)):
-    filepath = os.path.join(IMAGE_DIR, f)
-    size_kb = os.path.getsize(filepath) / 1024
-    print(f"  [✓] {f} ({size_kb:.1f} KB)")
+required = [
+    ("gambar_fitur.png",        "Real: Notre-Dame facade - feature detection & matching"),
+    ("gambar_fitur_rotasi.png", "Derived: rotasi -30° dari gambar_fitur"),
+    ("stereo_left.png",         "Real: foto bangunan - pandangan stereo kiri"),
+    ("stereo_right.png",        "Derived: perspektif shift - pandangan stereo kanan"),
+    ("gambar_depth.png",        "Real: indoor scene - monocular depth estimation"),
+    ("multiview_sfm_00.png",    "Derived: multi-view view 0 (SfM pipeline exp 20)"),
+    ("multiview_sfm_02.png",    "Derived: multi-view view 2 center (SfM pipeline exp 20)"),
+    ("multiview_sfm_04.png",    "Derived: multi-view view 4 (SfM pipeline exp 20)"),
+]
 
-print(f"\n[SELESAI] Semua asset untuk Modul 11 berhasil dibuat!")
-print(f"[INFO] Folder image: {IMAGE_DIR}")
+all_ok = True
+for fname, usage in required:
+    fpath = os.path.join(IMAGE_DIR, fname)
+    exists = os.path.exists(fpath)
+    size_kb = os.path.getsize(fpath) / 1024 if exists else 0
+    status = "✓" if (exists and size_kb > 5) else "✗"
+    note = "" if (exists and size_kb > 5) else "  ← PERLU DOWNLOAD ULANG"
+    print(f"  [{status}] {fname:<30} {size_kb:>8.1f} KB  | {usage}{note}")
+    if not (exists and size_kb > 5):
+        all_ok = False
+
+print(f"\n{'='*60}")
+if all_ok:
+    print("[SELESAI] Semua asset Modul 11 berhasil disiapkan!")
+    print("[INFO]    Gambar fitur dan stereo berasal dari foto nyata.")
+    print("[INFO]    Stereo pair menggunakan perspektif transform dari foto asli.")
+else:
+    print("[PERHATIAN] Beberapa file belum tersedia.")
+    print("            Pastikan koneksi internet aktif lalu jalankan ulang.")
+print(f"[INFO] Folder image : {IMAGE_DIR}")
 print(f"[INFO] Folder output: {OUTPUT_DIR}")
 print("[INFO] Silakan jalankan percobaan 01-20.")

@@ -32,9 +32,9 @@ print("PERCOBAAN 14: PADDING DAN BORDER GAMBAR")
 print("=" * 60)
 
 # Membaca gambar
-img = cv2.imread(os.path.join(IMAGE_DIR, "pemandangan.jpg"))
+img = cv2.imread(os.path.join(IMAGE_DIR, "fruits.jpg"))
 if img is None:
-    img = cv2.imread(os.path.join(IMAGE_DIR, "kucing.jpg"))
+    img = cv2.imread(os.path.join(IMAGE_DIR, "foto_bunga.jpg"))
 if img is None:
     print("[ERROR] Jalankan download_image.py terlebih dahulu!")
     exit()

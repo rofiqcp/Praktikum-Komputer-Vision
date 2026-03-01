@@ -90,7 +90,7 @@ for deg in [1, 2, 3]:
 print("\n--- 3. cv2.fitLine ---")
 
 # Baca gambar titik-titik
-img_pts = cv2.imread(os.path.join(IMAGE_DIR, "garis_noise.png"))
+img_pts = cv2.imread(os.path.join(IMAGE_DIR, "lena.jpg"))
 if img_pts is not None:
     gray = cv2.cvtColor(img_pts, cv2.COLOR_BGR2GRAY)
     # Deteksi titik-titik (threshold pada titik merah)

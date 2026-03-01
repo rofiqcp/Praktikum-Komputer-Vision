@@ -1,3 +1,0 @@
-LAPORAN RADIAL DISTORTION
-K1 Ground Truth: -0.25
-K1 Estimasi: 0.5

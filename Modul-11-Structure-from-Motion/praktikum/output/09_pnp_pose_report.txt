@@ -1,7 +1,0 @@
-LAPORAN PNP POSE ESTIMATION
-SolvePnP Success: True
-rvec (GT):  [ 0.2 -0.1  0.3]
-rvec (Est): [ 0.20399462 -0.10551169  0.29990741]
-tvec (GT):  [0. 0. 5.]
-tvec (Est): [4.78075697e-03 4.01026134e-03 5.00569946e+00]
-Mean Reprojection Error: 0.877 px

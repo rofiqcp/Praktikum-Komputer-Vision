@@ -27,7 +27,7 @@ numpy>=1.24.0                 # Operasi array dan matriks
 scipy>=1.11.0                 # Fungsi matematika dan optimisasi
 
 # Library Visualisasi
-matplotlib>=3.7.0             # Plotting dan visualisasi
+matplotlib>=3.10.0            # Plotting dan visualisasi (kompatibel dengan NumPy 2.x)
 seaborn>=0.12.0               # Visualisasi statistik
 
 # Library Deep Learning

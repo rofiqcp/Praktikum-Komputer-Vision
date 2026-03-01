@@ -1,5 +1,0 @@
-LAPORAN VANISHING POINTS
-VP1 Estimasi: [-108.66037344  352.19203603]
-VP2 Estimasi: [926.19072674 260.95425494]
-Principal Point: (400.0, 300.0)
-Estimasi Focal Length: 519.32 px

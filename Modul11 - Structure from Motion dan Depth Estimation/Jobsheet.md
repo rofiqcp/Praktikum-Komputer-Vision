@@ -1,611 +1,413 @@
-# JOBSHEET MODUL 11: STRUCTURE FROM MOTION DAN DEPTH ESTIMATION
+# JOBSHEET PRAKTIKUM
+# MODUL 11: STRUCTURE FROM MOTION DAN DEPTH ESTIMATION
 
 ---
 
-## Tujuan Praktikum
-1. Memahami epipolar geometry (Fundamental dan Essential matrix).
-2. Mengimplementasikan triangulasi 3D dari dua view.
-3. Memahami pipeline Structure from Motion (SfM).
-4. Mengimplementasikan stereo calibration dan rectification.
-5. Mengimplementasikan stereo matching (BM dan SGBM).
-6. Mencoba monocular depth estimation.
+## 1. TUJUAN PRAKTIKUM
+
+Setelah menyelesaikan praktikum ini, mahasiswa mampu:
+1. Memahami dan memvisualisasikan konsep epipolar geometry (epipole, epipolar lines, epipolar plane).
+2. Menghitung Fundamental Matrix dari korespondensi titik menggunakan 8-point algorithm.
+3. Menghitung Essential Matrix dan mendekomposisi menjadi rotasi dan translasi kamera.
+4. Menggambar dan menganalisis epipolar lines pada pasangan gambar stereo.
+5. Melakukan triangulasi untuk menghitung posisi 3D dari korespondensi 2D.
+6. Melakukan kalibrasi kamera stereo (intrinsik dan ekstrinsik).
+7. Menerapkan stereo rectification agar epipolar lines horizontal.
+8. Menghitung disparity map menggunakan StereoBM (Block Matching).
+9. Menghitung disparity map menggunakan StereoSGBM (Semi-Global Block Matching).
+10. Melakukan estimasi kedalaman monocular dari satu gambar.
+11. Mengkonversi disparity map menjadi depth map (Z = f·B/d).
+12. Membandingkan kualitas dan kecepatan StereoBM vs StereoSGBM.
+13. Meningkatkan kualitas disparity dengan WLS filter.
+14. Membuat point cloud 3D dari depth map.
+15. Melakukan estimasi pose kamera dengan solvePnP.
+16. Mengimplementasikan stereo matching real-time.
+17. Memvisualisasikan depth map dengan berbagai colormap.
+18. Menganalisis pengaruh baseline terhadap akurasi depth.
+19. Melakukan segmentasi objek berdasarkan kedalaman.
+20. Membangun pipeline SfM sederhana: feature matching → F → E → pose → triangulasi.
 
 ---
 
-## Alat dan Bahan
-- **Hardware**: PC/Laptop, webcam, smartphone, checkerboard pattern (cetak A4).
-- **Software**: Python 3.8+, Jupyter Notebook / VS Code.
-- **Library**: OpenCV (`opencv-contrib-python`), NumPy, Matplotlib, Open3D (opsional untuk visualisasi 3D).
-- **Dataset**: Pasangan gambar stereo, video objek dari berbagai sudut, checkerboard images.
+## 2. ALAT DAN BAHAN
 
-### Persiapan
-```text
-1. Cetak checkerboard pattern (9×6 inner corners) ukuran A4.
-2. Ambil foto objek dari 5+ sudut berbeda (untuk SfM).
-3. Ambil pasangan gambar stereo (geser kamera horizontal ~5-10 cm).
-```
+### Perangkat Keras
+- Laptop/PC (webcam opsional)
 
----
+### Perangkat Lunak
+- Python 3.8+, VS Code
+- Library: `opencv-python`, `opencv-contrib-python`, `numpy`, `matplotlib`
+- Opsional: `open3d` (visualisasi point cloud), `scipy`
 
-## Percobaan 1: Feature Matching Multi-View
-
-### Tujuan
-Membangun korespondensi fitur antar banyak view dari objek yang sama.
-
-### Dasar Teori
-SfM dimulai dari feature matching yang robust antar pasangan gambar. Match yang konsisten di banyak view menjadi dasar triangulasi.
-
-### Langkah Kerja
-1. Ambil 5 foto objek dari sudut berbeda (putar 15-30° per foto).
-2. Deteksi SIFT keypoints + descriptors pada semua gambar.
-3. Match fitur antar pasangan bersebelahan: (1,2), (2,3), (3,4), (4,5).
-4. Apply Lowe's ratio test (0.75).
-5. Visualisasikan matches per pasangan.
-6. Cari fitur yang muncul di 3+ gambar (track across views).
-7. Buat tabel: pasangan, jumlah matches, jumlah good matches.
-8. Uji match (1,3), (1,4) → match antar view yang jauh.
-9. Visualisasikan distribusi spasial keypoints per gambar.
-10. Identifikasi fitur yang paling sering match (most robust features).
-
-### Analisis Percobaan 1
-- Berapa persen fitur yang dapat di-track di 3+ view?
-- Apakah match antar view yang jauh (1,4) masih banyak?
-- Area mana dari objek yang paling banyak fitur robust?
-- Bagaimana sudut pandang mempengaruhi jumlah matches?
+### Dataset
+- Gambar stereo dari folder `image/` (diunduh via `download_image.py`):
+  - `stereo_left.png`, `stereo_right.png` — pasangan stereo
+  - `building_stereo.jpg` — bangunan stereo
+  - `gambar_fitur.png`, `gambar_fitur_rotasi.png` — matching fitur
+  - `indoor_scene.jpg` — scene dalam ruangan
+  - `gambar_depth.png` — depth map referensi
 
 ---
 
-## Percobaan 2: Fundamental Matrix Estimation
+## 3. LANGKAH KERJA
 
-### Tujuan
-Mengestimasi Fundamental Matrix dari pasangan gambar dan memvisualisasikan epipolar lines.
+### Percobaan 1: Epipolar Geometry Visualisasi
 
-### Dasar Teori
-Fundamental matrix $F$ mendefinisikan epipolar geometry antara 2 view tanpa memerlukan informasi intrinsik kamera. Setiap titik di satu gambar berkorespondensi dengan garis (epipolar line) di gambar lain.
+**Tujuan**: Memvisualisasikan konsep dasar epipolar geometry.
 
-### Langkah Kerja
-1. Load 2 gambar dari scene yang sama (sudut berbeda).
-2. Deteksi + match fitur (SIFT + FLANN + ratio test).
-3. Estimasi F: `cv2.findFundamentalMat(pts1, pts2, cv2.FM_RANSAC)`.
-4. Hitung persentase inlier.
-5. Hitung epipolar lines: `cv2.computeCorrespondEpilines()`.
-6. Gambar epipolar lines pada kedua gambar.
-7. Verifikasi: epipolar lines harus melewati titik koresponden.
-8. Hitung epipolar error: jarak titik ke epipolar line rata-rata.
-9. Bandingkan FM_RANSAC vs FM_LMEDS vs FM_8POINT.
-10. Visualisasikan epipole (titik konvergensi epipolar lines).
+**Langkah Kerja**:
+1. Buat file `01_epipolar_geometry_visualisasi.py`.
+2. Buat diagram epipolar geometry: dua kamera, titik 3D, baseline, projection rays.
+3. Visualisasikan epipolar plane yang terbentuk oleh dua pusat kamera dan titik 3D.
+4. Buat diagram matematis epipolar constraint: $x'^T F x = 0$.
+5. Jelaskan sifat Fundamental Matrix: rank 2, 7 DOF, dan hubungan dengan epipole.
+6. Simpan diagram ke folder `output/`.
 
-### Analisis Percobaan 2
-- Berapa epipolar error rata-rata (piksel)?
-- Metode estimasi mana (RANSAC, LMEDS, 8-point) yang paling akurat?
-- Apakah epipolar lines konvergen ke satu titik (epipole)?
-- Apa terjadi jika gerakan kamera hanya translasi murni?
+**Analisis**: Epipolar geometry adalah fondasi struktur dua pandangan. Epipolar constraint mengurangi pencarian korespondensi dari 2D menjadi 1D (garis epipolar).
 
 ---
 
-## Percobaan 3: Essential Matrix dan Pose Recovery
+### Percobaan 2: Fundamental Matrix
 
-### Tujuan
-Mengestimasi Essential Matrix dan me-recover relative pose (R, t) antara 2 kamera.
+**Tujuan**: Menghitung Fundamental Matrix dari korespondensi titik.
 
-### Dasar Teori
-Essential matrix $E = K'^T F K$ menghubungkan normalized coordinates. Dekomposisi E menghasilkan rotasi dan translasi relatif kamera.
+**Langkah Kerja**:
+1. Buat file `02_fundamental_matrix.py`.
+2. Load pasangan gambar stereo dari `image/`.
+3. Buat/gunakan minimal 8 pasangan titik koresponden.
+4. Hitung F menggunakan `cv2.findFundamentalMat()` dengan metode 8-point.
+5. Verifikasi: cek rank F = 2, det(F) ≈ 0.
+6. Hitung epipolar lines: `l' = Fx`, `l = F^Tx'`.
+7. Gambar epipolar lines pada kedua gambar.
+8. Simpan hasil ke folder `output/`.
 
-### Langkah Kerja
-1. Kalibrasi kamera: ambil 10+ foto checkerboard → `calibrateCamera()` → dapatkan $K$.
-2. Load 2 gambar dari scene.
-3. Deteksi + match fitur.
-4. Estimasi E: `cv2.findEssentialMat(pts1, pts2, K)`.
-5. Recover pose: `cv2.recoverPose(E, pts1, pts2, K)`.
-6. Print R (rotasi) dan t (translasi) → interpretasikan gerakan kamera.
-7. Atau: hitung E dari F → $E = K^T F K$ → bandingkan.
-8. Verifikasi: hitung $\mathbf{x'}^T E \mathbf{x}$ untuk setiap match → harus ≈ 0.
-9. Visualisasikan arah gerakan kamera (translasi vektor).
-10. Uji pada 3 pasangan gambar dengan gerakan berbeda.
-
-### Analisis Percobaan 3
-- Apakah R dan t sesuai dengan gerakan kamera sebenarnya?
-- Berapa error $\mathbf{x'}^T E \mathbf{x}$ rata-rata?
-- Mengapa t hanya menunjukkan arah (bukan magnitud)?
-- Pada kondisi apa pose recovery gagal (degenerate case)?
+**Analisis**: F menghubungkan titik di gambar kiri ke garis di gambar kanan. Kualitas F bergantung pada jumlah dan distribusi korespondensi.
 
 ---
 
-## Percobaan 4: Triangulasi 3D
+### Percobaan 3: Essential Matrix dan Pose Estimation
 
-### Tujuan
-Merekonstruksi titik 3D dari 2 view menggunakan triangulasi.
+**Tujuan**: Menghitung Essential Matrix dan mengekstrak pose kamera.
 
-### Dasar Teori
-Dari R, t antara 2 kamera + korespondensi titik, kita bisa menghitung posisi 3D titik menggunakan triangulasi (interseksi ray).
+**Langkah Kerja**:
+1. Buat file `03_essential_matrix_pose.py`.
+2. Definisikan matriks intrinsik K (focal length dan principal point).
+3. Buat korespondensi sintetis atau gunakan gambar stereo real.
+4. Hitung E menggunakan `cv2.findEssentialMat()`.
+5. Dekomposisi E menjadi R dan t menggunakan `cv2.recoverPose()`.
+6. Visualisasikan korespondensi titik dan relative pose kamera.
+7. Bandingkan dengan ground truth jika tersedia.
+8. Simpan hasil ke folder `output/`.
 
-### Langkah Kerja
-1. Gunakan K, R, t dari Percobaan 3.
-2. Buat projection matrix: $P_1 = K[I|0]$, $P_2 = K[R|t]$.
-3. Triangulasi: `cv2.triangulatePoints(P1, P2, pts1, pts2)`.
-4. Konversi homogeneous → Euclidean (bagi dengan w).
-5. Filter: hapus titik di belakang kamera (Z < 0).
-6. Plot 3D point cloud menggunakan Matplotlib `Axes3D` atau Open3D.
-7. Plot posisi kamera di 3D space.
-8. Hitung reprojection error: project 3D points kembali → bandingkan.
-9. Variasikan baseline (jarak kamera): kecil vs besar → bandingkan akurasi 3D.
-10. Colorize point cloud berdasarkan warna piksel dari gambar.
-
-### Analisis Percobaan 4
-- Berapa banyak titik 3D yang berhasil direkonstruksi?
-- Berapa reprojection error rata-rata?
-- Apakah bentuk objek bisa dikenali dari point cloud?
-- Bagaimana baseline mempengaruhi akurasi depth?
+**Analisis**: E = K'^T F K, hanya berlaku jika kamera terkalibrasi. Dekomposisi E menghasilkan 4 solusi, dipilih yang semua titik di depan kedua kamera.
 
 ---
 
-## Percobaan 5: Visual Odometry Sederhana
+### Percobaan 4: Epipolar Lines
 
-### Tujuan
-Mengimplementasikan visual odometry dari sekuens gambar/video.
+**Tujuan**: Menggambar dan menganalisis epipolar lines menggunakan feature matching.
 
-### Dasar Teori
-Visual odometry mengestimasi gerakan kamera dari frame ke frame, mengakumulasi pose untuk mendapatkan trajectory lengkap.
+**Langkah Kerja**:
+1. Buat file `04_epipolar_lines.py`.
+2. Load pasangan stereo, deteksi fitur ORB, match dengan BFMatcher.
+3. Hitung F dengan RANSAC.
+4. Hitung epipolar lines menggunakan `cv2.computeCorrespondEpilines()`.
+5. Gambar epipolar lines berwarna pada gambar kiri, titik koresponden pada gambar kanan.
+6. Verifikasi: semua epipolar lines pada gambar yang sudah di-rektifikasi harus horizontal.
+7. Simpan hasil ke folder `output/`.
 
-### Langkah Kerja
-1. Rekam video sambil berjalan lurus (atau gunakan dataset seperti KITTI).
-2. Baca frame secara berurutan.
-3. Deteksi fitur → track antar frame.
-4. Estimasi Essential matrix → recover R, t per pasangan frame.
-5. Akumulasi pose: $T_{global} = T_{global} \cdot T_{relative}$.
-6. Plot trajectory kamera (bird's-eye view: X vs Z).
-7. Bandingkan dengan ground truth jika ada (atau intuisi gerakan).
-8. Identifikasi scale drift (skala translasi berbeda per frame).
-9. Coba absolute scale: gunakan objek dengan ukuran diketahui.
-10. Plot trajectory 3D + orientasi kamera per keyframe.
-
-### Analisis Percobaan 5
-- Apakah trajectory sesuai dengan gerakan sebenarnya?
-- Apa yang menyebabkan drift pada trajectory?
-- Berapa frame per detik yang bisa diproses?
-- Bagaimana cara mengatasi scale ambiguity pada monocular VO?
+**Analisis**: Epipolar lines yang baik menunjukkan F yang akurat. Setelah rektifikasi, semua epipolar lines menjadi horizontal.
 
 ---
 
-## Percobaan 6: Stereo Calibration
+### Percobaan 5: Triangulasi Titik 3D
 
-### Tujuan
-Mengkalibrasi pasangan kamera stereo menggunakan checkerboard.
+**Tujuan**: Menghitung posisi 3D dari korespondensi 2D menggunakan triangulasi.
 
-### Dasar Teori
-Stereo calibration menentukan intrinsic parameters kedua kamera + extrinsic (R, T) di antara keduanya, diperlukan untuk rectification dan depth estimation.
+**Langkah Kerja**:
+1. Buat file `05_triangulasi_titik_3d.py`.
+2. Setup dua projection matrix P1, P2 dari K, R, t.
+3. Buat titik 3D ground truth, proyeksikan ke kedua kamera.
+4. Triangulasi menggunakan `cv2.triangulatePoints()`.
+5. Konversi koordinat homogen ke Euclidean.
+6. Hitung reprojection error per titik.
+7. Visualisasikan 3D: ground truth vs hasil triangulasi.
+8. Simpan grafik error dan point cloud ke folder `output/`.
 
-### Langkah Kerja
-1. Setup dua kamera atau gunakan satu kamera yang digeser horizontal.
-2. Ambil 15+ pasangan gambar checkerboard (tampilkan di berbagai posisi/orientasi).
-3. Deteksi chessboard corners di kedua gambar.
-4. Kalibrasi individual: `calibrateCamera()` per kamera.
-5. Stereo calibration: `stereoCalibrate()`.
-6. Print hasil: K1, K2, dist1, dist2, R, T, E, F.
-7. Hitung baseline: $|T|$ dalam unit yang diketahui (cm).
-8. Hitung reprojection error per kamera.
-9. Visualisasikan detected corners pada beberapa pasangan gambar.
-10. Simpan parameter kalibrasi ke file (JSON atau NPZ).
-
-### Analisis Percobaan 6
-- Berapa reprojection error per kamera?
-- Apakah baseline sesuai dengan jarak fisik kamera?
-- Berapa distortion coefficient yang signifikan?
-- Apa pengaruh jumlah gambar kalibrasi pada akurasi?
+**Analisis**: Triangulasi akurat bila baseline cukup besar dan noise rendah. Error meningkat untuk titik yang jauh dari kamera.
 
 ---
 
-## Percobaan 7: Stereo Rectification
+### Percobaan 6: Stereo Calibration
 
-### Tujuan
-Merektifikasi pasangan gambar stereo agar epipolar lines horizontal.
+**Tujuan**: Melakukan kalibrasi kamera stereo menggunakan checkerboard.
 
-### Dasar Teori
-Rectification mentransformasi kedua gambar sehingga titik koresponden berada di baris piksel yang sama. Ini memplifikasi stereo matching menjadi pencarian 1D.
+**Langkah Kerja**:
+1. Buat file `06_stereo_calibration.py`.
+2. Buat gambar checkerboard sintetis.
+3. Simulasikan deteksi corners dari beberapa posisi/orientasi.
+4. Jelaskan konsep intrinsik (fx, fy, cx, cy) dan ekstrinsik (R, T).
+5. Hitung baseline dari translasi vektor T.
+6. Visualisasikan checkerboard dan distribusi corner detection.
+7. Simpan hasil ke folder `output/`.
 
-### Langkah Kerja
-1. Load parameter kalibrasi stereo.
-2. Hitung rectification: `cv2.stereoRectify()`.
-3. Buat remap: `cv2.initUndistortRectifyMap()`.
-4. Remap kedua gambar: `cv2.remap()`.
-5. Tampilkan: gambar asli vs rectified (side-by-side).
-6. Gambar garis horizontal pada gambar rectified → verifikasi fitur sejajar.
-7. Overlay kedua gambar rectified → objek yang sama harus geser horizontal.
-8. Crop valid ROI dari rectification.
-9. Hitung dan visualisasikan disparity awal (hanya horizontal shift).
-10. Simpan gambar rectified untuk Percobaan 8.
-
-### Analisis Percobaan 7
-- Apakah epipolar lines sudah horizontal setelah rectification?
-- Berapa area gambar yang hilang setelah rectification?
-- Apakah fitur di kedua gambar benar-benar sejajar horizontal?
-- Apa artinya Q matrix dari stereoRectify?
+**Analisis**: Kalibrasi stereo menentukan hubungan geometris antara dua kamera. Akurasi kalibrasi sangat mempengaruhi kualitas depth estimation.
 
 ---
 
-## Percobaan 8: Block Matching Disparity
+### Percobaan 7: Stereo Rectification
 
-### Tujuan
-Menghitung disparity map menggunakan Block Matching (BM).
+**Tujuan**: Menerapkan rektifikasi stereo agar epipolar lines menjadi horizontal.
 
-### Dasar Teori
-BM mencari pasangan piksel di gambar kiri dan kanan menggunakan SAD (Sum of Absolute Differences) dalam block kecil. Disparity = perpindahan horizontal match.
+**Langkah Kerja**:
+1. Buat file `07_stereo_rectification.py`.
+2. Load pasangan stereo, deteksi fitur dan match.
+3. Hitung F dan gunakan `cv2.stereoRectifyUncalibrated()` untuk mendapat H1, H2.
+4. Warp kedua gambar menggunakan `cv2.warpPerspective()`.
+5. Gambar garis horizontal untuk verifikasi bahwa baris gambar sejajar.
+6. Bandingkan gambar sebelum dan sesudah rektifikasi.
+7. Simpan hasil ke folder `output/`.
 
-### Langkah Kerja
-1. Load gambar rectified (dari Percobaan 7 atau dataset Middlebury).
-2. Konversi ke grayscale.
-3. Buat StereoBM: `cv2.StereoBM_create(numDisparities=64, blockSize=15)`.
-4. Compute disparity.
-5. Visualisasikan disparity map (colormap JET).
-6. Variasikan `numDisparities` (16, 32, 64, 128).
-7. Variasikan `blockSize` (5, 9, 15, 21).
-8. Post-processing: WLS filter untuk smooth disparity.
-9. Konversi disparity ke depth: $Z = fb/d$.
-10. Visualisasikan depth map.
-
-### Analisis Percobaan 8
-- Parameter mana yang menghasilkan disparity paling akurat?
-- Area mana yang memiliki disparity noise (textureless regions)?
-- Apakah depth map sesuai dengan jarak fisik objek?
-- Apa limitasi Block Matching?
+**Analisis**: Setelah rektifikasi, stereo matching menjadi pencarian 1D (sepanjang baris). Ini mempercepat dan menyederhanakan Block Matching.
 
 ---
 
-## Percobaan 9: Semi-Global Matching (SGBM)
+### Percobaan 8: Block Matching (StereoBM) Disparity
 
-### Tujuan
-Menghitung disparity map menggunakan SGBM yang lebih akurat dari BM.
+**Tujuan**: Menghitung disparity map menggunakan Block Matching.
 
-### Dasar Teori
-SGBM mengoptimalkan cost function yang memperhitungkan smoothness dari 8 arah, menghasilkan disparity yang lebih konsisten terutama di area low-texture.
+**Langkah Kerja**:
+1. Buat file `08_block_matching_disparity.py`.
+2. Load pasangan stereo, konversi ke grayscale.
+3. Buat StereoBM dengan `cv2.StereoBM_create(numDisparities, blockSize)`.
+4. Variasikan parameter: numDisparities (32, 64, 128), blockSize (9, 15, 21).
+5. Visualisasikan 4 variasi disparity map side-by-side.
+6. Analisis: area mana yang menghasilkan disparity baik/buruk.
+7. Simpan hasil ke folder `output/`.
 
-### Langkah Kerja
-1. Load gambar rectified yang sama.
-2. Buat StereoSGBM: set P1 (smoothness penalty kecil), P2 (smoothness penalty besar).
-3. Compute disparity.
-4. Bandingkan visual: BM vs SGBM.
-5. Variasikan P1 dan P2.
-6. Variasikan `mode`: SGBM, SGBM_3WAY, HH.
-7. Post-processing: WLS filter.
-8. Konversi ke depth map.
-9. Hitung statistik: disparity coverage (% piksel valid).
-10. Buat tabel: BM vs SGBM (parameter, coverage, kualitas visual, waktu).
-
-### Analisis Percobaan 9
-- Seberapa besar peningkatan SGBM vs BM?
-- Area mana yang paling terpengaruh oleh smoothness penalty?
-- Mode SGBM mana yang optimal (kualitas vs waktu)?
-- Berapa banyak piksel invalid setelah SGBM?
+**Analisis**: numDisparities menentukan range pencarian, blockSize menentukan Detail vs Noise trade-off. Area homogen tanpa tekstur menghasilkan disparity buruk.
 
 ---
 
-## Percobaan 10: Monocular Depth Estimation
+### Percobaan 9: SGBM Disparity
 
-### Tujuan
-Mengestimasi depth map dari SATU gambar menggunakan deep learning (MiDaS).
+**Tujuan**: Menghitung disparity menggunakan Semi-Global Block Matching.
 
-### Dasar Teori
-Monocular depth estimation menggunakan CNN yang dilatih pada dataset gambar-depth untuk memprediksi kedalaman relatif dari satu gambar. Hasilnya relatif (bukan metrik absolut).
+**Langkah Kerja**:
+1. Buat file `09_sgbm_disparity.py`.
+2. Load pasangan stereo.
+3. Buat StereoSGBM dengan parameter P1, P2, disp12MaxDiff, uniquenessRatio, speckleWindowSize.
+4. Jelaskan peran masing-masing parameter.
+5. Bandingkan disparity SGBM dengan BM secara visual.
+6. Tampilkan colorbar untuk skala disparity.
+7. Simpan hasil ke folder `output/`.
 
-### Langkah Kerja
-1. Download model MiDaS (small atau large) dalam format ONNX.
-2. Load model dengan `cv2.dnn.readNet()`.
-3. Preprocessing: resize ke 256×256 atau 384×384, normalize.
-4. Forward pass → depth map.
-5. Post-processing: resize ke ukuran asli, normalize ke 0-255.
-6. Visualisasikan depth map (colormap).
-7. Uji pada 5 gambar berbeda: indoor, outdoor, close-up, landscape, street.
-8. Bandingkan depth MiDaS vs stereo depth (jika ada) pada gambar yang sama.
-9. Overlay depth map semi-transparent pada gambar asli.
-10. Gunakan depth map untuk synthetic bokeh (dari Modul 10).
-
-### Analisis Percobaan 10
-- Apakah depth map sesuai dengan intuisi kedalaman?
-- Pada jenis scene apa MiDaS paling akurat?
-- Apa perbedaan utama monocular vs stereo depth?
-- Bagaimana depth map bisa digunakan untuk aplikasi lain?
+**Analisis**: SGBM mengoptimasi cost secara semi-global (8 atau 16 arah), menghasilkan disparity lebih halus dan akurat dibanding BM, tetapi lebih lambat.
 
 ---
 
-## Percobaan 11: Konversi Disparity ke Depth Map
+### Percobaan 10: Monocular Depth Estimation
 
-### Tujuan
-Memahami hubungan matematis antara disparity dan depth menggunakan rumus $Z = f \cdot B / d$ serta membandingkan konversi manual dengan `cv2.reprojectImageTo3D()`.
+**Tujuan**: Estimasi kedalaman dari satu gambar tanpa stereo.
 
-### Dasar Teori
-Depth (kedalaman) suatu titik dapat dihitung dari disparity menggunakan rumus $Z = f \cdot B / d$, di mana $f$ adalah focal length, $B$ adalah baseline, dan $d$ adalah disparity. Matriks Q (4×4) dari stereo rectification memungkinkan konversi disparity ke koordinat 3D secara langsung menggunakan `cv2.reprojectImageTo3D()`. Analisis depth zones (near/mid/far) membantu memahami distribusi kedalaman objek dalam scene.
+**Langkah Kerja**:
+1. Buat file `10_monocular_depth_estimation.py`.
+2. Load gambar single view.
+3. Implementasikan estimasi depth berbasis gradien (area tajam = dekat).
+4. Implementasikan heuristik vertikal (bawah gambar = dekat).
+5. Gabungkan kedua metode.
+6. Bandingkan visual ketiga metode.
+7. Simpan hasil ke folder `output/`.
 
-### Langkah Kerja
-1. Buat pasangan stereo sintetis dengan objek pada depth yang diketahui (ground truth).
-2. Definisikan parameter kamera sintetis: `focal_length` dan `baseline`.
-3. Hitung disparity map menggunakan `cv2.StereoBM_create()`.
-4. Konversi disparity ke depth secara manual: $Z = f \cdot B / d$ menggunakan `np.where()`.
-5. Bangun matriks Q dan gunakan `cv2.reprojectImageTo3D()` untuk konversi otomatis.
-6. Bandingkan hasil depth manual vs `reprojectImageTo3D()` → hitung perbedaan.
-7. Normalisasi depth map dengan `cv2.normalize()` dan visualisasikan dengan `cv2.applyColorMap()`.
-8. Segmentasi depth zones: near (< 300), mid (300–600), far (> 600) menggunakan `np.clip()`.
-9. Buat histogram distribusi depth dan analisis persebaran objek.
-10. Bandingkan depth yang diestimasi dengan ground truth → hitung error per objek.
-
-### Analisis Percobaan 11
-- Seberapa akurat konversi $Z = f \cdot B / d$ dibandingkan ground truth?
-- Apakah hasil `cv2.reprojectImageTo3D()` identik dengan konversi manual?
-- Bagaimana distribusi depth zones (near/mid/far) pada scene?
-- Pada rentang disparity berapa konversi ke depth paling tidak stabil?
+**Analisis**: Monocular depth adalah ill-posed problem (satu gambar memiliki banyak solusi depth). Heuristik sederhana terbatas; deep learning (MiDaS) jauh lebih akurat.
 
 ---
 
-## Percobaan 12: Perbandingan Stereo BM vs SGBM
+### Percobaan 11: Disparity to Depth
 
-### Tujuan
-Membandingkan performa StereoBM dan StereoSGBM secara menyeluruh pada beberapa scene dengan tingkat kesulitan berbeda.
+**Tujuan**: Konversi disparity map menjadi depth map menggunakan formula.
 
-### Dasar Teori
-StereoBM menggunakan block matching sederhana (SAD) yang cepat namun kurang akurat pada area low-texture. StereoSGBM mengoptimalkan cost function dari 8 arah (semi-global), menghasilkan disparity lebih konsisten tetapi lebih lambat. Perbandingan meliputi coverage (persentase piksel valid), kualitas visual, dan waktu komputasi.
+**Langkah Kerja**:
+1. Buat file `11_disparity_to_depth.py`.
+2. Buat disparity map sintetis dengan variasi nilai.
+3. Terapkan formula: $Z = \frac{f \cdot B}{d}$, di mana f = focal, B = baseline, d = disparity.
+4. Visualisasikan disparity, depth map, dan profil baris tengah.
+5. Analisis: mengapa depth tidak linier terhadap disparity.
+6. Simpan hasil ke folder `output/`.
 
-### Langkah Kerja
-1. Buat 3 scene sintetis dengan tingkat kesulitan berbeda: easy, medium, hard.
-2. Buat `cv2.StereoBM_create()` dengan parameter `numDisparities` dan `blockSize`.
-3. Buat `cv2.StereoSGBM_create()` dengan parameter P1, P2, dan mode.
-4. Hitung disparity menggunakan `stereo.compute()` untuk kedua metode pada setiap scene.
-5. Ukur waktu komputasi menggunakan `time.time()` untuk setiap metode.
-6. Hitung coverage: persentase piksel dengan disparity valid (> 0).
-7. Normalisasi dan visualisasikan disparity map dengan `cv2.applyColorMap()`.
-8. Buat grid perbandingan visual: BM vs SGBM per scene.
-9. Buat tabel metrik: waktu, coverage, kualitas visual untuk setiap kombinasi.
-10. Analisis pro/kontra masing-masing metode berdasarkan tipe scene.
-
-### Analisis Percobaan 12
-- Scene tipe apa yang paling diuntungkan oleh SGBM dibanding BM?
-- Berapa rasio waktu komputasi SGBM/BM pada setiap scene?
-- Apakah coverage SGBM selalu lebih tinggi dari BM?
-- Pada kondisi apa BM sudah cukup baik sehingga SGBM tidak diperlukan?
+**Analisis**: Hubungan disparity-depth bersifat inversely proportional. Disparity kecil (objek jauh) menghasilkan depth yang sangat sensitif terhadap noise.
 
 ---
 
-## Percobaan 13: WLS Filter untuk Post-Processing Disparity
+### Percobaan 12: Perbandingan StereoBM vs StereoSGBM
 
-### Tujuan
-Mempelajari cara memperhalus disparity map menggunakan WLS Filter, median blur, dan bilateral filter.
+**Tujuan**: Membandingkan kinerja dan kecepatan BM vs SGBM.
 
-### Dasar Teori
-Disparity map mentah sering memiliki noise dan lubang (holes) terutama di area textureless. Median blur efektif menghilangkan salt-and-pepper noise, bilateral filter memperhalus sambil menjaga tepi (edge-preserving), dan WLS (Weighted Least Squares) Filter menggunakan informasi gambar asli sebagai panduan untuk menghasilkan disparity yang halus dan edge-aware.
+**Langkah Kerja**:
+1. Buat file `12_stereo_bm_vs_sgbm.py`.
+2. Load pasangan stereo.
+3. Hitung disparity dengan BM dan SGBM.
+4. Ukur waktu (ms) masing-masing metode.
+5. Tampilkan side-by-side: input, BM, SGBM dengan label waktu.
+6. Hitung speedup ratio.
+7. Simpan hasil ke folder `output/`.
 
-### Langkah Kerja
-1. Buat pasangan stereo sintetis dan hitung raw disparity menggunakan `cv2.StereoSGBM_create()`.
-2. Buat right matcher: `cv2.ximgproc.createRightMatcher(left_matcher)`.
-3. Hitung disparity kiri dan kanan.
-4. Buat WLS filter: `cv2.ximgproc.createDisparityWLSFilter(left_matcher)`.
-5. Set parameter WLS: `setLambda()` dan `setSigmaColor()`.
-6. Filter disparity: `wls_filter.filter(disp_left, img_left, disparity_map_right=disp_right)`.
-7. Terapkan `cv2.medianBlur()` pada raw disparity sebagai pembanding.
-8. Terapkan `cv2.bilateralFilter()` pada raw disparity.
-9. Hitung metrik: coverage dan smoothness untuk setiap metode filtering.
-10. Buat grid perbandingan visual: raw vs median vs bilateral vs WLS.
-
-### Analisis Percobaan 13
-- Metode filter mana yang menghasilkan disparity paling halus tanpa kehilangan tepi?
-- Berapa peningkatan coverage setelah WLS filtering?
-- Apakah median blur atau bilateral filter sudah cukup untuk post-processing?
-- Bagaimana parameter lambda dan sigma mempengaruhi hasil WLS filter?
+**Analisis**: BM 3-5x lebih cepat, cocok untuk real-time. SGBM lebih akurat di area sulit (oklusi, textureless). Pilihan bergantung pada kebutuhan aplikasi.
 
 ---
 
-## Percobaan 14: Membuat Point Cloud dari Depth Map
+### Percobaan 13: WLS Filter Disparity
 
-### Tujuan
-Mengkonversi depth map menjadi point cloud 3D dan memvisualisasikannya menggunakan Matplotlib 3D scatter plot.
+**Tujuan**: Meningkatkan kualitas disparity map menggunakan edge-aware filter.
 
-### Dasar Teori
-Point cloud adalah kumpulan titik 3D (X, Y, Z) yang merepresentasikan permukaan objek. Konversi dari depth map ke point cloud dapat dilakukan secara manual ($X = (x - c_x) \cdot Z / f$, $Y = (y - c_y) \cdot Z / f$) atau menggunakan `cv2.reprojectImageTo3D()` dengan matriks Q. Warna titik diambil dari gambar asli untuk visualisasi realistis.
+**Langkah Kerja**:
+1. Buat file `13_wls_filter_disparity.py`.
+2. Hitung disparity raw menggunakan StereoBM.
+3. Terapkan WLS filter (`ximgproc.createDisparityWLSFilter`) atau bilateral filter sebagai fallback.
+4. Bandingkan disparity raw vs filtered.
+5. Atur parameter Lambda dan SigmaColor.
+6. Simpan perbandingan ke folder `output/`.
 
-### Langkah Kerja
-1. Buat pasangan stereo sintetis dengan objek pada depth yang diketahui.
-2. Hitung disparity map menggunakan `cv2.StereoSGBM_create()`.
-3. Konversi manual: hitung Z, lalu $X = (x - c_x) \cdot Z / f$ dan $Y = (y - c_y) \cdot Z / f$ menggunakan `np.meshgrid()`.
-4. Konversi otomatis menggunakan `cv2.reprojectImageTo3D()` dengan matriks Q.
-5. Filter titik invalid (disparity ≤ 0 atau Z di luar rentang).
-6. Subsample titik untuk performa visualisasi.
-7. Ambil warna dari gambar kiri untuk setiap titik 3D.
-8. Visualisasikan point cloud dengan `matplotlib Axes3D scatter` dari berbagai sudut pandang.
-9. Bandingkan point cloud manual vs `reprojectImageTo3D()`.
-10. Plot posisi objek 3D dan verifikasi terhadap ground truth depth.
-
-### Analisis Percobaan 14
-- Apakah bentuk objek dapat dikenali dari point cloud 3D?
-- Seberapa besar perbedaan antara metode konversi manual dan `reprojectImageTo3D()`?
-- Berapa persentase titik yang berhasil direkonstruksi (valid)?
-- Bagaimana densitas titik mempengaruhi kualitas visualisasi 3D?
+**Analisis**: WLS filter menghaluskan disparity sambil mempertahankan edge objek. Lambda mengontrol kekuatan smoothing, SigmaColor mengontrol sensitivitas edge.
 
 ---
 
-## Percobaan 15: Pose Estimation dengan PnP
+### Percobaan 14: Point Cloud dari Depth Map
 
-### Tujuan
-Mengestimasi pose kamera (posisi dan orientasi) dari korespondensi titik 3D-2D menggunakan algoritma PnP (Perspective-N-Point).
+**Tujuan**: Membuat point cloud 3D dari depth map dan parameter kamera.
 
-### Dasar Teori
-PnP mengestimasi pose kamera (rotation vector + translation vector) dari minimal 4 pasangan titik 3D objek dan proyeksi 2D-nya. `cv2.solvePnP()` menyediakan beberapa metode (ITERATIVE, P3P, EPNP, SQPNP), sedangkan `cv2.solvePnPRansac()` lebih robust terhadap outlier. `cv2.Rodrigues()` mengkonversi antara rotation vector dan rotation matrix.
+**Langkah Kerja**:
+1. Buat file `14_point_cloud_from_depth.py`.
+2. Buat depth map sintetis dengan beberapa objek pada kedalaman berbeda.
+3. Definisikan matriks intrinsik K (fx, fy, cx, cy).
+4. Konversi depth ke 3D: $X = (u - c_x) \cdot Z / f_x$, $Y = (v - c_y) \cdot Z / f_y$.
+5. Visualisasikan point cloud 3D dengan matplotlib scatter.
+6. Analisis distribusi spasial titik-titik 3D.
+7. Simpan visualisasi ke folder `output/`.
 
-### Langkah Kerja
-1. Definisikan titik 3D objek (misal sudut kubus) dan matriks intrinsik kamera K.
-2. Tentukan pose kamera ground truth (rvec, tvec) dan koefisien distorsi.
-3. Proyeksi titik 3D ke 2D menggunakan `cv2.projectPoints()`.
-4. Estimasi pose dengan `cv2.solvePnP()` menggunakan metode ITERATIVE.
-5. Bandingkan dengan metode lain: P3P, EPNP, SQPNP.
-6. Estimasi pose robust: `cv2.solvePnPRansac()` pada data dengan noise.
-7. Konversi rvec ke rotation matrix: `cv2.Rodrigues()` dan bandingkan dengan ground truth.
-8. Hitung reprojection error: proyeksi ulang titik 3D → bandingkan dengan titik 2D.
-9. Visualisasikan sumbu 3D pada gambar menggunakan `cv2.drawFrameAxes()`.
-10. Buat tabel perbandingan: metode, rotation error, translation error, reprojection error.
-
-### Analisis Percobaan 15
-- Metode PnP mana yang paling akurat pada data bersih?
-- Seberapa besar keuntungan `solvePnPRansac()` pada data dengan noise/outlier?
-- Berapa reprojection error rata-rata untuk setiap metode?
-- Pada kondisi apa estimasi pose PnP gagal atau tidak stabil?
+**Analisis**: Point cloud memungkinkan pemahaman 3D scene. Density point cloud bergantung pada resolusi gambar dan range depth.
 
 ---
 
-## Percobaan 16: Simulasi Stereo Matching Real-Time
+### Percobaan 15: PnP Pose Estimation
 
-### Tujuan
-Melakukan stereo matching secara real-time pada video sintetis dan membandingkan performa FPS antara StereoBM dan StereoSGBM.
+**Tujuan**: Estimasi pose kamera dari korespondensi 2D-3D.
 
-### Dasar Teori
-Stereo matching real-time memerlukan keseimbangan antara akurasi dan kecepatan komputasi. StereoBM lebih cepat namun kurang akurat, StereoSGBM lebih akurat namun lebih lambat. FPS (Frames Per Second) mengukur kemampuan sistem memproses frame secara kontinu, yang kritis untuk aplikasi seperti autonomous driving dan robotika.
+**Langkah Kerja**:
+1. Buat file `15_pnp_pose_estimation.py`.
+2. Definisikan titik 3D objek dan proyeksikan ke 2D + noise.
+3. Gunakan `cv2.solvePnP()` untuk estimasi rvec, tvec.
+4. Bandingkan hasil dengan ground truth: hitung error rotasi dan translasi.
+5. Visualisasikan titik 2D dan pose kamera 3D.
+6. Simpan hasil ke folder `output/`.
 
-### Langkah Kerja
-1. Definisikan parameter simulasi: ukuran frame, jumlah frame, `numDisparities`, `blockSize`.
-2. Buat fungsi generator frame stereo sintetis dengan objek bergerak.
-3. Inisialisasi `cv2.StereoBM_create()` dan `cv2.StereoSGBM_create()`.
-4. Proses setiap frame: generate stereo pair → konversi grayscale → compute disparity.
-5. Ukur waktu per frame menggunakan `time.time()` untuk BM dan SGBM.
-6. Hitung FPS rata-rata: total frame / total waktu.
-7. Normalisasi dan visualisasikan disparity map per frame dengan `cv2.applyColorMap()`.
-8. Simpan sample frame ke output menggunakan `cv2.VideoWriter()` atau gambar.
-9. Plot grafik FPS per frame untuk BM vs SGBM.
-10. Buat ringkasan statistik: min/max/avg FPS, coverage rata-rata per metode.
-
-### Analisis Percobaan 16
-- Berapa FPS rata-rata BM vs SGBM pada resolusi yang diuji?
-- Apakah FPS stabil sepanjang video atau berfluktuasi?
-- Pada resolusi berapa SGBM tidak lagi memenuhi real-time (< 30 FPS)?
-- Apakah kualitas disparity SGBM sebanding dengan penurunan FPS-nya?
+**Analisis**: PnP memerlukan minimal 4 korespondensi 2D-3D untuk solusi unik. RANSAC variant (`solvePnPRansac`) lebih robust terhadap outlier.
 
 ---
 
-## Percobaan 17: Depth Map Colorization dan Visualisasi
+### Percobaan 16: Stereo Matching Real-time
 
-### Tujuan
-Mempelajari berbagai teknik visualisasi depth map menggunakan colormap, kontur kedalaman, dan overlay semi-transparan.
+**Tujuan**: Implementasi stereo matching dengan parameter tuning untuk performa real-time.
 
-### Dasar Teori
-Depth map grayscale sulit diinterpretasi tanpa pewarnaan. Colormap memetakan nilai skalar ke warna untuk visualisasi intuitif. Kontur kedalaman menunjukkan batas-batas perubahan depth, sedangkan overlay depth pada gambar asli membantu korelasi spasial antara objek dan jaraknya. Segmentasi zona depth membagi scene menjadi near/mid/far.
+**Langkah Kerja**:
+1. Buat file `16_stereo_matching_realtime.py`.
+2. Bandingkan tiga konfigurasi: BM Fast (numDisp=32, block=9), BM Quality (numDisp=128, block=21), SGBM.
+3. Ukur FPS masing-masing konfigurasi (rata-rata dari beberapa frame).
+4. Visualisasikan disparity map dengan label FPS.
+5. Analisis trade-off kecepatan vs kualitas.
+6. Simpan hasil ke folder `output/`.
 
-### Langkah Kerja
-1. Buat pasangan stereo sintetis dan hitung disparity/depth map dengan `cv2.StereoSGBM_create()`.
-2. Normalisasi depth map ke 0–255 menggunakan `cv2.normalize()`.
-3. Terapkan berbagai colormap: `cv2.applyColorMap()` dengan JET, INFERNO, VIRIDIS, MAGMA, TURBO.
-4. Buat overlay semi-transparan: `cv2.addWeighted(img_color, alpha, depth_color, 1-alpha, 0)`.
-5. Segmentasi zona depth: `cv2.threshold()` untuk memisahkan near, mid, far.
-6. Buat kontur kedalaman menggunakan `cv2.threshold()` pada beberapa level depth.
-7. Visualisasikan kontur depth pada gambar asli.
-8. Buat histogram distribusi depth menggunakan `np.histogram()` dan plot dengan Matplotlib.
-9. Buat grid visualisasi: semua colormap + overlay + kontur dalam satu figure.
-10. Analisis colormap mana yang paling informatif untuk interpretasi depth.
-
-### Analisis Percobaan 17
-- Colormap mana yang paling efektif membedakan objek dekat dan jauh?
-- Apakah overlay semi-transparan membantu memahami konteks spasial?
-- Berapa level kontur yang optimal untuk visualisasi depth?
-- Bagaimana histogram depth membantu mengidentifikasi jumlah objek pada depth berbeda?
+**Analisis**: Parameter tuning kritis untuk aplikasi real-time. Resolusi gambar sangat mempengaruhi kecepatan.
 
 ---
 
-## Percobaan 18: Pengaruh Baseline terhadap Akurasi Depth
+### Percobaan 17: Depth Map Colorization
 
-### Tujuan
-Mempelajari bagaimana jarak antar kamera (baseline) mempengaruhi akurasi dan resolusi depth estimation.
+**Tujuan**: Memvisualisasikan depth map dengan berbagai colormap.
 
-### Dasar Teori
-Baseline adalah jarak horizontal antara dua kamera stereo. Baseline kecil menghasilkan disparity kecil sehingga resolusi depth rendah, sementara baseline besar meningkatkan resolusi depth tetapi memperbesar area occlusion. Hubungan $Z = f \cdot B / d$ menunjukkan bahwa error depth sensitif terhadap error disparity, terutama untuk objek jauh.
+**Langkah Kerja**:
+1. Buat file `17_depth_map_colorization.py`.
+2. Buat depth map sintetis dengan gradien.
+3. Terapkan 6 colormap: JET, PLASMA, INFERNO, TURBO, HOT, BONE.
+4. Tampilkan 6 visualisasi side-by-side.
+5. Analisis: colormap mana paling intuitif untuk depth.
+6. Simpan hasil ke folder `output/`.
 
-### Langkah Kerja
-1. Buat scene 3D sintetis dengan objek pada depth yang diketahui (ground truth).
-2. Definisikan beberapa nilai baseline: misal 10, 20, 30, 50, 80 pixel-equiv.
-3. Untuk setiap baseline, buat pasangan stereo dengan menggeser gambar.
-4. Hitung disparity map menggunakan `cv2.StereoSGBM_create()` untuk setiap baseline.
-5. Konversi disparity ke depth: $Z = f \cdot B / d$.
-6. Hitung error per objek: MAE = `np.mean(np.abs(depth_est - gt_depth))`.
-7. Hitung RMSE = `np.sqrt(np.mean((depth_est - gt_depth)**2))`.
-8. Pisahkan analisis: akurasi objek near vs mid vs far untuk setiap baseline.
-9. Plot grafik MAE dan RMSE vs baseline.
-10. Buat tabel: baseline, MAE near, MAE mid, MAE far, RMSE keseluruhan.
-
-### Analisis Percobaan 18
-- Baseline berapa yang menghasilkan MAE terendah secara keseluruhan?
-- Apakah objek dekat atau jauh yang lebih terpengaruh oleh perubahan baseline?
-- Pada baseline berapa mulai muncul masalah occlusion signifikan?
-- Bagaimana trade-off antara akurasi depth dan coverage saat baseline diperbesar?
+**Analisis**: Colormap JET paling umum tetapi memiliki artefak persepsi. PLASMA dan TURBO secara perseptual lebih seragam.
 
 ---
 
-## Percobaan 19: Segmentasi Objek Berbasis Depth
+### Percobaan 18: Efek Baseline terhadap Depth
 
-### Tujuan
-Menggunakan informasi depth untuk melakukan segmentasi objek berdasarkan jaraknya dari kamera.
+**Tujuan**: Menganalisis pengaruh jarak antar kamera (baseline) terhadap akurasi depth.
 
-### Dasar Teori
-Depth map dapat digunakan sebagai dasar segmentasi objek dengan menerapkan thresholding pada nilai kedalaman. Connected components mengidentifikasi objek individual dalam mask biner, dan morphological operations (opening, closing) membersihkan noise pada mask. Kombinasi informasi depth dan spatial memberikan segmentasi yang lebih robust dibanding metode berbasis warna saja.
+**Langkah Kerja**:
+1. Buat file `18_baseline_effect_depth.py`.
+2. Simulasikan formula Z = f·B/d dengan berbagai baseline (0.05, 0.1, 0.2, 0.5 m).
+3. Plot Depth vs Disparity untuk setiap baseline.
+4. Plot resolusi depth ($\Delta Z \approx Z^2 / (f \cdot B)$) vs jarak.
+5. Analisis trade-off: baseline besar vs kecil.
+6. Simpan grafik ke folder `output/`.
 
-### Langkah Kerja
-1. Buat pasangan stereo sintetis dengan objek pada depth berbeda dan hitung depth map.
-2. Normalisasi depth map ke 0–255.
-3. Terapkan threshold depth: `cv2.threshold()` untuk memisahkan foreground/background.
-4. Buat mask per zona depth: `cv2.inRange()` untuk near, mid, far.
-5. Bersihkan mask menggunakan `cv2.morphologyEx()` dengan operasi opening dan closing.
-6. Identifikasi objek individual: `cv2.connectedComponentsWithStats()`.
-7. Temukan kontur objek: `cv2.findContours()` dan gambar dengan `cv2.drawContours()`.
-8. Hitung statistik per objek: area, bounding box, rata-rata depth.
-9. Warnai setiap objek berdasarkan zona depth (near=merah, mid=hijau, far=biru).
-10. Buat visualisasi final: gambar asli + overlay segmentasi + label depth per objek.
-
-### Analisis Percobaan 19
-- Berapa jumlah objek yang berhasil disegmentasi dengan benar?
-- Apakah thresholding depth cukup untuk memisahkan objek yang berdekatan?
-- Bagaimana morphological operations mempengaruhi kualitas mask segmentasi?
-- Pada kondisi apa segmentasi berbasis depth gagal (objek pada depth yang sama)?
+**Analisis**: Baseline besar → akurasi depth lebih baik di jarak jauh, tetapi area matching overlap berkurang di jarak dekat. Trade-off desain sistem stereo.
 
 ---
 
-## Percobaan 20: Pipeline Rekonstruksi 3D Multi-View
+### Percobaan 19: Depth Object Segmentation
 
-### Tujuan
-Mengimplementasikan pipeline lengkap rekonstruksi 3D dari multiple views: deteksi fitur → matching → Essential matrix → pose recovery → triangulasi → PnP → point cloud.
+**Tujuan**: Segmentasi objek berdasarkan kedalaman.
 
-### Dasar Teori
-Rekonstruksi 3D multi-view memerlukan minimal 2 view dengan overlap yang cukup. Pipeline dimulai dari deteksi fitur SIFT yang robust, dilanjutkan estimasi Essential matrix untuk mendapatkan hubungan geometri antar view, lalu recovery pose (R, t) dan triangulasi titik 3D. Untuk view tambahan, PnP digunakan untuk mengestimasi pose kamera baru terhadap titik 3D yang sudah direkonstruksi.
+**Langkah Kerja**:
+1. Buat file `19_depth_object_segmentation.py`.
+2. Buat depth map sintetis dengan beberapa objek pada kedalaman berbeda.
+3. Segmentasi depth menjadi beberapa layer berdasarkan range nilai.
+4. Hitung area piksel per layer.
+5. Visualisasikan: depth map, segmentation map, dan bar chart area.
+6. Simpan hasil ke folder `output/`.
 
-### Langkah Kerja
-1. Buat scene 3D sintetis dengan titik-titik acak dan definisikan 5 pose kamera.
-2. Proyeksikan titik 3D ke setiap view menggunakan matriks intrinsik K dan pose kamera.
-3. Deteksi fitur SIFT: `cv2.SIFT_create()` pada setiap gambar view.
-4. Match fitur antar pasangan view bersebelahan: `cv2.BFMatcher()` + ratio test.
-5. Estimasi Essential matrix: `cv2.findEssentialMat()` dari pasangan pertama.
-6. Recovery pose: `cv2.recoverPose()` → dapatkan R dan t relatif.
-7. Triangulasi titik 3D: `cv2.triangulatePoints()` dari pasangan pertama.
-8. Untuk view berikutnya, gunakan `cv2.solvePnPRansac()` untuk estimasi pose.
-9. Akumulasi titik 3D dari setiap pasangan view → gabungkan point cloud.
-10. Visualisasikan point cloud final dan posisi semua kamera menggunakan Matplotlib 3D scatter.
-
-### Analisis Percobaan 20
-- Berapa banyak titik 3D yang berhasil direkonstruksi dari semua view?
-- Apakah posisi kamera yang diestimasi sesuai dengan ground truth?
-- Bagaimana jumlah view mempengaruhi densitas dan akurasi point cloud?
-- Apa langkah pipeline yang paling kritis terhadap kualitas rekonstruksi akhir?
+**Analisis**: Depth-based segmentation efektif untuk memisahkan foreground dan background. Lebih robust terhadap perubahan warna/tekstur dibanding segmentasi berbasis warna.
 
 ---
 
-## Kesimpulan
-Tuliskan kesimpulan berdasarkan:
-1. Pemahaman epipolar geometry dan signifikansinya.
-2. Kemampuan SfM merekonstruksi 3D dari gambar.
-3. Perbandingan BM vs SGBM untuk stereo matching.
-4. Monocular vs stereo depth estimation.
-5. Konversi disparity ke depth dan akurasi formula $Z = f \cdot B / d$.
-6. Efektivitas post-processing (WLS, median, bilateral) pada disparity map.
-7. Pembuatan point cloud 3D dari depth map dan visualisasinya.
-8. Pose estimation menggunakan PnP dan perbandingan metode.
-9. Trade-off akurasi vs kecepatan pada stereo matching real-time.
-10. Pengaruh baseline terhadap akurasi depth estimation.
-11. Segmentasi objek berbasis depth dan morfologi.
-12. Pipeline rekonstruksi 3D multi-view secara end-to-end.
-13. Aplikasi dan limitasi masing-masing metode.
+### Percobaan 20: Multiview Reconstruction Pipeline
+
+**Tujuan**: Membangun pipeline Structure from Motion end-to-end.
+
+**Langkah Kerja**:
+1. Buat file `20_multiview_reconstruction_pipeline.py`.
+2. Load dua gambar, deteksi fitur ORB, match.
+3. Hitung F → E → dekomposisi pose (R, t).
+4. Triangulasi semua inlier → point cloud 3D.
+5. Visualisasikan: kedua view dan 3D reconstruction.
+6. Tampilkan jumlah matches, inliers, titik 3D valid.
+7. Cetak ringkasan pipeline: Feature → F → E → Pose → Triangulasi → 3D.
+8. Simpan hasil ke folder `output/`.
+
+**Analisis**: SfM pipeline menghubungkan semua konsep modul ini. Kualitas output bergantung pada kualitas fitur, jumlah korespondensi, dan baseline antar pandangan.
 
 ---
 
-## Format Pengumpulan
-- **Deadline**: 1 minggu setelah praktikum.
-- **Format**: Jupyter Notebook (`.ipynb`).
-- **Naming**: `NIM_Nama_Modul11.ipynb`
+## 4. ANALISIS DAN PEMBAHASAN
+
+Jawab pertanyaan berikut dalam laporan:
+1. Mengapa epipolar constraint mengurangi pencarian korespondensi dari 2D menjadi 1D?
+2. Apa perbedaan Fundamental Matrix dan Essential Matrix? Kapan menggunakan masing-masing?
+3. Jelaskan rumus $Z = f \cdot B / d$ dan konsekuensi hubungan inversnya.
+4. Mengapa area tanpa tekstur (textureless) menghasilkan disparity yang buruk?
+5. Bagaimana pengaruh baseline terhadap akurasi dan range depth?
+6. Apa kelebihan SGBM dibanding BM? Kapan sebaiknya menggunakan BM?
+7. Jelaskan langkah-langkah pipeline SfM dan peran masing-masing tahap.
+8. Apa itu PnP dan mengapa minimal diperlukan 4 korespondensi 2D-3D?
+9. Mengapa WLS filter efektif meningkatkan kualitas disparity?
+10. Bagaimana monocular depth estimation berbeda dari stereo-based?
+
+---
+
+## 5. KESIMPULAN
+
+Tuliskan kesimpulan berdasarkan hasil percobaan, meliputi:
+- Pemahaman konsep epipolar geometry dan perannya dalam stereo vision.
+- Kemampuan menghitung F, E, dan melakukan triangulasi.
+- Perbandingan metode disparity (BM vs SGBM) dan post-processing.
+- Pemahaman pipeline SfM end-to-end.
+- Aplikasi depth estimation dalam segmentasi dan rekonstruksi 3D.

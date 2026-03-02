@@ -1,140 +1,111 @@
 """
 ==========================================================================
-PERCOBAAN 02: ROTASI DENGAN SUDUT BEBAS
-==========================================================================
-Rotasi gambar dengan sudut bebas, titik pusat custom, dan penanganan
-canvas agar gambar tidak terpotong.
+ PERCOBAAN 2 — ROTASI SUDUT BEBAS
+ Modul 2: Pembentukan Citra (Image Formation)
 
-Fungsi:
-- cv2.getRotationMatrix2D(center, angle, scale) → Matriks rotasi 2×3
-- cv2.warpAffine(src, M, dsize) → Terapkan rotasi
+ Tujuan  : Merotasi gambar dengan sudut bebas menggunakan matriks rotasi.
+ Konsep  : cv2.getRotationMatrix2D(center, angle, scale)
+           cv2.warpAffine(src, M, (w, h))
+           Rotasi 2D: R(θ) = [[cosθ, -sinθ], [sinθ, cosθ]]
 ==========================================================================
 """
 
 import cv2
 import numpy as np
 import os
+import matplotlib
 import matplotlib.pyplot as plt
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-IMAGE_DIR = os.path.join(SCRIPT_DIR, "image")
+SCRIPT_DIR   = os.path.dirname(os.path.abspath(__file__))
+IMAGE_DIR  = os.path.join(SCRIPT_DIR, "image")
 OUTPUT_DIR = os.path.join(SCRIPT_DIR, "output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-img = cv2.imread(os.path.join(IMAGE_DIR, "baboon.jpg"))
-if img is None:
-    img = cv2.imread(os.path.join(IMAGE_DIR, "gedung.jpg"))
-if img is None:
-    print("[ERROR] Jalankan download_image.py!"); exit()
 
-img = cv2.resize(img, (300, 300))
-h, w = img.shape[:2]
-pusat = (w // 2, h // 2)
-
-print("=" * 60)
-print("PERCOBAAN 02: ROTASI SUDUT BEBAS")
-print("=" * 60)
-
-# ============================================================
-# 1. Rotasi berbagai sudut
-# ============================================================
-print("\n--- 1. Berbagai Sudut ---")
-sudut_list = [15, 37, 72, 123, 200, 315]
-hasil = {}
-for s in sudut_list:
-    M = cv2.getRotationMatrix2D(pusat, s, 1.0)
-    hasil[s] = cv2.warpAffine(img, M, (w, h))
-    print(f"  Sudut {s}°")
-
-# ============================================================
-# 2. Rotasi tanpa crop dengan perhitungan canvas otomatis
-# ============================================================
-print("\n--- 2. Rotasi Tanpa Crop ---")
-
-def rotasi_full(img, sudut):
-    """Rotasi gambar dengan canvas diperbesar agar tidak crop."""
+def rotasi_sederhana(img, sudut, scale=1.0):
+    """Rotasi gambar pada pusat dengan sudut tertentu."""
     h, w = img.shape[:2]
-    cx, cy = w / 2, h / 2
-    M = cv2.getRotationMatrix2D((cx, cy), sudut, 1.0)
-    cos_a = abs(M[0, 0])
-    sin_a = abs(M[0, 1])
-    nw = int(h * sin_a + w * cos_a)
-    nh = int(h * cos_a + w * sin_a)
-    M[0, 2] += (nw - w) / 2
-    M[1, 2] += (nh - h) / 2
-    return cv2.warpAffine(img, M, (nw, nh), borderValue=(255, 255, 255))
+    center = (w // 2, h // 2)
+    M = cv2.getRotationMatrix2D(center, sudut, scale)
+    hasil = cv2.warpAffine(img, M, (w, h))
+    print(f"  Rotasi {sudut}° (scale={scale})")
+    return hasil
 
-img_full_37 = rotasi_full(img, 37)
-img_full_72 = rotasi_full(img, 72)
-print(f"  37° full: {img_full_37.shape[1]}×{img_full_37.shape[0]}")
 
-# ============================================================
-# 3. Rotasi dari titik pusat berbeda
-# ============================================================
-print("\n--- 3. Pusat Rotasi Berbeda ---")
-pusat_list = [(0, 0), (w, 0), (w // 2, h // 2), (w, h)]
-hasil_pusat = {}
-for p in pusat_list:
-    M = cv2.getRotationMatrix2D(p, 30, 1.0)
-    hasil_pusat[p] = cv2.warpAffine(img, M, (w, h))
-    print(f"  Pusat {p}")
+def rotasi_tanpa_crop(img, sudut):
+    """Rotasi gambar dengan canvas yang diperbesar agar tidak terpotong."""
+    h, w = img.shape[:2]
+    center = (w // 2, h // 2)
+    M = cv2.getRotationMatrix2D(center, sudut, 1.0)
+    cos_val = np.abs(M[0, 0])
+    sin_val = np.abs(M[0, 1])
+    w_baru = int(h * sin_val + w * cos_val)
+    h_baru = int(h * cos_val + w * sin_val)
+    M[0, 2] += (w_baru - w) / 2
+    M[1, 2] += (h_baru - h) / 2
+    hasil = cv2.warpAffine(img, M, (w_baru, h_baru))
+    print(f"  Rotasi {sudut}° tanpa crop: {w}×{h} → {w_baru}×{h_baru}")
+    return hasil
 
-# ============================================================
-# 4. Rotasi + scaling bersamaan
-# ============================================================
-print("\n--- 4. Rotasi + Scale ---")
-scale_list = [0.5, 0.75, 1.0, 1.25, 1.5]
-hasil_scale = {}
-for s in scale_list:
-    M = cv2.getRotationMatrix2D(pusat, 45, s)
-    hasil_scale[s] = cv2.warpAffine(img, M, (w, h))
-    print(f"  45° scale={s}")
 
-# ============================================================
-# 5. Membangun matriks rotasi manual
-# ============================================================
-print("\n--- 5. Matriks Rotasi Manual ---")
-sudut_rad = np.deg2rad(30)
-cos_t = np.cos(sudut_rad)
-sin_t = np.sin(sudut_rad)
-cx, cy = w / 2, h / 2
-# Matriks rotasi sekitar pusat (cx, cy):
-# M = [[cos, -sin, cx*(1-cos)+cy*sin],
-#      [sin,  cos, cy*(1-cos)-cx*sin]]
-M_manual = np.float32([
-    [cos_t, -sin_t, cx * (1 - cos_t) + cy * sin_t],
-    [sin_t,  cos_t, cy * (1 - cos_t) - cx * sin_t]
-])
-M_cv = cv2.getRotationMatrix2D((cx, cy), 30, 1.0)
-print(f"  Manual:\n{M_manual}")
-print(f"  OpenCV:\n{M_cv}")
-print(f"  Identik: {np.allclose(M_manual, M_cv)}")
+def rotasi_multi_sudut(img, sudut_list):
+    """Rotasi gambar ke beberapa sudut sekaligus."""
+    return [(s, rotasi_sederhana(img, s)) for s in sudut_list]
 
-# ============================================================
-# 6. Visualisasi
-# ============================================================
-fig, axes = plt.subplots(2, 4, figsize=(20, 10))
 
-axes[0, 0].imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-axes[0, 0].set_title("Original")
-for i, s in enumerate([15, 37, 72]):
-    axes[0, i+1].imshow(cv2.cvtColor(hasil[s], cv2.COLOR_BGR2RGB))
-    axes[0, i+1].set_title(f"{s}° (crop)")
+def tampilkan_hasil(img, rotasi_list, rotasi_nocrop):
+    """Visualisasi rotasi berbagai sudut."""
+    n = len(rotasi_list)
+    fig, axes = plt.subplots(2, max(n, 3), figsize=(4 * n, 8))
+    if axes.ndim == 1:
+        axes = axes.reshape(1, -1)
 
-axes[1, 0].imshow(cv2.cvtColor(img_full_37, cv2.COLOR_BGR2RGB))
-axes[1, 0].set_title("37° (full)")
-axes[1, 1].imshow(cv2.cvtColor(img_full_72, cv2.COLOR_BGR2RGB))
-axes[1, 1].set_title("72° (full)")
-axes[1, 2].imshow(cv2.cvtColor(hasil_scale[0.5], cv2.COLOR_BGR2RGB))
-axes[1, 2].set_title("45° scale=0.5")
-axes[1, 3].imshow(cv2.cvtColor(hasil_scale[1.5], cv2.COLOR_BGR2RGB))
-axes[1, 3].set_title("45° scale=1.5")
+    axes[0, 0].imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    axes[0, 0].set_title("Original"); axes[0, 0].axis("off")
+    for i, (s, im) in enumerate(rotasi_list):
+        if i + 1 < axes.shape[1]:
+            axes[0, i + 1].imshow(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
+            axes[0, i + 1].set_title(f"Rotasi {s}°")
+            axes[0, i + 1].axis("off")
 
-for ax in axes.flat:
-    ax.axis("off")
-plt.suptitle("Percobaan 02: Rotasi Sudut Bebas", fontsize=16, fontweight="bold")
-plt.tight_layout()
+    axes[1, 0].imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    axes[1, 0].set_title("Original"); axes[1, 0].axis("off")
+    axes[1, 1].imshow(cv2.cvtColor(rotasi_nocrop, cv2.COLOR_BGR2RGB))
+    axes[1, 1].set_title("30° Tanpa Crop"); axes[1, 1].axis("off")
+    for j in range(2, axes.shape[1]):
+        axes[1, j].axis("off")
 
-path = os.path.join(OUTPUT_DIR, "02_rotasi_sudut_bebas_hasil.png")
-plt.savefig(path, dpi=150, bbox_inches="tight")
-print(f"\n[OUTPUT] {path}")
+    plt.suptitle("Percobaan 2 — Rotasi Sudut Bebas", fontweight="bold")
+    plt.tight_layout()
+
+    out = os.path.join(OUTPUT_DIR, "02_rotasi_sudut_bebas.png")
+    plt.savefig(out, dpi=150, bbox_inches="tight")
+    plt.show()
+    print(f"\n[SIMPAN] {out}")
+
+
+def main():
+    print("=" * 60)
+    print(" PERCOBAAN 2: ROTASI SUDUT BEBAS")
+    print("=" * 60)
+
+    img = cv2.imread(os.path.join(IMAGE_DIR, "baboon.jpg"))
+    print(f"\n  Ukuran gambar: {img.shape}")
+
+    print("\n[1] Rotasi berbagai sudut:")
+    sudut_list = [45, 90, 135, 180]
+    rotasi_list = rotasi_multi_sudut(img, sudut_list)
+
+    print("\n[2] Rotasi tanpa crop:")
+    r_nocrop = rotasi_tanpa_crop(img, 30)
+
+    tampilkan_hasil(img, rotasi_list, r_nocrop)
+
+    print("\nRINGKASAN:")
+    print("  getRotationMatrix2D(center, angle, scale) → matriks 2×3")
+    print("  warpAffine(img, M, (w,h)) → terapkan rotasi")
+    print("  Rotasi tanpa crop: perbesar canvas sesuai sin/cos sudut")
+
+
+if __name__ == "__main__":
+    main()

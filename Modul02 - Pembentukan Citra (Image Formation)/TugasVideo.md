@@ -46,26 +46,26 @@ Untuk **setiap percobaan (1 s.d. 20)**, tunjukkan:
 4. **Penjelasan singkat** — apa yang dilakukan dan dipelajari.
 
 Urutan percobaan yang harus ditunjukkan:
-- Percobaan 1: Translasi Gambar
-- Percobaan 2: Rotasi Sudut Bebas
-- Percobaan 3: Scaling dan Zoom
-- Percobaan 4: Transformasi Affine
-- Percobaan 5: Transformasi Perspektif
-- Percobaan 6: Kalibrasi Kamera Checkerboard
-- Percobaan 7: Proyeksi 3D ke 2D
-- Percobaan 8: Koreksi Distorsi Lensa
-- Percobaan 9: Sampling dan Aliasing
-- Percobaan 10: Gamma Correction
-- Percobaan 11: Interpolasi Gambar
-- Percobaan 12: Konversi Koordinat Polar
-- Percobaan 13: Shearing Gambar
-- Percobaan 14: Refleksi Gambar
-- Percobaan 15: Matriks Transformasi Homogen
-- Percobaan 16: Image Pyramid
-- Percobaan 17: Barrel dan Pincushion Distortion
-- Percobaan 18: Remapping Gambar
-- Percobaan 19: Transformasi Log dan Power
-- Percobaan 20: Pembuatan Citra Sintetis
+- Percobaan 1: Translasi Gambar (`01_translasi_gambar.py`)
+- Percobaan 2: Rotasi Sudut Bebas (`02_rotasi_sudut_bebas.py`)
+- Percobaan 3: Scaling dan Zoom (`03_scaling_zoom.py`)
+- Percobaan 4: Transformasi Affine (`04_transformasi_affine.py`)
+- Percobaan 5: Transformasi Perspektif (`05_transformasi_perspektif.py`)
+- Percobaan 6: Kalibrasi Kamera Checkerboard (`06_kalibrasi_kamera_checkerboard.py`)
+- Percobaan 7: Proyeksi 3D ke 2D (`07_proyeksi_3d_ke_2d.py`)
+- Percobaan 8: Shearing dan Refleksi (`08_shearing_dan_refleksi.py`)
+- Percobaan 9: Komposisi Transformasi (`09_komposisi_transformasi.py`)
+- Percobaan 10: Simulasi Distorsi Lensa (`10_distorsi_lensa.py`)
+- Percobaan 11: Koreksi Distorsi Kamera (`11_koreksi_distorsi.py`)
+- Percobaan 12: Sampling dan Aliasing (`12_sampling_dan_aliasing.py`)
+- Percobaan 13: Interpolasi Gambar (`13_interpolasi_gambar.py`)
+- Percobaan 14: Image Pyramid (`14_image_pyramid.py`)
+- Percobaan 15: Konversi Koordinat Polar (`15_koordinat_polar.py`)
+- Percobaan 16: Remapping dan Efek Custom (`16_remapping_efek_custom.py`)
+- Percobaan 17: Koreksi Gamma dan Power-Law (`17_gamma_correction.py`)
+- Percobaan 18: Transformasi Intensitas Point Operations (`18_transformasi_intensitas.py`)
+- Percobaan 19: Citra Sintetis untuk Pengujian (`19_citra_sintetis.py`)
+- Percobaan 20: Deteksi dan Estimasi Pose Marker ArUco (`20_aruco_marker.py`)
 
 ### D. DEMONSTRASI PROJECT (5–10 menit)
 1. Jelaskan soal cerita yang dipilih dan alasan pemilihan.

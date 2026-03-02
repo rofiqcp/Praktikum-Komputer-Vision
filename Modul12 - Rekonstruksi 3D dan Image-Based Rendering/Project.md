@@ -1,319 +1,102 @@
 # PROJECT MODUL 12: REKONSTRUKSI 3D DAN IMAGE-BASED RENDERING
 
----
-
-## Deskripsi
-Project ini mengembangkan seluruh percobaan menjadi aplikasi rekonstruksi 3D dan rendering novel view yang lengkap dan aplikatif.
-
----
-
-## Improvisasi Percobaan
-
-### Dari Percobaan 1 (Point Cloud Basics)
-**Improvisasi 1: 3D Object Scanner Sederhana**
-Buat aplikasi yang menerima video seputar objek (rotate object on turntable), jalankan SfM + MVS (COLMAP), lalu load dan visualisasi hasilnya sebagai point cloud interaktif menggunakan Open3D. Tambahkan fitur: crop, color edit, measurement tool (jarak antar 2 titik klik).
-
-**Improvisasi 2: Point Cloud Comparator**
-Buat tool untuk membandingkan dua point cloud: hitung Chamfer distance dan Hausdorff distance. Visualisasikan perbedaan sebagai heatmap warna pada point cloud. Aplikasikan untuk membandingkan hasil scan berbeda dari objek yang sama.
-
-### Dari Percobaan 2 (Filtering & Downsampling)
-**Improvisasi 3: Adaptive Point Cloud LOD System**
-Implementasikan sistem Level-of-Detail (LOD) untuk point cloud besar. Berdasarkan jarak kamera, tampilkan resolusi berbeda (full di dekat, downsampled di jauh). Gunakan octree untuk spatial partitioning dan voxel downsampling pada level yang tepat.
-
-### Dari Percobaan 3 (Normal Estimation)
-**Improvisasi 4: Surface Curvature Analyzer**
-Buat tool analisis curvature: hitung Gaussian curvature dan mean curvature dari point cloud. Visualisasikan dengan colormap. Gunakan untuk deteksi fitur geometris (edge, corner, planar region). Terapkan pada objek berbeda (sphere, cube, complex object).
-
-### Dari Percobaan 4 (ICP Registration)
-**Improvisasi 5: Multi-Scan Assembler**
-Buat pipeline yang mengambil 4-6 partial scans dari objek dan melakukan registrasi otomatis (global registration + ICP refinement) secara berurutan. Implementasikan pose graph optimization untuk mengurangi drift. Output: unified point cloud + merged mesh.
-
-### Dari Percobaan 5 (Surface Reconstruction)
-**Improvisasi 6: Reconstruction Quality Benchmark**
-Buat benchmark yang membandingkan 3 metode (Poisson, BPA, Alpha Shapes) pada 5 dataset berbeda. Ukur: waktu, triangle count, mesh quality metrics (watertight, self-intersection), visual quality (render dari sudut tetap). Generate laporan otomatis berupa tabel dan gambar perbandingan.
-
-### Dari Percobaan 6 (Mesh Processing)
-**Improvisasi 7: 3D Model Optimizer untuk Web/Mobile**
-Buat pipeline yang menerima high-poly mesh dan menghasilkan optimized version untuk web/mobile deployment: simplification dengan target triangle budget, texture atlas generation, LOD generation (3 levels), export ke glTF/GLB format. Bandingkan visual quality tiap level.
-
-### Dari Percobaan 7 (TSDF Integration)
-**Improvisasi 8: Mini KinectFusion**
-Implementasikan simplified KinectFusion pipeline: frame-to-model tracking (ICP), TSDF integration, raycasting untuk rendering. Gunakan RGB-D dataset dari TUM atau ICL-NUIM. Visualisasikan rekonstruksi progresif (frame demi frame).
-
-### Dari Percobaan 8 (Image Warping)
-**Improvisasi 9: Parallax Photo Effect Generator**
-Buat aplikasi yang mengubah foto 2D + depth map (dari MiDaS Modul 11) menjadi efek parallax 3D (seperti Facebook 3D Photo). Generate video looping di mana kamera bergerak sedikit (translate dan rotate). Handle disocclusion dengan inpainting.
-
-### Dari Percobaan 9 (View Interpolation)
-**Improvisasi 10: Virtual Camera Dolly System**
-Implementasikan virtual camera yang bergerak mulus antara dua foto scene yang sama. Gunakan depth-based warping + blending. Buat UI sederhana untuk mengontrol posisi kamera virtual (slider). Output: smooth video transition antara viewpoints.
-
-### Dari Percobaan 10 (Neural Rendering)
-**Improvisasi 11: NeRF Object Turntable Renderer**
-Train NeRF atau 3D Gaussian Splatting pada objek kecil (dari 30-50 foto). Render video turntable 360° di sekitar objek. Bandingkan kualitas dengan mesh tradisional yang di-render dengan texture. Hitung PSNR dan SSIM.
-
-**Improvisasi 12: Scene Relighting dengan NeRF**
-Menggunakan trained NeRF model, eksplorasi modifikasi rendering: ubah background, adjust density threshold, render dari viewpoint yang tidak ada di training set. Dokumentasikan limitasi dan artefak pada extrapolated views.
-
-### Proyek Gabungan
-**Improvisasi 13: End-to-End Photogrammetry Pipeline**
-Buat pipeline lengkap: ambil 30-50 foto objek → COLMAP SfM → dense reconstruction → Poisson mesh → texture mapping → export OBJ/PLY. Semua langkah otomatis dari command line. Implementasikan quality checks di setiap tahap.
-
-**Improvisasi 14: AR Object Placement**
-Gunakan mesh 3D yang direkonstruksi, lalu "tempatkan" ke scene baru menggunakan homography atau pose estimation. Render objek virtual di atas real image dengan lighting estimation sederhana (ambient + directional). Output: composited image.
-
-**Improvisasi 15: Cultural Heritage Documentation**
-Rekonstruksi 3D objek heritage (patung, relief, bangunan bagian). Pipeline: capture → SfM → dense → mesh → annotate (add labels pada bagian penting). Generate web-based viewer menggunakan three.js atau potree. Buat video presentasi.
+## Ketentuan Umum
+- Format pengumpulan: **NIM_Nama_Project12.zip**
+- Berisi: source code (.py), output images, dan laporan singkat (PDF)
+- Gunakan dataset dari folder `image/` atau dataset sendiri
+- Setiap project harus menghasilkan output visual di folder `output/`
 
 ---
 
-## Soal Cerita
+## Improvisasi Project (Pilih minimal 3)
 
-### Soal 1: Arkeologi Digital
-Sebuah tim arkeologi menemukan pecahan keramik kuno. Mereka memfoto setiap pecahan dari 20 sudut berbeda.
+### 1. Multi-Resolution Voxel Downsampling
+Bandingkan 5 voxel size (0.01, 0.05, 0.1, 0.5, 1.0) pada point cloud. Visualisasi dan analisis trade-off antara jumlah titik vs kecepatan vs kualitas representasi.
 
-**Tugas**:
-- Rekonstruksi 3D setiap pecahan (SfM + Poisson/MVS).
-- Register pecahan-pecahan menggunakan ICP (simulasikan dengan partial point clouds).
-- Visualisasi gabungan.
-- **Buat laporan**: metode, parameter, screenshot dari 4 sudut pandang, waktu processing per tahap.
+### 2. Robust ICP dengan Variasi Noise
+Implementasikan ICP point-to-point dan point-to-plane. Bandingkan konvergensi pada berbagai level noise (σ = 0.01, 0.05, 0.1, 0.5). Visualisasi kurva error per iterasi untuk setiap varian.
 
-**Rubrik**:
-| Komponen | Bobot |
-|----------|-------|
-| Rekonstruksi tiap pecahan | 25% |
-| Registrasi antar pecahan | 25% |
-| Kualitas mesh akhir | 20% |
-| Visualisasi dan dokumentasi | 15% |
-| Analisis dan kesimpulan | 15% |
+### 3. Surface Reconstruction Comparison
+Bandingkan 4 metode rekonstruksi (Poisson, BPA, Alpha Shapes, Marching Cubes) pada point cloud yang sama. Analisis kualitas mesh, jumlah triangle, dan waktu eksekusi.
 
----
+### 4. TSDF Multi-Frame Fusion
+Integrasi 5+ depth map dari viewpoint berbeda ke TSDF volume. Visualisasi volume sebelum/sesudah fusion dan extract mesh. Analisis pengaruh truncation distance.
 
-### Soal 2: Quality Control Manufaktur
-Pabrik otomotif ingin membandingkan komponen produksi dengan model CAD referensi.
+### 5. Depth-Based View Synthesis
+Implementasikan forward + inverse warping untuk mensintesis 5 novel view dari satu gambar + depth map. Analisis artefak (holes, ghosting) dan implementasikan inpainting sederhana.
 
-**Tugas**:
-- Rekonstruksi 3D komponen dari foto.
-- Register hasil scan ke model referensi (gunakan ICP).
-- Hitung deviasi (Hausdorff / Chamfer distance).
-- Visualisasikan deviasi sebagai heatmap pada mesh.
-- Tentukan PASS/FAIL berdasarkan threshold deviasi.
+### 6. Optical Flow View Interpolation
+Buat video interpolasi halus (20 frame) antara dua gambar multiview. Bandingkan linear blend vs flow-based. Hitung PSNR/SSIM jika ground truth tersedia.
 
-**Rubrik**:
-| Komponen | Bobot |
-|----------|-------|
-| Rekonstruksi 3D | 20% |
-| Registrasi ke referensi | 20% |
-| Perhitungan deviasi | 20% |
-| Heatmap visualisasi | 20% |
-| Keputusan QC + laporan | 20% |
+### 7. Light Field Processing
+Buat light field dari 5×5 grid gambar sintetis. Implementasikan refocusing dengan shift-and-add. Visualisasi EPI dan analisis slope untuk estimasi depth.
 
----
+### 8. NeRF Volume Rendering Variants
+Implementasikan volume rendering dengan berbagai stratified sampling (uniform, stratified, hierarchical). Visualisasi efek jumlah sample terhadap kualitas rendered image.
 
-### Soal 3: Virtual Tour Generator
-Agen properti ingin membuat virtual tour rumah dari foto-foto interior.
+### 9. 3D Gaussian Splatting Analysis
+Buat visualisasi 3DGS konseptual: variasikan jumlah Gaussian (10, 50, 200, 1000), ukuran, dan opacity. Bandingkan kualitas splatted image. Visualisasi proses densification/pruning.
 
-**Tugas**:
-- Rekonstruksi 3D beberapa ruangan (TSDF integration dari RGB-D, atau SfM+mesh dari foto).
-- Texture mapping dari foto asli ke mesh.
-- Render novel views (virtual walkthrough path).
-- Generate video fly-through.
-- Overlay info (nama ruangan, ukuran) pada output.
+### 10. Point Cloud Classification
+Implementasikan klasifikasi sederhana point cloud berdasarkan fitur geometrik (normal, curvature, planarity). Segmentasi menjadi floor, wall, dan object.
 
-**Rubrik**:
-| Komponen | Bobot |
-|----------|-------|
-| Rekonstruksi per ruangan | 25% |
-| Texture quality | 20% |
-| Novel view rendering | 25% |
-| Video fly-through | 15% |
-| Informasi overlay + dokumentasi | 15% |
+### 11. Mesh Simplification Pipeline
+Implementasikan pipeline: load mesh → decimation (25%, 50%, 75%) → smoothing → normal recomputation. Analisis perubahan visual dan metrik (Hausdorff distance estimasi).
+
+### 12. RGBD Scene Reconstruction
+Gunakan RGBD data untuk rekonstruksi scene: deproject → colored point cloud → voxel filter → plane segmentation → per-object clustering.
+
+### 13. Texture Mapping Multi-View
+Implementasikan texturing mesh dari 3+ gambar berbeda viewpoint. Gunakan z-buffer untuk menentukan view terbaik per face. Visualisasi mesh textured dari sudut pandang baru.
+
+### 14. Volumetric Rendering Artistic
+Buat volume 3D dengan multiple objek (sphere, torus, cube) dan render dengan berbagai transfer function (warna berdasarkan density). Implementasikan absorption + emission model.
+
+### 15. Rekonstruksi 3D End-to-End
+Pipeline lengkap: RGBD → Point Cloud → Filtering → Normal Estimation → Surface Reconstruction → Texturing → Export PLY. Visualisasi setiap tahap dan hitung metrik kualitas.
 
 ---
 
-### Soal 4: Scan-to-BIM untuk Renovasi
-Tim arsitek ingin membuat model 3D ruangan kantor yang akan direnovasi.
+## Soal Cerita (Kerjakan semua)
 
-**Tugas**:
-- Scan ruangan (3-4 posisi, simulasi dengan dataset RGB-D).
-- TSDF integration → mesh.
-- Identifikasi bidang datar besar (dinding, lantai, ceiling) menggunakan RANSAC plane fitting.
-- Hitung dimensi ruangan (panjang × lebar × tinggi).
-- Visualisasi dengan planes yang diberi warna berbeda.
+### Soal 1: Survei Bangunan Bersejarah
+Sebuah museum ingin merekonstruksi 3D model candi bersejarah dari data LiDAR. Point cloud yang diperoleh memiliki 5 juta titik dengan banyak noise dan outlier dari vegetasi. Jelaskan pipeline filtering yang tepat (voxel downsample → SOR → radius filter) dan tentukan parameter optimal untuk setiap tahap. Implementasikan demonstrasi dengan point cloud sintetis yang merepresentasikan permukaan candi.
 
-**Rubrik**:
-| Komponen | Bobot |
-|----------|-------|
-| TSDF reconstruction | 25% |
-| Plane detection | 25% |
-| Pengukuran dimensi | 20% |
-| Visualisasi | 15% |
-| Akurasi dan analisis | 15% |
+### Soal 2: Robot Navigasi Indoor
+Robot menggunakan Kinect untuk navigasi. Diperlukan deteksi lantai (plane) dan segmentasi objek penghalang. Implementasikan pipeline RGBD → Point Cloud → RANSAC Plane → Euclidean Clustering. Robot harus tahu jarak ke setiap cluster. Demonstrasikan dengan data RGBD sintetis.
 
----
+### Soal 3: Pabrik Quality Control
+Pabrik automobile menggunakan structured light scanner untuk inspeksi bodi mobil. Dua scan dari posisi berbeda harus digabungkan menggunakan ICP. Implementasikan ICP dengan threshold konvergensi yang tepat dan visualisasi error alignment.
 
-### Soal 5: E-Commerce 3D Product Viewer
-Toko online ingin menampilkan produk dalam 3D yang bisa diputar pelanggan.
+### Soal 4: Arsitek Virtual Tour
+Arsitek ingin membuat virtual tour rumah dari 20 foto smartphone. Jelaskan pipeline SfM → NeRF/3DGS untuk menghasilkan novel views. Implementasikan demo volume rendering sederhana dan visualisasi pipeline diagram.
 
-**Tugas**:
-- Foto produk kecil (sepatu/tas/mainan) dari 30+ sudut di turntable.
-- Rekonstruksi 3D (SfM → dense → mesh → texture).
-- Optimasi mesh untuk web (simplify ke <50k triangles).
-- Render 36 views (setiap 10°) untuk web viewer.
-- Hitung PSNR antara rendered view dan foto asli terdekat.
+### Soal 5: Dental 3D Scanning
+Dental scanner menghasilkan mesh gigi pasien. Mesh perlu di-smooth untuk menghilangkan artefak scan tanpa kehilangan detail penting (cusp, groove). Implementasikan Laplacian smoothing dengan parameter adaptif dan bandingkan 3 level smoothing.
 
-**Rubrik**:
-| Komponen | Bobot |
-|----------|-------|
-| Kualitas rekonstruksi 3D | 25% |
-| Optimasi mesh | 20% |
-| Multi-view rendering | 25% |
-| PSNR evaluation | 15% |
-| Dokumentasi pipeline | 15% |
+### Soal 6: Drone Mapping
+Drone mengambil foto aerial dari 5 posisi untuk pemetaan lahan. Implementasikan view interpolation antara foto-foto tersebut untuk menghasilkan video flythrough. Gunakan optical flow-based interpolation dan analisis kualitas.
+
+### Soal 7: Gaming 3D Asset Creation
+Game developer ingin mengkonversi scan 3D menjadi low-poly mesh. Implementasikan pipeline: high-poly point cloud → surface reconstruction → mesh simplification (10% vertices). Bandingkan visual quality sebelum dan sesudah simplification.
+
+### Soal 8: Augmented Reality Depth
+Aplikasi AR memerlukan depth map untuk menempatkan objek virtual. Dari stereo camera diperoleh disparity map. Konversikan ke depth map → colored point cloud → visualisasi adegan 3D dengan objek virtual tambahan.
+
+### Soal 9: Medical Imaging
+CT scan menghasilkan volume 3D dari organ tubuh. Implementasikan Marching Cubes untuk mengekstrak permukaan organ dari volume sintetis (SDF ellipsoid). Variasikan iso-value dan analisis pengaruhnya terhadap mesh yang dihasilkan.
+
+### Soal 10: Smart City Digital Twin
+Kota ingin membuat digital twin dari kawasan komersial. Data: RGBD dari 10 frame berurutan. Implementasikan TSDF fusion dari multiple depth frames, extract mesh, dan texturing. Analisis kualitas fusion vs jumlah frame.
 
 ---
 
-### Soal 6: Robot Navigation Map Building
-Robot bergerak di koridor dan membangun peta 3D real-time dari depth sensor.
+## Rubrik Penilaian
 
-**Tugas**:
-- Simulasikan dengan RGB-D dataset sequence.
-- Implementasikan frame-to-frame ICP tracking.
-- Build global TSDF volume secara inkremental.
-- Setiap 10 frame, extract mesh dan visualisasikan progress.
-- Plot trajectory kamera (path robot).
-
-**Rubrik**:
-| Komponen | Bobot |
-|----------|-------|
-| ICP tracking | 25% |
-| TSDF integration inkremental | 25% |
-| Trajectory plot | 15% |
-| Visualisasi progress | 20% |
-| Analisis drift + dokumentasi | 15% |
-
----
-
-### Soal 7: 3D Face Reconstruction
-Sistem keamanan ingin merekonstruksi 3D wajah dari beberapa foto wajah.
-
-**Tugas**:
-- Ambil 10-15 foto wajah dari sudut berbeda (frontal, 45°, profile).
-- Jalankan SfM → dense reconstruction.
-- Surface reconstruction (Poisson).
-- Smooth mesh dan improve quality.
-- Render wajah dari sudut baru yang tidak ada di input.
-- Bandingkan face recognition accuracy pada rendered vs real photo.
-
-**Rubrik**:
-| Komponen | Bobot |
-|----------|-------|
-| SfM + Dense reconstruction | 25% |
-| Mesh quality (Poisson + smoothing) | 25% |
-| Novel view rendering | 20% |
-| Face recognition comparison | 15% |
-| Dokumentasi + analisis | 15% |
-
----
-
-### Soal 8: Disaster Damage Assessment dari Drone
-Pasca gempa, drone mengambil foto bangunan rusak dari udara.
-
-**Tugas**:
-- Rekonstruksi 3D bangunan dari foto aerial (gunakan dataset structure-from-motion, atau simulasi).
-- Identifikasi area kerusakan: compare dengan model "sebelum" (generate atau download).
-- Hitung volume perubahan (using difference of point clouds).
-- Visualisasi perubahan dengan heatmap.
-- Generate laporan: area damage, severity estimation.
-
-**Rubrik**:
-| Komponen | Bobot |
-|----------|-------|
-| Rekonstruksi 3D from aerial | 25% |
-| Change detection | 25% |
-| Volume estimation | 20% |
-| Heatmap + laporan | 15% |
-| Analisis dan kesimpulan | 15% |
-
----
-
-### Soal 9: Parallax Video Creator untuk Media Sosial
-Content creator ingin mengubah foto landscape menjadi video 3D parallax yang menarik.
-
-**Tugas**:
-- Ambil foto landscape berkualitas tinggi.
-- Estimate depth menggunakan MiDaS (dari Modul 11).
-- Manual refine depth di area yang salah (edge artifacts).
-- Forward warp dengan camera motion path (slow horizontal pan + subtle zoom).
-- Inpaint disoccluded areas.
-- Output: video MP4 3-5 detik, loopable.
-
-**Rubrik**:
-| Komponen | Bobot |
-|----------|-------|
-| Depth estimation quality | 20% |
-| Depth refinement | 15% |
-| Warping implementation | 25% |
-| Inpainting quality | 20% |
-| Video output quality | 20% |
-
----
-
-### Soal 10: Museum Virtual Exhibition
-Museum ingin membuat pameran virtual di mana pengunjung bisa melihat artefak 3D secara interaktif.
-
-**Tugas**:
-- Rekonstruksi 3D minimal 3 objek berbeda (masing-masing dari 20+ foto).
-- Optimasi setiap mesh (simplify, texture bake).
-- Buat "virtual room" (simple 3D environment) dan tempatkan objek.
-- Implementasi NeRF atau 3DGS pada salah satu objek sebagai perbandingan.
-- Render video walkthrough museum virtual.
-- Generate quality report: PSNR, mesh stats, rendering speed.
-
-**Rubrik**:
-| Komponen | Bobot |
-|----------|-------|
-| Rekonstruksi 3 objek | 25% |
-| Mesh optimization | 15% |
-| Neural rendering (1 objek) | 20% |
-| Virtual room + placement | 15% |
-| Video walkthrough + report | 15% |
-| Kreativitas dan presentation | 10% |
-
----
-
-## Rubrik Penilaian Project Keseluruhan
-
-| Komponen | Bobot | Keterangan |
-|----------|-------|------------|
-| Fungsionalitas | 35% | Program berjalan, output benar |
-| Integrasi Multi-Teknik | 20% | Menggabungkan registration, reconstruction, rendering |
-| Kualitas Kode | 15% | Modular, terdokumentasi, efisien |
-| Dokumentasi & Laporan | 15% | README, screenshot 3D, analisis quantitative |
-| Kreativitas & Inovasi | 15% | Solusi unik, visualization, extra features |
-
----
-
-## Ketentuan Pengumpulan
-- **Deadline**: 2 minggu setelah modul selesai.
-- **Format**: ZIP berisi folder project.
-- **Struktur folder**:
-  ```
-  Modul12_Project_[NIM]/
-  ├── README.md
-  ├── src/
-  │   ├── reconstruction.py
-  │   ├── registration.py
-  │   ├── rendering.py
-  │   └── utils.py
-  ├── data/
-  │   └── (sample images, point clouds)
-  ├── output/
-  │   ├── meshes/
-  │   ├── renders/
-  │   └── videos/
-  └── docs/
-      ├── screenshots/
-      └── report.md
-  ```
-- **Naming**: `Modul12_Project_[NIM]_[Nama].zip`
+| Komponen | Bobot | Kriteria |
+|---|---|---|
+| Implementasi Kode | 30% | Kode berjalan, style def/fungsi, komentar bahasa Indonesia |
+| Output Visual | 25% | Gambar tersimpan di output/, visualisasi informatif |
+| Analisis & Laporan | 20% | Penjelasan hasil, perbandingan metode, parameter tuning |
+| Improvisasi (3+) | 15% | Kreativitas, kedalaman eksplorasi, variasi metode |
+| Soal Cerita | 10% | Kelengkapan jawaban, relevansi implementasi |

@@ -1,246 +1,136 @@
 """
 ==========================================================================
-PERCOBAAN 4: AKSES DAN MANIPULASI PIKSEL
-==========================================================================
-Program ini mempelajari cara mengakses nilai piksel individual maupun
-kelompok piksel, serta memodifikasinya secara langsung.
+ PERCOBAAN 4 — AKSES DAN MANIPULASI PIKSEL
+ Modul 1: Pendahuluan Komputer Vision
 
-Konsep penting:
-- Gambar = array NumPy 2D (grayscale) atau 3D (berwarna)
-- Koordinat: img[y, x] (baris, kolom) → BUKAN (x, y)!
-- Piksel BGR: img[y, x] = [blue, green, red]
-- Piksel Grayscale: img[y, x] = intensitas (0-255)
-
-Fungsi utama:
-- img[y, x]         : Akses piksel di posisi (y, x)
-- img[y, x] = val   : Mengubah nilai piksel
-- img.item(y, x, c) : Akses cepat satu elemen
-- img.itemset()      : Ubah cepat satu elemen
-- Slicing array      : Akses area/region piksel
+ Tujuan  : Memahami cara mengakses piksel tunggal, memodifikasi area
+           piksel, serta memahami sistem koordinat gambar OpenCV.
+ Konsep  : img[y, x], slicing img[y1:y2, x1:x2], copy vs reference,
+           koordinat: (0,0) = kiri atas, y=baris, x=kolom.
 ==========================================================================
 """
 
-# Mengimpor library yang dibutuhkan
 import cv2
 import numpy as np
 import os
+import matplotlib
 import matplotlib.pyplot as plt
 
-# Setup path
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-IMAGE_DIR = os.path.join(SCRIPT_DIR, "image")
+SCRIPT_DIR   = os.path.dirname(os.path.abspath(__file__))
+IMAGE_DIR  = os.path.join(SCRIPT_DIR, "image")
 OUTPUT_DIR = os.path.join(SCRIPT_DIR, "output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-print("=" * 60)
-print("PERCOBAAN 4: AKSES DAN MANIPULASI PIKSEL")
-print("=" * 60)
 
-# Membaca gambar kucing dalam mode warna
-img = cv2.imread(os.path.join(IMAGE_DIR, "foto_kucing.jpg"))
-if img is None:
-    print("[ERROR] Jalankan download_image.py terlebih dahulu!")
-    exit()
+def akses_piksel_tunggal(img):
+    """
+    Mengakses nilai piksel pada posisi tertentu.
+    Koordinat OpenCV: img[y, x]  (baris, kolom).
+    Untuk gambar BGR → mengembalikan (B, G, R).
+    """
+    h, w = img.shape[:2]
+    # Piksel pojok kiri atas
+    px_00 = img[0, 0]
+    # Piksel tengah
+    px_mid = img[h // 2, w // 2]
+    # Piksel pojok kanan bawah
+    px_end = img[h - 1, w - 1]
 
-# Membuat salinan gambar untuk manipulasi (agar asli tidak berubah)
-# PENTING: Gunakan .copy() bukan assignment langsung!
-# img2 = img → hanya membuat referensi (alias), bukan salinan
-# img2 = img.copy() → membuat salinan independen
-img_modif = img.copy()
+    print(f"  Posisi (0,0)       → BGR = {px_00}")
+    print(f"  Posisi tengah      → BGR = {px_mid}")
+    print(f"  Posisi ({h-1},{w-1}) → BGR = {px_end}")
+    return px_00, px_mid, px_end
 
-# ============================================================
-# 1. Mengakses nilai piksel individual
-# ============================================================
-print("\n--- 1. Akses Piksel Individual ---")
 
-# Mengakses piksel di posisi (y=100, x=200)
-# PERHATIAN: urutan adalah [baris/y, kolom/x], BUKAN [x, y]!
-piksel = img[100, 200]
-print(f"  Piksel di (y=100, x=200) : {piksel}")
-print(f"  Blue={piksel[0]}, Green={piksel[1]}, Red={piksel[2]}")
+def modifikasi_area_piksel(img):
+    """
+    Mengubah warna blok piksel menggunakan slicing NumPy.
+    img[y1:y2, x1:x2] = nilai_baru
+    PENTING: gunakan .copy() agar gambar asli tidak berubah.
+    """
+    hasil = img.copy()  # copy agar original aman
 
-# Mengakses satu channel saja menggunakan indeks ke-3
-# Channel 0=Blue, 1=Green, 2=Red
-blue_value = img[100, 200, 0]
-green_value = img[100, 200, 1]
-red_value = img[100, 200, 2]
-print(f"  Blue channel  : {blue_value}")
-print(f"  Green channel : {green_value}")
-print(f"  Red channel   : {red_value}")
+    h, w = hasil.shape[:2]
+    bh, bw = h // 5, w // 5  # ukuran blok 1/5 gambar
 
-# ============================================================
-# 2. Cara cepat akses piksel: item() dan itemset()
-# ============================================================
-print("\n--- 2. Akses Cepat dengan item() dan itemset() ---")
+    # Blok merah di kiri atas
+    hasil[0:bh, 0:bw] = (0, 0, 255)
+    # Blok hijau di kanan atas
+    hasil[0:bh, w - bw:w] = (0, 255, 0)
+    # Blok biru di kiri bawah
+    hasil[h - bh:h, 0:bw] = (255, 0, 0)
+    # Blok kuning di kanan bawah
+    hasil[h - bh:h, w - bw:w] = (0, 255, 255)
 
-# img.item(y, x, channel) lebih cepat dari img[y, x, c] untuk akses tunggal
-blue_fast = img.item(100, 200, 0)
-print(f"  Blue (item method): {blue_fast}")
+    print("  Empat blok warna ditambahkan di keempat pojok.")
+    return hasil
 
-# img.itemset((y, x, channel), value) untuk mengubah satu piksel
-img_modif.itemset((100, 200, 0), 255)  # Set blue channel ke 255
-img_modif.itemset((100, 200, 1), 0)    # Set green channel ke 0
-img_modif.itemset((100, 200, 2), 0)    # Set red channel ke 0
-print(f"  Piksel diubah ke biru murni: {img_modif[100, 200]}")
 
-# ============================================================
-# 3. Mengubah area piksel (menggunakan slicing NumPy)
-# ============================================================
-print("\n--- 3. Manipulasi Area Piksel ---")
+def demo_copy_vs_reference(img):
+    """
+    Menunjukkan perbedaan copy (independen) vs reference (shared).
+    Tanpa copy, perubahan akan mempengaruhi gambar asli!
+    """
+    # Reference (alias) — modifikasi mempengaruhi asli
+    ref = img
+    ref_asli_sebelum = img[0, 0].copy()
+    ref[0, 0] = [0, 0, 0]
+    ref_asli_sesudah = img[0, 0].copy()
+    img[0, 0] = ref_asli_sebelum  # kembalikan
 
-# Membuat kotak merah di area y:50-150, x:50-150
-# Slicing: img[y_start:y_end, x_start:x_end] = [B, G, R]
-img_modif[50:150, 50:150] = [0, 0, 255]  # BGR: merah
-print("  Kotak merah (100x100 piksel) dibuat di posisi (50,50)")
+    # Copy — modifikasi TIDAK mempengaruhi asli
+    salinan = img.copy()
+    salinan[0, 0] = [0, 0, 0]
+    asli_setelah_copy = img[0, 0].copy()
 
-# Membuat kotak hijau di area lain
-img_modif[50:150, 160:260] = [0, 255, 0]  # BGR: hijau
-print("  Kotak hijau (100x100 piksel) dibuat di posisi (50,160)")
+    print(f"  Reference: sebelum={ref_asli_sebelum} → setelah={ref_asli_sesudah} (BERUBAH)")
+    print(f"  Copy:      asli setelah modify copy = {asli_setelah_copy} (TIDAK berubah)")
 
-# Membuat kotak biru
-img_modif[50:150, 270:370] = [255, 0, 0]  # BGR: biru
-print("  Kotak biru (100x100 piksel) dibuat di posisi (50,270)")
 
-# ============================================================
-# 4. Menyalin area piksel (copy region)
-# ============================================================
-print("\n--- 4. Menyalin Region ---")
+def tampilkan_hasil(img_original, img_modified):
+    """Visualisasi perbandingan sebelum dan sesudah modifikasi."""
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
-# Menyalin bagian gambar dari satu posisi ke posisi lain
-# Mengambil region wajah kucing (contoh area)
-region = img[150:300, 200:400].copy()  # Salin region
-print(f"  Region disalin: ukuran {region.shape}")
+    axes[0].imshow(cv2.cvtColor(img_original, cv2.COLOR_BGR2RGB))
+    axes[0].set_title("Original")
+    axes[0].axis("off")
 
-# Menempelkan region di posisi baru
-img_modif[300:300+region.shape[0], 400:400+region.shape[1]] = region
-print("  Region ditempelkan di posisi (300, 400)")
+    axes[1].imshow(cv2.cvtColor(img_modified, cv2.COLOR_BGR2RGB))
+    axes[1].set_title("Setelah Modifikasi Piksel")
+    axes[1].axis("off")
 
-# ============================================================
-# 5. Manipulasi piksel berdasarkan kondisi
-# ============================================================
-print("\n--- 5. Manipulasi Kondisional ---")
+    plt.suptitle("Percobaan 4 — Akses & Manipulasi Piksel", fontweight="bold")
+    plt.tight_layout()
 
-# Membuat salinan baru untuk manipulasi kondisional
-img_cond = img.copy()
+    out = os.path.join(OUTPUT_DIR, "04_akses_manipulasi_piksel.png")
+    plt.savefig(out, dpi=150, bbox_inches="tight")
+    plt.show()
+    print(f"\n[SIMPAN] {out}")
 
-# Mengubah piksel yang grayscale-nya di bawah 100 menjadi hitam
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-# Membuat mask: True jika piksel gelap (< 100)
-mask_gelap = gray < 100
+def main():
+    print("=" * 60)
+    print(" PERCOBAAN 4: AKSES DAN MANIPULASI PIKSEL")
+    print("=" * 60)
 
-# Menerapkan mask: ubah piksel gelap menjadi merah
-# Expand mask ke 3 channel untuk diterapkan ke gambar BGR
-img_cond[mask_gelap] = [0, 0, 200]
-print("  Piksel gelap (< 100) diubah menjadi merah")
+    path = os.path.join(IMAGE_DIR, "foto_kucing.jpg")
+    img = cv2.imread(path)
 
-# ============================================================
-# 6. Iterasi piksel (lambat, hanya untuk edukasi)
-# ============================================================
-print("\n--- 6. Iterasi Piksel (Demonstrasi) ---")
+    print("\n[1] Akses piksel tunggal:")
+    akses_piksel_tunggal(img)
 
-# Membuat gambar kecil untuk demonstrasi iterasi
-img_kecil = np.zeros((100, 100, 3), dtype=np.uint8)
+    print("\n[2] Copy vs Reference:")
+    demo_copy_vs_reference(img)
 
-# Mengisi gambar piksel per piksel dengan gradient
-for y in range(100):
-    for x in range(100):
-        # Menghitung nilai warna berdasarkan posisi
-        img_kecil[y, x, 0] = x * 255 // 100      # Blue: gradient horizontal
-        img_kecil[y, x, 1] = y * 255 // 100      # Green: gradient vertikal
-        img_kecil[y, x, 2] = (x + y) * 255 // 200  # Red: gradient diagonal
+    print("\n[3] Modifikasi area piksel:")
+    img_mod = modifikasi_area_piksel(img)
+    tampilkan_hasil(img, img_mod)
 
-print("  Gambar gradient 100x100 dibuat dengan loop piksel")
-print("  CATATAN: Iterasi piksel SANGAT LAMBAT! Gunakan operasi NumPy!")
+    print("\nRINGKASAN:")
+    print("  img[y, x]            → akses piksel (0,0)=kiri-atas")
+    print("  img[y1:y2, x1:x2]   → slicing area piksel")
+    print("  img.copy()           → salin agar original aman")
 
-# ============================================================
-# 7. Cara cepat (vektorisasi) vs cara lambat (loop)
-# ============================================================
-print("\n--- 7. Perbandingan Kecepatan ---")
 
-import time
-
-# Membuat gambar tes berukuran 500x500
-img_test = np.random.randint(0, 256, (500, 500, 3), dtype=np.uint8)
-
-# Cara LAMBAT: invert gambar menggunakan loop
-start = time.time()
-img_slow = img_test.copy()
-for y in range(500):
-    for x in range(500):
-        for c in range(3):
-            img_slow[y, x, c] = 255 - img_slow[y, x, c]
-waktu_loop = time.time() - start
-
-# Cara CEPAT: invert gambar menggunakan operasi NumPy
-start = time.time()
-img_fast = 255 - img_test
-waktu_numpy = time.time() - start
-
-print(f"  Loop piksel  : {waktu_loop:.4f} detik")
-print(f"  Operasi NumPy: {waktu_numpy:.6f} detik")
-print(f"  NumPy {waktu_loop/max(waktu_numpy, 1e-6):.0f}x lebih cepat!")
-
-# ============================================================
-# 8. Visualisasi hasil
-# ============================================================
-
-fig, axes = plt.subplots(2, 3, figsize=(18, 10))
-
-# Gambar asli
-axes[0, 0].imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-axes[0, 0].set_title("Gambar Asli")
-axes[0, 0].axis("off")
-
-# Gambar setelah manipulasi kotak warna + copy region
-axes[0, 1].imshow(cv2.cvtColor(img_modif, cv2.COLOR_BGR2RGB))
-axes[0, 1].set_title("Manipulasi: Kotak Warna + Copy Region")
-axes[0, 1].axis("off")
-
-# Gambar kondisional (piksel gelap → merah)
-axes[0, 2].imshow(cv2.cvtColor(img_cond, cv2.COLOR_BGR2RGB))
-axes[0, 2].set_title("Piksel Gelap → Merah")
-axes[0, 2].axis("off")
-
-# Gambar gradient hasil iterasi piksel
-axes[1, 0].imshow(cv2.cvtColor(img_kecil, cv2.COLOR_BGR2RGB))
-axes[1, 0].set_title("Gradient (Loop Piksel)")
-axes[1, 0].axis("off")
-
-# Gambar invert
-axes[1, 1].imshow(cv2.cvtColor(img_fast, cv2.COLOR_BGR2RGB))
-axes[1, 1].set_title("Invert (NumPy)")
-axes[1, 1].axis("off")
-
-# Text perbandingan kecepatan
-axes[1, 2].text(0.5, 0.5,
-               f"Perbandingan Kecepatan\n\n"
-               f"Loop: {waktu_loop:.4f}s\n"
-               f"NumPy: {waktu_numpy:.6f}s\n\n"
-               f"NumPy {waktu_loop/max(waktu_numpy, 1e-6):.0f}x\nlebih cepat!",
-               ha="center", va="center", fontsize=16,
-               transform=axes[1, 2].transAxes)
-axes[1, 2].axis("off")
-
-plt.suptitle("Percobaan 4: Akses dan Manipulasi Piksel", fontsize=16, fontweight="bold")
-plt.tight_layout()
-
-output_path = os.path.join(OUTPUT_DIR, "04_manipulasi_piksel_hasil.png")
-plt.savefig(output_path, dpi=150, bbox_inches="tight")
-print(f"\n[OUTPUT] Hasil disimpan di: {output_path}")
-
-# ============================================================
-# RINGKASAN
-# ============================================================
-print("\n" + "=" * 60)
-print("RINGKASAN PERCOBAAN 4")
-print("=" * 60)
-print("Cara akses dan manipulasi piksel:")
-print("  1. img[y, x]         → Akses piksel (PERHATIKAN: y dulu, bukan x!)")
-print("  2. img[y, x, c]      → Akses channel tertentu (0=B, 1=G, 2=R)")
-print("  3. img[y1:y2, x1:x2] → Akses area/region (slicing)")
-print("  4. img.item(y,x,c)   → Akses cepat satu elemen")
-print("  5. img.itemset()     → Ubah cepat satu elemen")
-print("  6. mask boolean      → Manipulasi piksel berdasarkan kondisi")
-print("  7. SELALU gunakan NumPy daripada loop piksel!")
-print("=" * 60)
+if __name__ == "__main__":
+    main()

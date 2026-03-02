@@ -1,104 +1,98 @@
-# TUGAS VIDEO MODUL 11: STRUCTURE FROM MOTION DAN DEPTH ESTIMATION
+# TUGAS VIDEO PRAKTIKUM
+# MODUL 11: STRUCTURE FROM MOTION DAN DEPTH ESTIMATION
 
 ---
 
-## Deskripsi Tugas
-Buat video laporan yang mendemonstrasikan seluruh materi, 20 percobaan, dan project SfM & Depth Estimation. Fokus pada visualisasi 3D dan depth maps.
+## FORMAT PENGUMPULAN
+
+- **Nama file**: `Video_Modul11_NIM_Nama.mp4`
+- **Durasi**: 15–25 menit
+- **Resolusi**: Minimal 720p
+- **Audio**: Narasi jelas dalam Bahasa Indonesia
 
 ---
 
-## Struktur Video
+## 1. PEMBUKAAN (1-2 menit)
 
-### 1. Pembukaan (Maks 2 menit)
-- Perkenalan: Nama, NIM, kelas, modul.
-- Overview topik SfM dan Depth Estimation.
-
-### 2. Penjelasan Materi (10–15 menit)
-- Epipolar geometry: Fundamental vs Essential matrix.
-- Triangulasi: prinsip ray intersection.
-- SfM pipeline: features → matches → F/E → pose → triangulate → BA.
-- Stereo vision: calibration, rectification, matching.
-- BM vs SGBM: perbedaan cost function.
-- Monocular depth: MiDaS, limitasi.
-- **Wajib**: Diagram epipolar geometry + SfM pipeline + stereo pipeline.
-
-### 3. Demo 20 Percobaan (40–60 menit)
-
-| No | Percobaan | Poin Penting |
-|----|-----------|--------------|
-| 1 | Feature Matching Multi-View | Matches antar 5 view |
-| 2 | Fundamental Matrix | Epipolar lines visualization |
-| 3 | Essential Matrix + Pose | R, t recovery |
-| 4 | Epipolar Lines | Visualisasi geometri epipolar |
-| 5 | Triangulasi 3D | 3D point cloud plot |
-| 6 | Stereo Calibration | Checkerboard, K, dist, R, T |
-| 7 | Stereo Rectification | Horizontal alignment verification |
-| 8 | Block Matching | Disparity map, parameter tuning |
-| 9 | SGBM | BM vs SGBM comparison |
-| 10 | Monocular Depth | Depth cues, MiDaS fallback |
-| 11 | Disparity to Depth | Z=f*B/d, reprojectImageTo3D |
-| 12 | BM vs SGBM Comparison | Timing, coverage, multi-scene |
-| 13 | WLS Filter Disparity | Post-processing, smoothing |
-| 14 | Point Cloud from Depth | 3D scatter, colored points |
-| 15 | PnP Pose Estimation | solvePnP methods comparison |
-| 16 | Stereo Matching Realtime | FPS measurement, video |
-| 17 | Depth Colorization | Colormaps, overlay, contour |
-| 18 | Baseline Effect | MAE/RMSE, near vs far |
-| 19 | Depth Segmentation | Threshold, connected components |
-| 20 | Multi-View Reconstruction | Full SfM pipeline, point cloud |
-
-- Tunjukkan checkerboard fisik dan proses kalibrasi.
-- Tunjukkan gambar 3D dari berbagai angle.
-
-### 4. Demo Project (10–15 menit)
-- Demo project soal cerita.
-- Tunjukkan 3D output (point cloud, depth map).
-
-### 5. Analisis dan Penutup (5 menit)
-- Rangkuman perbandingan metode.
-- Limitasi dan potensi.
-- Kesimpulan.
+- Perkenalan: nama, NIM, mata kuliah
+- Judul modul: "Structure from Motion dan Depth Estimation"
+- Overview singkat: apa itu SfM, stereo vision, depth estimation
+- Sebutkan tujuan pembelajaran modul ini
 
 ---
 
-## Ketentuan Teknis
+## 2. PENJELASAN MATERI (4-6 menit)
 
-| Aspek | Ketentuan |
-|-------|-----------|
-| Durasi | 75–100 menit |
-| Resolusi | Minimal 1080p |
-| Recording | Screen recording + webcam |
-| Webcam | Tunjukkan checkerboard + objek saat capture |
-| Audio | Narasi jelas |
-| Platform | YouTube (Unlisted) atau Google Drive |
-| Format | MP4 |
+Jelaskan konsep-konsep utama:
 
----
-
-## Rubrik Penilaian Video
-
-| Komponen | Bobot | Keterangan |
-|----------|-------|------------|
-| Pembukaan | 5% | Profesional |
-| Penjelasan Materi | 15% | Akurat, diagram epipolar |
-| Demo 20 Percobaan | 40% | Semua berjalan, 3D visualization |
-| Demo Project | 20% | Fitur lengkap |
-| Analisis & Kesimpulan | 10% | Kritis |
-| Kualitas Video | 10% | Resolusi, audio |
-
-### Bonus & Penalti
-| Item | Nilai |
-|------|-------|
-| Visualisasi 3D interaktif (Open3D/rotating plot) | +5 |
-| Kalibrasi dengan checkerboard sendiri | +5 |
-| Video < 45 menit | -10 |
-| Tidak ada webcam | -5 |
-| Audio tidak jelas | -5 |
-| Percobaan error tanpa penjelasan | -5 per percobaan |
+1. **Epipolar Geometry**: epipole, epipolar plane, epipolar line, epipolar constraint ($x'^T Fx = 0$)
+2. **Fundamental & Essential Matrix**: perbedaan F dan E, dekomposisi pose dari E
+3. **Triangulasi**: dari korespondensi 2D ke posisi 3D
+4. **Stereo Vision**: kalibrasi, rektifikasi, baseline, disparity
+5. **Disparity → Depth**: formula $Z = f \cdot B / d$, hubungan invers
+6. **SfM Pipeline**: feature → F → E → pose → triangulasi → bundle adjustment
+7. **Monocular Depth**: tantangan dan pendekatan (heuristik vs deep learning)
 
 ---
 
-## Format Pengumpulan
-- **Deadline**: 1 minggu setelah modul selesai.
-- **Format**: Link YouTube (Unlisted) atau Google Drive.
-- **Naming**: `[NIM]_[Nama]_Video_Modul11`
+## 3. DEMO PERCOBAAN (6-10 menit)
+
+Demonstrasikan dan jelaskan minimal 10 dari 20 percobaan:
+
+| No | File | Topik Demo |
+|----|------|-----------|
+| 1 | `01_epipolar_geometry_visualisasi.py` | Diagram epipolar geometry dan constraint |
+| 2 | `02_fundamental_matrix.py` | Hitung F matrix dan gambar epipolar lines |
+| 3 | `03_essential_matrix_pose.py` | Dekomposisi E → R, t |
+| 4 | `04_epipolar_lines.py` | Epipolar lines dari feature matching |
+| 5 | `05_triangulasi_titik_3d.py` | Triangulasi dan reprojection error |
+| 6 | `06_stereo_calibration.py` | Kalibrasi stereo dengan checkerboard |
+| 7 | `07_stereo_rectification.py` | Rektifikasi dan verifikasi horizontal |
+| 8 | `08_block_matching_disparity.py` | Variasi parameter BM |
+| 9 | `09_sgbm_disparity.py` | SGBM dan parameter P1, P2 |
+| 10 | `10_monocular_depth_estimation.py` | Depth dari gradien dan heuristik |
+| 11 | `11_disparity_to_depth.py` | Konversi disparity ke depth |
+| 12 | `12_stereo_bm_vs_sgbm.py` | Perbandingan BM vs SGBM |
+| 13 | `13_wls_filter_disparity.py` | Post-processing disparity |
+| 14 | `14_point_cloud_from_depth.py` | Depth → point cloud 3D |
+| 15 | `15_pnp_pose_estimation.py` | PnP pose estimation |
+| 16 | `16_stereo_matching_realtime.py` | Speed benchmarking |
+| 17 | `17_depth_map_colorization.py` | 6 colormap visualization |
+| 18 | `18_baseline_effect_depth.py` | Analisis efek baseline |
+| 19 | `19_depth_object_segmentation.py` | Segmentasi berbasis depth |
+| 20 | `20_multiview_reconstruction_pipeline.py` | Pipeline SfM end-to-end |
+
+Untuk setiap demo, jelaskan:
+- Tujuan program
+- Parameter / metode yang digunakan
+- Interpretasi output dan visualisasi
+
+---
+
+## 4. DEMO PROJECT (2-4 menit)
+
+Tunjukkan minimal 1 improvisasi dan 2 soal cerita:
+- Jelaskan pendekatan dan modifikasi yang dilakukan
+- Tunjukkan output program
+- Bandingkan hasil jika ada variasi
+
+---
+
+## 5. PENUTUP (1-2 menit)
+
+- Rangkuman konsep kunci: epipolar geometry, stereo → disparity → depth, SfM pipeline
+- Kesulitan yang dihadapi dan solusinya
+- Aplikasi dunia nyata: autonomous driving, 3D mapping, AR/VR
+- Saran pengembangan: deep stereo, NeRF, COLMAP
+
+---
+
+## RUBRIK PENILAIAN VIDEO
+
+| Komponen | Bobot | Kriteria |
+|----------|-------|----------|
+| Penjelasan Materi | 25% | Konsep jelas, formula benar, contoh relevan |
+| Demo Percobaan | 30% | Minimal 10 demo, output ditampilkan, analisis ada |
+| Demo Project | 20% | Improvisasi kreatif, soal cerita benar |
+| Presentasi | 15% | Narasi jelas, pace baik, transisi smooth |
+| Teknis Video | 10% | Resolusi baik, audio jelas, durasi sesuai |

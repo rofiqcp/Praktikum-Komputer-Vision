@@ -175,6 +175,7 @@ plt.tight_layout()
 
 path = os.path.join(OUTPUT_DIR, "13_canny_hasil.png")
 plt.savefig(path, dpi=150, bbox_inches="tight")
+plt.show()
 print(f"\n[OUTPUT] {path}")
 
 # ============================================================

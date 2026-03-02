@@ -1,192 +1,154 @@
 """
 ==========================================================================
-PERCOBAAN 06: KALIBRASI KAMERA DENGAN CHECKERBOARD
-==========================================================================
-Kalibrasi kamera mengestimasi parameter intrinsik (focal length,
-principal point, distorsi) menggunakan pola checkerboard.
+ PERCOBAAN 6 — KALIBRASI KAMERA (CHECKERBOARD)
+ Modul 2: Pembentukan Citra (Image Formation)
 
-Fungsi:
-- cv2.findChessboardCorners() → Deteksi sudut checkerboard
-- cv2.cornerSubPix() → Sub-pixel refinement
-- cv2.drawChessboardCorners() → Visualisasi
-- cv2.calibrateCamera() → Estimasi parameter kamera
+ Tujuan  : Memahami proses kalibrasi kamera menggunakan pola checkerboard.
+ Konsep  : Kalibrasi = mencari parameter intrinsik K (focal length, optical center)
+           dan parameter distorsi (radial k1,k2,k3 dan tangensial p1,p2).
+           cv2.findChessboardCorners(), cv2.calibrateCamera()
+           Simulasi: buat checkerboard sintetis → terapkan distorsi → kalibrasi.
 ==========================================================================
 """
 
 import cv2
 import numpy as np
 import os
+import matplotlib
 import matplotlib.pyplot as plt
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-IMAGE_DIR = os.path.join(SCRIPT_DIR, "image")
+SCRIPT_DIR   = os.path.dirname(os.path.abspath(__file__))
+IMAGE_DIR  = os.path.join(SCRIPT_DIR, "image")
 OUTPUT_DIR = os.path.join(SCRIPT_DIR, "output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-print("=" * 60)
-print("PERCOBAAN 06: KALIBRASI KAMERA")
-print("=" * 60)
 
-# ============================================================
-# 1. Membuat beberapa gambar checkerboard dari sudut berbeda
-# ============================================================
-print("\n--- 1. Membuat Data Kalibrasi ---")
+def buat_checkerboard(rows=7, cols=9, square_size=40):
+    """
+    Membuat gambar checkerboard sintetis.
+    rows × cols = jumlah kotak internal.
+    """
+    h = (rows + 1) * square_size
+    w = (cols + 1) * square_size
+    board = np.zeros((h, w), dtype=np.uint8)
+    for i in range(rows + 1):
+        for j in range(cols + 1):
+            if (i + j) % 2 == 0:
+                y1 = i * square_size
+                y2 = y1 + square_size
+                x1 = j * square_size
+                x2 = x1 + square_size
+                board[y1:y2, x1:x2] = 255
+    print(f"  Checkerboard sintetis: {w}×{h}, kotak={square_size}px")
+    return board
 
-# Ukuran checkerboard interior corners
-ROWS, COLS = 7, 10
-CELL = 40
 
-# Membuat checkerboard dasar
-cb = np.zeros(((ROWS + 1) * CELL, (COLS + 1) * CELL), dtype=np.uint8)
-for r in range(ROWS + 1):
-    for c in range(COLS + 1):
-        if (r + c) % 2 == 0:
-            cb[r * CELL:(r + 1) * CELL, c * CELL:(c + 1) * CELL] = 255
-
-# Border putih
-cb_bordered = cv2.copyMakeBorder(cb, 30, 30, 30, 30, cv2.BORDER_CONSTANT, value=255)
-cb_bgr = cv2.cvtColor(cb_bordered, cv2.COLOR_GRAY2BGR)
-
-# Buat beberapa view dari sudut berbeda (simulasi)
-views = []
-h_cb, w_cb = cb_bgr.shape[:2]
-src = np.float32([[0, 0], [w_cb, 0], [w_cb, h_cb], [0, h_cb]])
-
-perspektif_list = [
-    np.float32([[20, 10], [w_cb-10, 0], [w_cb-20, h_cb], [10, h_cb-10]]),
-    np.float32([[0, 20], [w_cb, 10], [w_cb-30, h_cb-10], [30, h_cb]]),
-    np.float32([[40, 0], [w_cb-10, 30], [w_cb, h_cb-20], [10, h_cb-30]]),
-    np.float32([[10, 30], [w_cb-30, 10], [w_cb-10, h_cb], [20, h_cb-20]]),
-]
-
-for i, dst in enumerate(perspektif_list):
-    M = cv2.getPerspectiveTransform(src, dst)
-    view = cv2.warpPerspective(cb_bgr, M, (w_cb, h_cb), borderValue=(200, 200, 200))
-    views.append(view)
-    print(f"  View {i + 1} dibuat")
-
-# ============================================================
-# 2. Deteksi sudut checkerboard
-# ============================================================
-print("\n--- 2. Deteksi Sudut ---")
-
-# Titik 3D objek (koordinat nyata checkerboard)
-# Diasumsikan z=0 (papan datar), x,y = posisi sudut
-objp = np.zeros((ROWS * COLS, 3), np.float32)
-# np.mgrid membuat grid koordinat
-objp[:, :2] = np.mgrid[0:COLS, 0:ROWS].T.reshape(-1, 2)
-
-obj_points = []  # Titik 3D di dunia nyata
-img_points = []  # Titik 2D di gambar
-detected_views = []
-
-# Kriteria terminasi untuk cornerSubPix
-# (tipe, max_iterasi, epsilon)
-criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-
-for i, view in enumerate(views):
-    gray = cv2.cvtColor(view, cv2.COLOR_BGR2GRAY)
-
-    # cv2.findChessboardCorners mendeteksi sudut interior checkerboard
-    # Returns: (found, corners)
-    found, corners = cv2.findChessboardCorners(gray, (COLS, ROWS), None)
-
-    if found:
-        obj_points.append(objp)
-
-        # cv2.cornerSubPix memperbaiki posisi sudut ke presisi sub-pixel
-        corners_refined = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
-        img_points.append(corners_refined)
-
-        # cv2.drawChessboardCorners menggambar sudut yang terdeteksi
-        view_drawn = view.copy()
-        cv2.drawChessboardCorners(view_drawn, (COLS, ROWS), corners_refined, found)
-        detected_views.append(view_drawn)
-
-        print(f"  View {i + 1}: TERDETEKSI ({len(corners)} sudut)")
+def deteksi_corner_checkerboard(img_gray, pattern_size=(8, 6)):
+    """
+    Mendeteksi corner pada checkerboard.
+    pattern_size = (cols-1, rows-1) titik internal.
+    """
+    ret, corners = cv2.findChessboardCorners(img_gray, pattern_size, None)
+    if ret:
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+        corners = cv2.cornerSubPix(img_gray, corners, (11, 11), (-1, -1), criteria)
+        print(f"  Corner terdeteksi: {len(corners)} titik")
     else:
-        print(f"  View {i + 1}: Tidak terdeteksi")
+        print("  Corner TIDAK terdeteksi!")
+    return ret, corners
 
-# ============================================================
-# 3. Kalibrasi kamera
-# ============================================================
-print("\n--- 3. Kalibrasi Kamera ---")
 
-if len(obj_points) >= 2:
-    # cv2.calibrateCamera mengestimasi parameter kamera
-    # Returns: ret, camera_matrix, dist_coeffs, rvecs, tvecs
-    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
-        obj_points, img_points, gray.shape[::-1], None, None
+def simulasi_kalibrasi(img_gray, pattern_size=(8, 6), square_size=40):
+    """
+    Simulasi proses kalibrasi kamera dari 1 gambar checkerboard.
+    """
+    ret, corners = deteksi_corner_checkerboard(img_gray, pattern_size)
+    if not ret:
+        return None, None, None
+
+    # Titik 3D dunia (z=0 untuk semua)
+    objp = np.zeros((pattern_size[0] * pattern_size[1], 3), np.float32)
+    objp[:, :2] = np.mgrid[0:pattern_size[0],
+                            0:pattern_size[1]].T.reshape(-1, 2) * square_size
+
+    h, w = img_gray.shape[:2]
+    ret, K, dist, rvecs, tvecs = cv2.calibrateCamera(
+        [objp], [corners], (w, h), None, None
     )
 
-    print(f"  RMS re-projection error: {ret:.4f}")
-    print(f"\n  Camera Matrix (Intrinsik):")
-    print(f"    fx = {mtx[0,0]:.2f}")
-    print(f"    fy = {mtx[1,1]:.2f}")
-    print(f"    cx = {mtx[0,2]:.2f}")
-    print(f"    cy = {mtx[1,2]:.2f}")
-    print(f"\n  Koefisien Distorsi: {dist.flatten()[:5]}")
+    print(f"\n  [Matriks Intrinsik K]:")
+    print(f"    fx={K[0,0]:.1f}, fy={K[1,1]:.1f}")
+    print(f"    cx={K[0,2]:.1f}, cy={K[1,2]:.1f}")
+    print(f"  [Distorsi]: k1={dist[0][0]:.4f}, k2={dist[0][1]:.4f}")
+    print(f"  Reprojection error: {ret:.4f}")
 
-    # ============================================================
-    # 4. Undistort gambar
-    # ============================================================
-    print("\n--- 4. Undistort ---")
-    
-    # cv2.undistort mengoreksi distorsi lensa
-    img_undist = cv2.undistort(views[0], mtx, dist)
-    
-    # cv2.getOptimalNewCameraMatrix untuk crop optimal setelah undistort
-    new_mtx, roi = cv2.getOptimalNewCameraMatrix(
-        mtx, dist, (w_cb, h_cb), 1, (w_cb, h_cb)
-    )
-    img_undist2 = cv2.undistort(views[0], mtx, dist, None, new_mtx)
-    print("  Gambar di-undistort")
-else:
-    print("  [WARNING] Tidak cukup view untuk kalibrasi")
-    mtx = np.eye(3)
-    dist = np.zeros(5)
+    return K, dist, corners
 
-# ============================================================
-# 5. Visualisasi
-# ============================================================
-n_views = min(len(detected_views), 4)
-fig, axes = plt.subplots(2, 4, figsize=(20, 10))
 
-# Baris 1: Checkerboard & deteksi
-axes[0, 0].imshow(cv2.cvtColor(cb_bgr, cv2.COLOR_BGR2RGB))
-axes[0, 0].set_title("Checkerboard Asli")
-for i in range(min(3, n_views)):
-    axes[0, i + 1].imshow(cv2.cvtColor(detected_views[i], cv2.COLOR_BGR2RGB))
-    axes[0, i + 1].set_title(f"View {i + 1} (corners)")
+def tampilkan_hasil(board, board_corners, K, dist):
+    """Visualisasi checkerboard dan hasil kalibrasi."""
+    fig, axes = plt.subplots(1, 3, figsize=(16, 5))
 
-# Baris 2: Kalibrasi info
-axes[1, 0].imshow(cv2.cvtColor(views[0], cv2.COLOR_BGR2RGB))
-axes[1, 0].set_title("View 1 Original")
+    axes[0].imshow(board, cmap='gray')
+    axes[0].set_title("Checkerboard Sintetis"); axes[0].axis("off")
 
-if len(obj_points) >= 2:
-    axes[1, 1].imshow(cv2.cvtColor(img_undist, cv2.COLOR_BGR2RGB))
-    axes[1, 1].set_title("Undistorted")
+    # Gambar corner pada checkerboard
+    board_color = cv2.cvtColor(board, cv2.COLOR_GRAY2BGR)
+    if board_corners is not None:
+        cv2.drawChessboardCorners(board_color, (8, 6), board_corners, True)
+    axes[1].imshow(cv2.cvtColor(board_color, cv2.COLOR_BGR2RGB))
+    axes[1].set_title("Corner Terdeteksi"); axes[1].axis("off")
 
-# Plot camera matrix sebagai heatmap
-axes[1, 2].imshow(mtx, cmap='hot')
-axes[1, 2].set_title("Camera Matrix")
-for (j, i), val in np.ndenumerate(mtx):
-    axes[1, 2].text(i, j, f'{val:.0f}', ha='center', va='center', fontsize=8)
+    # Info kalibrasi
+    axes[2].axis("off")
+    if K is not None:
+        info = (
+            f"Matriks Intrinsik K:\n"
+            f"  fx = {K[0,0]:.1f}\n"
+            f"  fy = {K[1,1]:.1f}\n"
+            f"  cx = {K[0,2]:.1f}\n"
+            f"  cy = {K[1,2]:.1f}\n\n"
+            f"Distorsi:\n"
+            f"  k1 = {dist[0][0]:.6f}\n"
+            f"  k2 = {dist[0][1]:.6f}\n"
+            f"  p1 = {dist[0][2]:.6f}\n"
+            f"  p2 = {dist[0][3]:.6f}"
+        )
+    else:
+        info = "Kalibrasi gagal"
+    axes[2].text(0.1, 0.5, info, fontfamily='monospace', fontsize=12,
+                 verticalalignment='center',
+                 bbox=dict(boxstyle='round', facecolor='lightyellow'))
+    axes[2].set_title("Parameter Kalibrasi")
 
-# Plot distortion coefficients
-if len(obj_points) >= 2:
-    axes[1, 3].bar(range(5), dist.flatten()[:5])
-    axes[1, 3].set_title("Distortion Coeffs")
-else:
-    axes[1, 3].axis("off")
+    plt.suptitle("Percobaan 6 — Kalibrasi Kamera Checkerboard", fontweight="bold")
+    plt.tight_layout()
 
-for ax in axes.flat:
-    if not ax.has_data():
-        ax.axis("off")
+    out = os.path.join(OUTPUT_DIR, "06_kalibrasi_kamera.png")
+    plt.savefig(out, dpi=150, bbox_inches="tight")
+    plt.show()
+    print(f"\n[SIMPAN] {out}")
 
-plt.suptitle("Percobaan 06: Kalibrasi Kamera", fontsize=16, fontweight="bold")
-plt.tight_layout()
 
-path = os.path.join(OUTPUT_DIR, "06_kalibrasi_kamera_hasil.png")
-plt.savefig(path, dpi=150, bbox_inches="tight")
-print(f"\n[OUTPUT] {path}")
+def main():
+    print("=" * 60)
+    print(" PERCOBAAN 6: KALIBRASI KAMERA (CHECKERBOARD)")
+    print("=" * 60)
+
+    print("\n[1] Buat checkerboard sintetis:")
+    board = buat_checkerboard(7, 9, 40)
+
+    print("\n[2] Deteksi corner:")
+    K, dist, corners = simulasi_kalibrasi(board, (8, 6), 40)
+
+    tampilkan_hasil(board, corners, K, dist)
+
+    print("\nRINGKASAN:")
+    print("  Kalibrasi = mencari matriks intrinsik K dan distorsi")
+    print("  findChessboardCorners → deteksi titik sudut")
+    print("  calibrateCamera → hitung K, dist, rvecs, tvecs")
+    print("  K berisi: fx, fy (focal), cx, cy (optical center)")
+
+
+if __name__ == "__main__":
+    main()

@@ -159,29 +159,74 @@ Setelah menyelesaikan praktikum ini, mahasiswa mampu:
 
 ---
 
-### Percobaan 8: Koreksi Distorsi Lensa
-**File**: `08_koreksi_distorsi_lensa.py`
+### Percobaan 8: Shearing dan Refleksi
+**File**: `08_shearing_dan_refleksi.py`
 
-**Tujuan**: Mendeteksi dan mengoreksi distorsi radial dan tangensial pada gambar.
+**Tujuan**: Menerapkan transformasi shearing (geser) dan refleksi (cermin) menggunakan matriks affine dan cv2.flip.
 
 **Langkah Kerja**:
-1. Buka dan pelajari file `08_koreksi_distorsi_lensa.py`.
-2. Jalankan program: `python 08_koreksi_distorsi_lensa.py`.
-3. Bandingkan gambar sebelum dan sesudah undistort.
-4. Amati simulasi distorsi barrel dan pincushion.
-5. Perhatikan efek setiap koefisien distorsi (k1, k2, p1, p2).
+1. Buka dan pelajari file `08_shearing_dan_refleksi.py`.
+2. Jalankan program: `python 08_shearing_dan_refleksi.py`.
+3. Amati shearing horizontal dan vertikal dengan berbagai faktor shear.
+4. Bandingkan refleksi horizontal, vertikal, dan gabungan menggunakan cv2.flip.
+5. Perhatikan efek artistik seperti water reflection.
 6. Periksa output di folder `output/`.
 
 ---
 
-### Percobaan 9: Sampling dan Aliasing
-**File**: `09_sampling_dan_aliasing.py`
+### Percobaan 9: Komposisi Transformasi
+**File**: `09_komposisi_transformasi.py`
 
-**Tujuan**: Memahami efek sampling, aliasing (pola moiré), dan anti-aliasing pada gambar.
+**Tujuan**: Memahami komposisi transformasi geometri menggunakan perkalian matriks homogen 3×3.
 
 **Langkah Kerja**:
-1. Buka dan pelajari file `09_sampling_dan_aliasing.py`.
-2. Jalankan program: `python 09_sampling_dan_aliasing.py`.
+1. Buka dan pelajari file `09_komposisi_transformasi.py`.
+2. Jalankan program: `python 09_komposisi_transformasi.py`.
+3. Amati komposisi translasi + rotasi + scaling dalam satu matriks homogen.
+4. Perhatikan perbedaan urutan transformasi (non-komutatif).
+5. Bandingkan beberapa urutan transformasi dan visualisasikan hasilnya.
+6. Periksa output di folder `output/`.
+
+---
+
+### Percobaan 10: Simulasi Distorsi Lensa
+**File**: `10_distorsi_lensa.py`
+
+**Tujuan**: Mensimulasi distorsi radial barrel dan pincushion serta distorsi tangensial pada gambar.
+
+**Langkah Kerja**:
+1. Buka dan pelajari file `10_distorsi_lensa.py`.
+2. Jalankan program: `python 10_distorsi_lensa.py`.
+3. Amati simulasi distorsi barrel (wide-angle) dan pincushion (telephoto).
+4. Perhatikan distorsi tangensial dan pengaruhnya pada garis lurus.
+5. Bandingkan berbagai tingkat koefisien distorsi radial k1.
+6. Periksa output di folder `output/`.
+
+---
+
+### Percobaan 11: Koreksi Distorsi Kamera
+**File**: `11_koreksi_distorsi.py`
+
+**Tujuan**: Mengoreksi distorsi lensa menggunakan cv2.undistort dan initUndistortRectifyMap.
+
+**Langkah Kerja**:
+1. Buka dan pelajari file `11_koreksi_distorsi.py`.
+2. Jalankan program: `python 11_koreksi_distorsi.py`.
+3. Amati perbedaan cv2.undistort vs remap dua-langkah.
+4. Perhatikan alpha parameter pada getOptimalNewCameraMatrix.
+5. Visualisasikan vektor displacement distorsi menggunakan quiver plot.
+6. Periksa output di folder `output/`.
+
+---
+
+### Percobaan 12: Sampling dan Aliasing
+**File**: `12_sampling_dan_aliasing.py`
+
+**Tujuan**: Memahami efek sampling, aliasing (pola moiré), dan teknik anti-aliasing pada gambar.
+
+**Langkah Kerja**:
+1. Buka dan pelajari file `12_sampling_dan_aliasing.py`.
+2. Jalankan program: `python 12_sampling_dan_aliasing.py`.
 3. Amati aliasing saat downscale tanpa filter vs dengan Gaussian blur.
 4. Bandingkan INTER_NEAREST vs INTER_AREA pada downscaling.
 5. Perhatikan zona plate dan pola moiré yang muncul.
@@ -189,167 +234,122 @@ Setelah menyelesaikan praktikum ini, mahasiswa mampu:
 
 ---
 
-### Percobaan 10: Gamma Correction
-**File**: `10_gamma_correction.py`
+### Percobaan 13: Interpolasi Gambar
+**File**: `13_interpolasi_gambar.py`
 
-**Tujuan**: Memahami gamma correction dan manipulasi pencahayaan menggunakan LUT.
-
-**Langkah Kerja**:
-1. Buka dan pelajari file `10_gamma_correction.py`.
-2. Jalankan program: `python 10_gamma_correction.py`.
-3. Amati efek berbagai nilai gamma (0.5, 1.0, 1.5, 2.2).
-4. Perhatikan penggunaan Look-Up Table (LUT) untuk gamma cepat.
-5. Amati simulasi vignette dan white balance sederhana.
-6. Periksa output di folder `output/`.
-
----
-
-### Percobaan 11: Interpolasi Gambar
-**File**: `11_interpolasi_gambar.py`
-
-**Tujuan**: Memahami dan membandingkan berbagai metode interpolasi gambar secara mendalam.
+**Tujuan**: Membandingkan lima metode interpolasi gambar (NEAREST, LINEAR, CUBIC, LANCZOS4, AREA) secara kualitas dan kecepatan.
 
 **Langkah Kerja**:
-1. Buka dan pelajari file `11_interpolasi_gambar.py`.
-2. Jalankan program: `python 11_interpolasi_gambar.py`.
-3. Bandingkan kualitas visual NEAREST, LINEAR, CUBIC, LANCZOS4.
+1. Buka dan pelajari file `13_interpolasi_gambar.py`.
+2. Jalankan program: `python 13_interpolasi_gambar.py`.
+3. Bandingkan kualitas visual NEAREST, LINEAR, CUBIC, LANCZOS4, AREA.
 4. Amati perbedaan interpolasi pada upscale vs downscale.
-5. Perhatikan waktu eksekusi setiap metode.
+5. Ukur PSNR dan waktu eksekusi setiap metode.
 6. Periksa output di folder `output/`.
 
 ---
 
-### Percobaan 12: Konversi Koordinat Polar
-**File**: `12_konversi_koordinat_polar.py`
+### Percobaan 14: Image Pyramid
+**File**: `14_image_pyramid.py`
 
-**Tujuan**: Memahami konversi antara koordinat Cartesian dan polar menggunakan `cv2.linearPolar` dan `cv2.logPolar`.
-
-**Langkah Kerja**:
-1. Buka dan pelajari file `12_konversi_koordinat_polar.py`.
-2. Jalankan program: `python 12_konversi_koordinat_polar.py`.
-3. Amati transformasi linear polar dan log-polar.
-4. Perhatikan inverse transform dari polar kembali ke Cartesian.
-5. Amati efek pada berbagai jenis gambar (wajah, lingkaran, dsb.).
-6. Periksa output di folder `output/`.
-
----
-
-### Percobaan 13: Shearing Gambar
-**File**: `13_shearing_gambar.py`
-
-**Tujuan**: Menerapkan transformasi shearing (geser) pada gambar menggunakan matriks affine.
+**Tujuan**: Membangun Gaussian dan Laplacian pyramid untuk representasi multi-skala dan pyramid blending.
 
 **Langkah Kerja**:
-1. Buka dan pelajari file `13_shearing_gambar.py`.
-2. Jalankan program: `python 13_shearing_gambar.py`.
-3. Amati shearing horizontal dan vertikal dengan berbagai faktor.
-4. Perhatikan kombinasi shearing dengan rotasi dan scaling.
-5. Amati penggunaan shearing untuk efek italic pada gambar teks.
-6. Periksa output di folder `output/`.
-
----
-
-### Percobaan 14: Refleksi Gambar
-**File**: `14_refleksi_gambar.py`
-
-**Tujuan**: Menerapkan refleksi (pencerminan) sebagai transformasi geometri menggunakan matriks dan `cv2.flip`.
-
-**Langkah Kerja**:
-1. Buka dan pelajari file `14_refleksi_gambar.py`.
-2. Jalankan program: `python 14_refleksi_gambar.py`.
-3. Amati refleksi horizontal, vertikal, dan combined.
-4. Perhatikan implementasi refleksi terhadap sumbu miring.
-5. Amati efek refleksi dan water reflection effect.
-6. Periksa output di folder `output/`.
-
----
-
-### Percobaan 15: Matriks Transformasi Homogen
-**File**: `15_matriks_transformasi_homogen.py`
-
-**Tujuan**: Memahami komposisi transformasi menggunakan perkalian matriks homogen 3×3.
-
-**Langkah Kerja**:
-1. Buka dan pelajari file `15_matriks_transformasi_homogen.py`.
-2. Jalankan program: `python 15_matriks_transformasi_homogen.py`.
-3. Amati komposisi translasi + rotasi + scaling dalam satu matriks.
-4. Perhatikan perbedaan urutan transformasi (non-komutatif).
-5. Amati dekomposisi matriks transformasi menjadi komponen dasar.
-6. Periksa output di folder `output/`.
-
----
-
-### Percobaan 16: Image Pyramid
-**File**: `16_image_pyramid.py`
-
-**Tujuan**: Membangun Gaussian dan Laplacian pyramid untuk representasi multi-skala gambar.
-
-**Langkah Kerja**:
-1. Buka dan pelajari file `16_image_pyramid.py`.
-2. Jalankan program: `python 16_image_pyramid.py`.
+1. Buka dan pelajari file `14_image_pyramid.py`.
+2. Jalankan program: `python 14_image_pyramid.py`.
 3. Amati Gaussian pyramid (pyrDown) dan rekonstruksi (pyrUp).
-4. Perhatikan Laplacian pyramid dan rekonstruksi gambar dari pyramid.
-5. Amati aplikasi pyramid blending dua gambar.
+4. Perhatikan Laplacian pyramid sebagai selisih antar-level.
+5. Bandingkan pyramid blending vs penggabungan langsung (direct).
 6. Periksa output di folder `output/`.
 
 ---
 
-### Percobaan 17: Barrel dan Pincushion Distortion
-**File**: `17_barrel_pincushion_distortion.py`
+### Percobaan 15: Konversi Koordinat Polar
+**File**: `15_koordinat_polar.py`
 
-**Tujuan**: Mensimulasi dan membandingkan distorsi barrel (wide-angle) dan pincushion (telephoto).
+**Tujuan**: Memahami transformasi antara koordinat Cartesian dan polar (linear dan log-polar) menggunakan cv2.warpPolar.
 
 **Langkah Kerja**:
-1. Buka dan pelajari file `17_barrel_pincushion_distortion.py`.
-2. Jalankan program: `python 17_barrel_pincushion_distortion.py`.
-3. Amati simulasi barrel distortion dengan berbagai koefisien k.
-4. Amati simulasi pincushion distortion.
-5. Perhatikan koreksi distorsi dan perbandingan before/after.
+1. Buka dan pelajari file `15_koordinat_polar.py`.
+2. Jalankan program: `python 15_koordinat_polar.py`.
+3. Amati transformasi linear polar dan log-polar.
+4. Perhatikan demonstrasi rotasi = translasi vertikal dalam ruang log-polar.
+5. Amati aplikasi polar unwrapping untuk iris sintetis.
 6. Periksa output di folder `output/`.
 
 ---
 
-### Percobaan 18: Remapping Gambar
-**File**: `18_remapping_gambar.py`
+### Percobaan 16: Remapping dan Efek Custom
+**File**: `16_remapping_efek_custom.py`
 
-**Tujuan**: Menggunakan `cv2.remap` untuk transformasi gambar fleksibel dengan custom mapping.
+**Tujuan**: Membuat transformasi gambar fleksibel menggunakan cv2.remap() dengan custom lookup map.
 
 **Langkah Kerja**:
-1. Buka dan pelajari file `18_remapping_gambar.py`.
-2. Jalankan program: `python 18_remapping_gambar.py`.
-3. Amati efek remap: flip, mirror, wave distortion, swirl.
-4. Perhatikan custom mapping function untuk efek artistik.
-5. Amati penggunaan remap vs warpAffine/warpPerspective.
+1. Buka dan pelajari file `16_remapping_efek_custom.py`.
+2. Jalankan program: `python 16_remapping_efek_custom.py`.
+3. Amati efek gelombang horizontal dan vertikal (wave distortion).
+4. Perhatikan efek pusaran (swirl), kaca pembesar, dan fisheye.
+5. Bandingkan kecepatan remap vs warpAffine/warpPerspective.
 6. Periksa output di folder `output/`.
 
 ---
 
-### Percobaan 19: Transformasi Log dan Power
-**File**: `19_transformasi_log_dan_power.py`
+### Percobaan 17: Koreksi Gamma dan Power-Law
+**File**: `17_gamma_correction.py`
 
-**Tujuan**: Menerapkan transformasi intensitas logaritmik dan power-law (gamma) untuk manipulasi kontras.
+**Tujuan**: Memahami gamma correction, transformasi power-law, dan pengaruhnya terhadap kecerahan gambar.
 
 **Langkah Kerja**:
-1. Buka dan pelajari file `19_transformasi_log_dan_power.py`.
-2. Jalankan program: `python 19_transformasi_log_dan_power.py`.
-3. Amati efek transformasi log: memperluas range gelap, mengompresi range terang.
-4. Perhatikan perbandingan log vs power-law pada gambar yang sama.
-5. Amati inverse log transform dan aplikasinya.
+1. Buka dan pelajari file `17_gamma_correction.py`.
+2. Jalankan program: `python 17_gamma_correction.py`.
+3. Amati efek berbagai nilai gamma (0.25, 0.5, 1.0, 2.0, 3.0).
+4. Perhatikan penggunaan LUT untuk koreksi gamma yang efisien.
+5. Bandingkan histogram sebelum dan sesudah koreksi gamma.
 6. Periksa output di folder `output/`.
 
 ---
 
-### Percobaan 20: Pembuatan Citra Sintetis
-**File**: `20_pembuatan_citra_sintetis.py`
+### Percobaan 18: Transformasi Intensitas (Point Operations)
+**File**: `18_transformasi_intensitas.py`
 
-**Tujuan**: Membuat gambar sintetis (gradien, pola, noise) untuk keperluan pengujian algoritma.
+**Tujuan**: Mempelajari transformasi intensitas piksel (negatif, log, power-law, piecewise) dan ekualisasi histogram.
 
 **Langkah Kerja**:
-1. Buka dan pelajari file `20_pembuatan_citra_sintetis.py`.
-2. Jalankan program: `python 20_pembuatan_citra_sintetis.py`.
-3. Amati pembuatan gradien linier dan radial.
-4. Perhatikan pembuatan pola checkerboard, garis, dan lingkaran konsentris.
-5. Amati penambahan noise (Gaussian, salt-and-pepper, Poisson).
+1. Buka dan pelajari file `18_transformasi_intensitas.py`.
+2. Jalankan program: `python 18_transformasi_intensitas.py`.
+3. Bandingkan transformasi negatif, log, power-law, dan piecewise linear.
+4. Amati histogram equalization global vs CLAHE (adaptif).
+5. Plot kurva transfer T(r) untuk setiap transformasi.
+6. Periksa output di folder `output/`.
+
+---
+
+### Percobaan 19: Citra Sintetis untuk Pengujian Algoritma
+**File**: `19_citra_sintetis.py`
+
+**Tujuan**: Membuat pola gambar standar (checkerboard, Siemens star, zone plate, noise) sebagai test target algoritma.
+
+**Langkah Kerja**:
+1. Buka dan pelajari file `19_citra_sintetis.py`.
+2. Jalankan program: `python 19_citra_sintetis.py`.
+3. Amati checkerboard, Siemens star, dan zona plate yang dibuat secara matematis.
+4. Bandingkan noise Gaussian vs salt-and-pepper pada berbagai intensitas.
+5. Perhatikan slanted edge target untuk pengukuran MTF (resolusi).
+6. Periksa output di folder `output/`.
+
+---
+
+### Percobaan 20: Deteksi dan Estimasi Pose Marker ArUco
+**File**: `20_aruco_marker.py`
+
+**Tujuan**: Mendeteksi marker ArUco, mendekode ID, dan mengestimasi pose kamera (Rvec, Tvec) untuk AR sederhana.
+
+**Langkah Kerja**:
+1. Buka dan pelajari file `20_aruco_marker.py`.
+2. Jalankan program: `python 20_aruco_marker.py`.
+3. Amati pembuatan marker ArUco DICT_4X4_50 dengan berbagai ID.
+4. Perhatikan proses deteksi corners dan dekoding ID marker.
+5. Amati overlay sumbu 3D (merah=X, hijau=Y, biru=Z) pada setiap marker.
 6. Periksa output di folder `output/`.
 
 ---

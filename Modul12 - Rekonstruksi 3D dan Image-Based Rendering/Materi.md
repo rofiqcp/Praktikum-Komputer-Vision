@@ -1,312 +1,249 @@
 # MATERI MODUL 12: REKONSTRUKSI 3D DAN IMAGE-BASED RENDERING
 
----
+## 12.1 Pendahuluan Rekonstruksi 3D
 
-## 1. Pendahuluan
-Modul ini membahas tahap akhir pipeline komputer vision: merekonstruksi objek 3D dari data citra dan merender tampilan baru dari model yang dihasilkan. Rekonstruksi 3D mengubah informasi 2D (gambar, depth map, point cloud) menjadi representasi geometri 3D (mesh, voxel, implicit surface). Image-Based Rendering (IBR) menghasilkan pandangan (view) baru dari sebuah scene tanpa perlu model geometri eksplisit yang sempurna, cukup dari kumpulan foto yang ada.
+Rekonstruksi 3D adalah proses membangun model tiga dimensi dari data sensor (gambar, depth, point cloud). Modul ini mencakup seluruh pipeline dari representasi data 3D, pemrosesan point cloud, rekonstruksi permukaan, hingga teknik rendering modern.
 
-Referensi utama: **Szeliski, "Computer Vision: Algorithms and Applications", 2nd Ed., Ch. 13 (3D Reconstruction) & Ch. 14 (Image-Based Rendering)**.
+**Representasi Data 3D:**
+| Representasi | Deskripsi | Contoh Format |
+|---|---|---|
+| Point Cloud | Kumpulan titik (x,y,z) | PLY, PCD, XYZ |
+| Mesh | Vertices + Faces (triangle) | OBJ, STL, PLY |
+| Volume | Voxel grid (3D array) | TSDF, occupancy |
+| Implicit | Fungsi f(x,y,z) = 0 | SDF, NeRF |
 
----
+## 12.2 Point Cloud Basics
 
-## 2. Point Cloud Processing
+Point cloud merepresentasikan permukaan objek sebagai kumpulan titik 3D:
 
-### 2.1 Representasi Point Cloud
-Point cloud adalah kumpulan titik 3D $(x, y, z)$ — bisa dilengkapi warna $(r, g, b)$ dan normal $(n_x, n_y, n_z)$. Format umum: PLY, PCD, XYZ, LAS.
+$$P = \{(x_i, y_i, z_i) \mid i = 1, \ldots, N\}$$
 
-### 2.2 Filtering dan Preprocessing
-- **Statistical Outlier Removal**: Hapus titik yang jaraknya ke tetangga terdekat terlalu jauh.
-  $$d_i = \frac{1}{k} \sum_{j=1}^{k} \| p_i - p_j \|, \quad \text{hapus jika } d_i > \mu_d + \alpha \cdot \sigma_d$$
-
-- **Voxel Downsampling**: Bagi ruang menjadi voxel grid, ambil satu titik per voxel (centroid).
-- **Radius Outlier Removal**: Hapus titik dengan tetangga < threshold dalam radius tertentu.
-
-### 2.3 Normal Estimation
-Normal di setiap titik dihitung dari Principal Component Analysis (PCA) lokal:
-1. Ambil $k$-nearest neighbors.
-2. Hitung matriks kovarians.
-3. Eigenvector dengan eigenvalue terkecil = surface normal.
-
-$$\mathbf{C} = \frac{1}{k}\sum_{i=1}^{k}(\mathbf{p}_i - \bar{\mathbf{p}})(\mathbf{p}_i - \bar{\mathbf{p}})^T$$
-
-### 2.4 Point Cloud Registration
-**Iterative Closest Point (ICP)** menyelaraskan dua point cloud:
-
-1. **Find correspondences**: Untuk setiap titik di *source*, cari titik terdekat di *target*.
-2. **Estimate transformation**: Hitung rotasi $\mathbf{R}$ dan translasi $\mathbf{t}$ yang meminimalkan:
-   $$E = \sum_{i} \| \mathbf{R} \mathbf{p}_i + \mathbf{t} - \mathbf{q}_i \|^2$$
-3. **Apply dan iterasi** hingga konvergen.
-
-Variasi: **Point-to-Plane ICP** — meminimalkan jarak titik ke bidang tangent target:
-$$E = \sum_{i} \left[ (\mathbf{R} \mathbf{p}_i + \mathbf{t} - \mathbf{q}_i) \cdot \mathbf{n}_i \right]^2$$
-
-```python
-import open3d as o3d
-
-source = o3d.io.read_point_cloud("source.ply")
-target = o3d.io.read_point_cloud("target.ply")
-
-# ICP registration
-threshold = 0.02
-reg = o3d.pipelines.registration.registration_icp(
-    source, target, threshold,
-    estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPlane()
-)
-source.transform(reg.transformation)
+**Format PLY (Polygon File Format):**
+```
+ply
+format ascii 1.0
+element vertex N
+property float x
+property float y
+property float z
+property uchar red
+property uchar green
+property uchar blue
+end_header
+x1 y1 z1 r1 g1 b1
+...
 ```
 
----
+Sumber point cloud: LiDAR, structured light, stereo matching, depth camera (Kinect), SfM.
 
-## 3. Surface Reconstruction
+## 12.3 Point Cloud Filtering
 
-### 3.1 Poisson Surface Reconstruction
-Metode ini merekonstruksi implicit surface dari oriented point cloud (titik + normal). Ide: cari fungsi indikator $\chi$ yang gradiennya sesuai dengan field normal:
-$$\nabla \chi = \mathbf{V} \quad \Rightarrow \quad \nabla \cdot \nabla \chi = \nabla \cdot \mathbf{V}$$
+### Voxel Downsampling
+Membagi ruang 3D menjadi voxel grid berukuran $v$, setiap voxel yang berisi titik diwakilkan oleh centroid:
 
-Diselesaikan sebagai persamaan Poisson $\Delta \chi = \nabla \cdot \mathbf{V}$ menggunakan octree. Surface = isosurface $\chi = \text{threshold}$.
+$$\mathbf{p}_{voxel} = \frac{1}{|S|} \sum_{i \in S} \mathbf{p}_i$$
 
-```python
-mesh, densities = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
-    pcd, depth=9
-)
-# Remove low-density vertices
-vertices_to_remove = densities < np.quantile(densities, 0.01)
-mesh.remove_vertices_by_mask(vertices_to_remove)
-```
+### Statistical Outlier Removal (SOR)
+Hitung rata-rata jarak ke $k$ tetangga terdekat $\bar{d}_i$. Hapus titik jika:
 
-### 3.2 Ball Pivoting Algorithm (BPA)
-Bayangkan bola dengan radius $r$ menggelinding di atas point cloud. Setiap kali menyentuh 3 titik, membentuk segitiga. Sederhana tetapi sensitif terhadap pemilihan radius.
+$$\bar{d}_i > \mu_d + \alpha \cdot \sigma_d$$
 
-### 3.3 Alpha Shapes
-Generalisasi convex hull. Parameter $\alpha$ mengontrol detail:
-- $\alpha = 0$: convex hull.
-- $\alpha$ besar: semakin banyak detail dan lubang.
+dimana $\mu_d$ dan $\sigma_d$ adalah mean dan standar deviasi dari seluruh $\bar{d}$.
 
-### 3.4 Marching Cubes
-Mengekstrak mesh dari volumetric representation (voxel grid atau implicit function). Membagi ruang menjadi kubus, lalu menentukan konfigurasi vertex in/out untuk menghasilkan segitiga.
+### Radius Outlier Removal
+Hapus titik yang memiliki $< n_{min}$ tetangga dalam radius $r$.
 
-### 3.5 Mesh Post-Processing
-- **Decimation**: Kurangi jumlah segitiga (simplification).
-- **Smoothing**: Laplacian smoothing, Taubin smoothing.
-- **Hole filling**: Tutup lubang pada mesh.
-- **Texturing**: Proyeksikan warna dari gambar ke mesh.
+## 12.4 Normal Estimation
 
-```python
-# Mesh simplification
-mesh_simplified = mesh.simplify_quadric_decimation(target_number_of_triangles=10000)
+Normal permukaan diestimasi menggunakan **PCA lokal**:
 
-# Smoothing
-mesh_smooth = mesh.filter_smooth_laplacian(number_of_iterations=5)
-```
+1. Ambil $k$ tetangga terdekat dari titik $\mathbf{p}_i$
+2. Hitung covariance matrix:
+$$C = \frac{1}{k} \sum_{j=1}^{k} (\mathbf{p}_j - \bar{\mathbf{p}})(\mathbf{p}_j - \bar{\mathbf{p}})^T$$
+3. Eigenvector dari eigenvalue terkecil = normal $\mathbf{n}_i$
 
----
+**Orientasi konsisten:** arahkan semua normal ke sisi yang sama (misal ke kamera).
 
-## 4. Volumetric Reconstruction
+## 12.5 ICP Registration
 
-### 4.1 TSDF (Truncated Signed Distance Function)
-Representasi volumetrik yang menyimpan signed distance ke surface terdekat di setiap voxel. TSDF di-*integrate* dari multiple depth maps:
+**Iterative Closest Point (ICP)** menyelaraskan source $P$ ke target $Q$:
 
-$$TSDF(\mathbf{x}) = \frac{\sum_i w_i \cdot d_i(\mathbf{x})}{\sum_i w_i}$$
+1. **Closest Point:** untuk setiap $\mathbf{p}_i \in P$, cari $\mathbf{q}_j \in Q$ terdekat
+2. **Transformation:** minimize:
+$$E(R, \mathbf{t}) = \sum_i \|R\mathbf{p}_i + \mathbf{t} - \mathbf{q}_{c(i)}\|^2$$
+3. **SVD Solution:**
+$$H = \sum_i (\mathbf{p}_i - \bar{\mathbf{p}})(\mathbf{q}_{c(i)} - \bar{\mathbf{q}})^T$$
+$$H = U \Sigma V^T \implies R = V U^T, \quad \mathbf{t} = \bar{\mathbf{q}} - R\bar{\mathbf{p}}$$
+4. **Iterasi** sampai konvergen: $\Delta E < \epsilon$
 
-di mana $d_i$ = signed distance dari voxel $\mathbf{x}$ ke surface pada depth frame $i$.
+**Variasi:** Point-to-Plane ICP minimize jarak ke bidang tangent:
+$$E = \sum_i \left[(\mathbf{R}\mathbf{p}_i + \mathbf{t} - \mathbf{q}_{c(i)}) \cdot \mathbf{n}_{c(i)}\right]^2$$
 
-**KinectFusion** pipeline:
-1. Capture depth frame.
-2. Track camera pose (ICP terhadap model).
-3. Integrate depth ke TSDF volume.
-4. Raycast TSDF untuk render.
+## 12.6 Surface Reconstruction
 
-```python
-volume = o3d.pipelines.integration.ScalableTSDFVolume(
-    voxel_length=4.0/512.0,
-    sdf_trunc=0.04,
-    color_type=o3d.pipelines.integration.TSDFVolumeColorType.RGB8
-)
-for i, rgbd in enumerate(rgbd_images):
-    volume.integrate(rgbd, intrinsic, extrinsics[i])
-mesh = volume.extract_triangle_mesh()
-```
+### Poisson Surface Reconstruction
+Filosofi: cari indicator function $\chi$ dimana $\nabla \chi = \mathbf{V}$ (oriented normals).
 
-### 4.2 Voxel Hashing
-Representasi sparse voxel untuk scene besar tanpa mengalokasikan grid penuh. Hanya voxel di dekat surface yang disimpan (hash table).
+Solve Poisson equation:
+$$\Delta \chi = \nabla \cdot \mathbf{V}$$
 
----
+Isosurface $\chi = \tau$ diextract dengan Marching Cubes.
 
-## 5. Multi-View Stereo (MVS)
+**Kelebihan:** menghasilkan mesh watertight (tertutup), robust terhadap noise.
+**Kekurangan:** memerlukan normal yang baik, bisa menghasilkan artefak di area sparse.
 
-### 5.1 Plane-Sweeping Stereo
-Evaluasi depth hypothesis pada serangkaian bidang fronto-parallel:
+### Ball Pivoting Algorithm (BPA)
+Bola berradius $\rho$ menggelinding di permukaan point cloud:
+1. Bola menyentuh 3 titik → buat triangle
+2. Pivot bola ke edge baru → cari titik ketiga baru
+3. Ulangi sampai seluruh permukaan tercover
 
-Untuk setiap depth $d$:
-1. Homography-warp reference ke neighbor views.
-2. Hitung photo-consistency cost.
-3. Pilih $d$ dengan cost minimum.
+**Kelebihan:** preservasi detail, cocok untuk scan data.
+**Kekurangan:** sensitif terhadap pilihan radius, tidak menutup gaps.
 
-### 5.2 Patch-Based MVS (PMVS/CMVS)
-1. Detect features → match → triangulate (sparse).
-2. Expand patches ke area featureless.
-3. Filter inconsistent patches.
+### Alpha Shapes
+Generalisasi convex hull: hapus simpleks dari Delaunay triangulation dimana circumradius > $1/\alpha$:
 
-Tool: **COLMAP** — software open-source untuk SfM + MVS pipeline lengkap.
+$$\alpha\text{-shape} = \{T \in \text{Delaunay} \mid R_{circumscribed}(T) < \frac{1}{\alpha}\}$$
 
----
+- $\alpha \to 0$: hanya titik (empty shape)
+- $\alpha \to \infty$: convex hull
 
-## 6. Image-Based Rendering (IBR)
+## 12.7 Marching Cubes
 
-### 6.1 Prinsip Dasar
-IBR menghasilkan novel views dari kumpulan foto tanpa model 3D eksplisit yang sempurna. Spektrum representasi:
+Algoritma untuk mengekstrak isosurface dari scalar field $f(x,y,z) = c$:
 
-| Representasi | Geometri | Contoh |
-|-------------|----------|--------|
-| Tanpa geometri | Tidak ada | Light field, Lumigraph |
-| Implicit | Depth maps | View interpolation |
-| Explicit | Mesh + texture | Traditional rendering |
-| Neural | Network weights | NeRF |
+1. Bagi volume menjadi kubus-kubus (voxel)
+2. Untuk setiap kubus (8 corner), klasifikasi inside/outside
+3. $2^8 = 256$ konfigurasi → lookup table → triangle vertices
+4. Interpolasi posisi vertex pada edge yang di-cross
 
-### 6.2 View Interpolation
-Diberikan dua view dengan depth, hasilkan view antara:
+**Marching Cubes 33:** mengatasi ambiguitas konfigurasi tertentu.
 
-1. Warp kedua view ke viewpoint baru menggunakan depth-based reprojection.
-2. Blend hasil warp.
-3. Handle disocclusion (inpainting area yang tidak terlihat).
+## 12.8 TSDF Integration
 
-$$\mathbf{p}' = \mathbf{K}' (\mathbf{R}' \mathbf{R}^{-1}) (\mathbf{K}^{-1} \mathbf{p} \cdot d - \mathbf{t}) + \mathbf{K}' \mathbf{t}'$$
+**Truncated Signed Distance Function** menyimpan jarak bertanda ke permukaan terdekat dalam voxel grid:
 
-### 6.3 Image Warping
-Transformasi piksel dari satu view ke view lain berdasarkan geometri (depth dan camera pose):
+$$\text{TSDF}(\mathbf{x}) = \text{clamp}\left(\frac{d_{meas} - d_{proj}}{\delta}, -1, 1\right)$$
 
-- **Forward warping**: Splat pixels dari source ke target. Masalah: holes dan aliasing.
-- **Inverse warping**: Untuk setiap pixel di target, cari asalnya di source. Butuh depth di target view.
+dimana $\delta$ adalah truncation distance.
 
-### 6.4 Texture Mapping
-Proyeksikan warna dari foto ke mesh 3D:
-1. UV parameterization.
-2. Multi-view blending: pilih foto terbaik berdasarkan angle dan resolusi.
-3. Seam optimization untuk transisi halus.
+**Fusion (KinectFusion):**
+$$\text{TSDF}_{k+1} = \frac{W_k \cdot \text{TSDF}_k + w_{k+1} \cdot \text{tsdf}_{k+1}}{W_k + w_{k+1}}$$
 
-### 6.5 Light Fields
-Representasi 4D dari semua sinar di scene. Parameterisasi dua-bidang $(u, v, s, t)$:
-- $(u, v)$: posisi di camera plane.
-- $(s, t)$: posisi di focal plane.
+Permukaan diekstrak dimana TSDF = 0 (zero-crossing) menggunakan Marching Cubes.
 
-Novel view = slice dari light field.
+## 12.9 Image Warping dan View Synthesis
 
----
+### Forward Warping
+Untuk setiap piksel $(u, v)$ di source:
+$$\mathbf{X} = D(u,v) \cdot K^{-1}[u, v, 1]^T$$
+$$[u', v', 1]^T \propto K'(R\mathbf{X} + \mathbf{t})$$
 
-## 7. Neural Scene Representations
+**Masalah:** holes (piksel target tidak ter-cover) dan conflicts (beberapa source ke satu target).
 
-### 7.1 Neural Radiance Fields (NeRF)
-NeRF merepresentasikan scene sebagai fungsi kontinu:
+### Inverse Warping
+Untuk setiap piksel $(u', v')$ di target:
+$$\mathbf{X}' = D'(u',v') \cdot K'^{-1}[u', v', 1]^T$$
+$$[u, v, 1]^T \propto K(R^T\mathbf{X}' - R^T\mathbf{t})$$
 
-$$F_\theta : (\mathbf{x}, \mathbf{d}) \rightarrow (\mathbf{c}, \sigma)$$
+**Keuntungan:** tidak ada holes, tapi memerlukan depth di view target.
 
-- Input: posisi 3D $\mathbf{x} = (x, y, z)$ dan viewing direction $\mathbf{d} = (\theta, \phi)$.
-- Output: warna $\mathbf{c} = (r, g, b)$ dan density $\sigma$.
+## 12.10 View Interpolation
 
-Volume rendering integral:
-$$C(\mathbf{r}) = \int_{t_n}^{t_f} T(t) \cdot \sigma(\mathbf{r}(t)) \cdot \mathbf{c}(\mathbf{r}(t), \mathbf{d}) \, dt$$
+Mensintesis gambar dari viewpoint intermediate:
 
-di mana $T(t) = \exp\left(-\int_{t_n}^{t} \sigma(\mathbf{r}(s)) ds\right)$.
+**Linear blend:**
+$$I_\alpha = (1-\alpha) \cdot I_1 + \alpha \cdot I_2$$
 
-**Positional encoding**:
-$$\gamma(p) = [\sin(2^0 \pi p), \cos(2^0 \pi p), \ldots, \sin(2^{L-1} \pi p), \cos(2^{L-1} \pi p)]$$
+**Flow-based interpolation:**
+1. Hitung optical flow $\mathbf{F}_{1 \to 2}$
+2. Warp $I_1$ dengan $\alpha \cdot \mathbf{F}$ dan $I_2$ dengan $(1-\alpha) \cdot \mathbf{F}$
+3. Blend warped images
 
-### 7.2 3D Gaussian Splatting
-Representasi scene sebagai kumpulan 3D Gaussian:
-- Setiap Gaussian: posisi $\mu$, kovarians $\Sigma$, opacity $\alpha$, spherical harmonics untuk warna view-dependent.
-- Rendering: differentiable rasterization (jauh lebih cepat daripada NeRF).
-- Training: optimize posisi, shape, warna via gradient descent.
+## 12.11 Neural Radiance Fields (NeRF)
 
-### 7.3 Instant NGP
-Percepatan NeRF menggunakan multi-resolution hash encoding:
-- Hash table menyimpan feature vectors pada berbagai resolusi.
-- Training <5 menit (vs berjam-jam pada NeRF original).
+NeRF (Mildenhall et al., 2020) merepresentasikan scene sebagai fungsi kontinu:
 
----
+$$F_\theta: (\mathbf{x}, \mathbf{d}) \to (\mathbf{c}, \sigma)$$
 
-## 8. Aplikasi Rekonstruksi 3D
+dimana $\mathbf{x} = (x,y,z)$ posisi, $\mathbf{d} = (\theta, \phi)$ arah pandang, $\mathbf{c}$ warna RGB, $\sigma$ density.
 
-| Aplikasi | Teknik Utama |
-|----------|-------------|
-| Digital twin | TSDF + texturing |
-| Cultural heritage | SfM + MVS + mesh |
-| Robotics mapping | Visual SLAM + TSDF |
-| AR content creation | 3D Gaussian splatting |
-| VR/Gaming | NeRF → mesh export |
-| Medical imaging | Volumetric reconstruction |
-| E-commerce | Object 3D scanning |
-| Architecture | LiDAR + photo reconstruction |
+**Volume Rendering:**
+$$C(\mathbf{r}) = \sum_{i=1}^{N} T_i \cdot \alpha_i \cdot \mathbf{c}_i$$
+$$T_i = \prod_{j=1}^{i-1}(1 - \alpha_j), \quad \alpha_i = 1 - e^{-\sigma_i \delta_i}$$
 
----
+**Positional Encoding:**
+$$\gamma(p) = (\sin(2^0\pi p), \cos(2^0\pi p), \ldots, \sin(2^{L-1}\pi p), \cos(2^{L-1}\pi p))$$
 
-## 9. Pipeline Lengkap
+**Training:** minimize MSE antara rendered pixel dan ground truth:
+$$\mathcal{L} = \sum_{\mathbf{r}} \|C(\mathbf{r}) - C_{gt}(\mathbf{r})\|^2$$
 
-```
-Gambar Multi-View
-      │
-      ▼
-  SfM (Modul 11)
-      │
-  ┌───┴───┐
-  │       │
-  ▼       ▼
-Sparse 3D   Camera Poses
-Points       & Intrinsics
-  │       │
-  └───┬───┘
-      │
-      ▼
-  Dense MVS
-      │
-  ┌───┴───┐
-  │       │
-  ▼       ▼
-Dense         Depth Maps
-Point Cloud
-  │       │
-  ▼       ▼
-Surface       TSDF
-Recon         Integration
-  │       │
-  └───┬───┘
-      │
-      ▼
-  Textured Mesh
-      │
-  ┌───┴───┐
-  │       │
-  ▼       ▼
-Export 3D   Novel View
-(OBJ/PLY)   Synthesis
-            (NeRF/3DGS)
-```
+## 12.12 3D Gaussian Splatting
 
----
+3DGS (Kerbl et al., 2023) merepresentasikan scene sebagai kumpulan 3D Gaussian:
 
-## 10. Tools dan Library
+Setiap Gaussian: $G_i = (\boldsymbol{\mu}_i, \boldsymbol{\Sigma}_i, \alpha_i, \mathbf{c}_i)$
+- $\boldsymbol{\mu}_i$: posisi 3D (mean)
+- $\boldsymbol{\Sigma}_i$: 3D covariance matrix
+- $\alpha_i$: opacity
+- $\mathbf{c}_i$: spherical harmonics coefficients (view-dependent color)
 
-| Library | Fungsi |
-|---------|--------|
-| **Open3D** | Point cloud, mesh, TSDF, ICP, visualization |
-| **COLMAP** | SfM + MVS end-to-end |
-| **PyMeshLab** | Mesh processing (Poisson, BPA, simplification) |
-| **trimesh** | Mesh I/O, operations, boolean |
-| **nerfstudio** | NeRF training & rendering |
-| **gsplat** | 3D Gaussian splatting |
-| **OpenCV** | Stereo, depth, warping |
-| **PCL (via pclpy)** | Point cloud processing (C++ with Python bindings) |
-| **Meshroom** | Open-source photogrammetry (GUI) |
+**Rendering (Differentiable Splatting):**
+1. Project 3D Gaussians ke 2D
+2. Sort berdasarkan depth
+3. Alpha compositing:
+$$C = \sum_{i=1}^{N} \mathbf{c}_i \cdot \alpha_i \cdot \prod_{j=1}^{i-1}(1 - \alpha_j)$$
 
----
+**Keunggulan:**
+- Training: 10-100× lebih cepat dari NeRF
+- Rendering: real-time (~100 FPS) vs NeRF (~0.1 FPS)
+- Kualitas: setara atau lebih baik dari NeRF
+
+## 12.13 Light Field
+
+Light field merepresentasikan semua sinar cahaya dalam scene:
+
+$$L(u, v, s, t)$$
+
+dimana $(u,v)$ posisi kamera dan $(s,t)$ arah ray pada sensor plane.
+
+**Epipolar Plane Image (EPI):** irisan 2D dari light field (fixkan satu dimensi).
+
+**Aplikasi:**
+- Post-capture refocusing
+- Depth estimation dari slope EPI
+- View synthesis tanpa geometry
+
+## 12.14 RGBD Pipeline
+
+Pipeline dari RGBD camera (Kinect, RealSense):
+
+1. **Akuisisi:** RGB + Depth per frame
+2. **Deprojection:** pixel (u,v,d) → 3D point (X,Y,Z)
+3. **Registration:** ICP antar frame
+4. **Fusion:** TSDF integration
+5. **Extraction:** Marching Cubes → mesh
+6. **Texturing:** proyeksi warna dari RGB frames
+
+## 12.15 Perbandingan Metode Rekonstruksi
+
+| Metode | Input | Output | Kecepatan | Kualitas |
+|---|---|---|---|---|
+| Poisson | Points + Normals | Watertight mesh | Sedang | Baik |
+| BPA | Points + Normals | Open mesh | Cepat | Tergantung density |
+| Alpha Shapes | Points | Boundary | Cepat | Sedang |
+| Marching Cubes | Volume/SDF | Mesh | Cepat | Tergantung resolusi |
+| TSDF + MC | Depth maps | Mesh | Lambat (fusi) | Baik |
+| NeRF | Images + Poses | Novel views | Lambat training | Sangat baik |
+| 3DGS | Images + Poses | Novel views | Cepat training | Sangat baik |
 
 ## Referensi
-1. Szeliski, R. (2022). *Computer Vision: Algorithms and Applications*, 2nd Ed. Springer. Ch. 13–14.
-2. Kazhdan, M., Hoppe, H. (2013). Screened Poisson Surface Reconstruction. *ACM ToG*.
-3. Curless, B., Levoy, M. (1996). A Volumetric Method for Building Complex Models from Range Images. *SIGGRAPH*.
-4. Newcombe, R. et al. (2011). KinectFusion: Real-Time Dense Surface Mapping and Tracking. *ISMAR*.
-5. Mildenhall, B. et al. (2020). NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis. *ECCV*.
-6. Kerbl, B. et al. (2023). 3D Gaussian Splatting for Real-Time Radiance Field Rendering. *ACM ToG*.
-7. Müller, T. et al. (2022). Instant Neural Graphics Primitives with a Multiresolution Hash Encoding. *ACM ToG*.
-8. Schönberger, J.L., Frahm, J.M. (2016). Structure-from-Motion Revisited. *CVPR*.
-9. Open3D Documentation. http://www.open3d.org/docs/
-10. COLMAP Documentation. https://colmap.github.io/
+1. Szeliski, R. (2022). *Computer Vision: Algorithms and Applications*, 2nd Ed. Chapter 12-14.
+2. Mildenhall, B., et al. (2020). "NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis."
+3. Kerbl, B., et al. (2023). "3D Gaussian Splatting for Real-Time Radiance Field Rendering."
+4. Curless, B. & Levoy, M. (1996). "A Volumetric Method for Building Complex Models from Range Images."
+5. Lorensen, W. & Cline, H. (1987). "Marching Cubes: A High Resolution 3D Surface Construction Algorithm."
+6. Bernardini, F., et al. (1999). "The Ball-Pivoting Algorithm for Surface Reconstruction."
+7. Newcombe, R., et al. (2011). "KinectFusion: Real-Time Dense Surface Mapping and Tracking."
+8. Open3D Documentation: http://www.open3d.org/docs/

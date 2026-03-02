@@ -1,105 +1,76 @@
 # TUGAS VIDEO MODUL 12: REKONSTRUKSI 3D DAN IMAGE-BASED RENDERING
 
----
-
-## Deskripsi Tugas
-Buat video laporan yang mendemonstrasikan seluruh materi, 20 percobaan, dan project Rekonstruksi 3D & Image-Based Rendering. Fokus pada visualisasi 3D dan novel view synthesis.
+## Ketentuan Video
+- **Format:** MP4 (H.264)
+- **Nama file:** `Video_Modul12_NIM_Nama.mp4`
+- **Durasi:** 15-25 menit
+- **Resolusi:** Minimal 720p
+- **Audio:** Narasi jelas dalam Bahasa Indonesia
+- **Screen recording:** Tampilkan kode + output
 
 ---
 
 ## Struktur Video
 
-### 1. Pembukaan (Maks 2 menit)
-- Perkenalan: Nama, NIM, kelas, modul.
-- Overview topik Rekonstruksi 3D dan Image-Based Rendering.
+### 1. Pembukaan (1-2 menit)
+- Perkenalan: Nama, NIM, Mata Kuliah
+- Judul: "Modul 12 - Rekonstruksi 3D dan Image-Based Rendering"
+- Overview singkat topik yang akan dibahas
 
-### 2. Penjelasan Materi (10–15 menit)
-- Point cloud processing: filtering, normals, registration.
-- Surface reconstruction: Poisson vs BPA vs Alpha Shapes.
-- TSDF integration: prinsip dan pipeline.
-- Image warping: forward/inverse, disocclusion.
-- View interpolation: pose interpolation, blending.
-- Neural rendering: NeRF dan 3D Gaussian Splatting (konsep).
-- **Wajib**: Diagram pipeline lengkap (SfM → dense → mesh → render).
+### 2. Penjelasan Materi (5-7 menit)
+Jelaskan konsep utama:
+- Representasi data 3D (point cloud, mesh, volume, implicit)
+- Pipeline rekonstruksi 3D: akuisisi → preprocessing → reconstruction → rendering
+- Point cloud processing: filtering, normal estimation, registration (ICP)
+- Surface reconstruction: Poisson, BPA, Alpha Shapes, Marching Cubes
+- TSDF integration dan KinectFusion
+- Image-based rendering: warping, view interpolation
+- NeRF dan 3D Gaussian Splatting (konsep dan perbandingan)
 
-### 3. Demo 20 Percobaan (40–60 menit)
+### 3. Demo Percobaan (5-10 menit)
+Jalankan dan jelaskan setiap percobaan:
 
-| No | Percobaan | Poin Penting |
-|----|-----------|--------------|
-| 1 | Point Cloud Basics | Load, visualisasi, properties |
-| 2 | Filtering & Downsampling | Noise removal, voxel grid |
-| 3 | Normal Estimation | Normal visualization, PCA |
-| 4 | ICP Registration | P2P vs P2Plane, fitness |
-| 5 | Surface Reconstruction | Poisson vs BPA perbandingan |
-| 6 | Mesh Processing | Simplification, smoothing |
-| 7 | TSDF Integration | Inkremental build dari depth |
-| 8 | Image Warping | Forward warp, disocclusion |
-| 9 | View Interpolation | Smooth transition video |
-| 10 | Neural Rendering | MLP image regression, konsep |
-| 11 | Ball Pivoting Detail | Multi-radius, coverage analysis |
-| 12 | Alpha Shapes | Alpha parameter, concave shape |
-| 13 | Mesh Texturing | Projecting color, trisurf |
-| 14 | Point Cloud Colorization | 6 metode colorization |
-| 15 | Point Cloud Segmentation | RANSAC plane, clustering |
-| 16 | Marching Cubes | Isosurface, sphere/torus |
-| 17 | Volumetric Rendering | MIP, average, first-surface |
-| 18 | Forward vs Inverse Warp | Holes, splatting, bilinear |
-| 19 | Light Field Basics | 4D, sub-aperture, refocus |
-| 20 | 3D Visualization & Export | PLY/OBJ, turntable video |
+| No | File | Topik |
+|---|---|---|
+| 01 | `01_point_cloud_basics.py` | Membuat, load, dan visualisasi point cloud |
+| 02 | `02_point_cloud_filtering.py` | Voxel downsample dan SOR |
+| 03 | `03_normal_estimation.py` | Estimasi normal via PCA lokal |
+| 04 | `04_icp_registration.py` | ICP point-to-point alignment |
+| 05 | `05_surface_reconstruction_poisson.py` | Pipeline Poisson reconstruction |
+| 06 | `06_mesh_processing.py` | Decimation dan Laplacian smoothing |
+| 07 | `07_tsdf_integration.py` | TSDF volume integration |
+| 08 | `08_image_warping_depth.py` | Forward warping dengan depth |
+| 09 | `09_view_interpolation.py` | Linear blend vs flow-based |
+| 10 | `10_neural_rendering_konsep.py` | Pipeline NeRF dan volume rendering |
+| 11 | `11_ball_pivoting_algorithm.py` | Konsep BPA 2D |
+| 12 | `12_alpha_shapes.py` | Alpha shapes variasi parameter |
+| 13 | `13_mesh_texturing.py` | Proyeksi tekstur ke mesh |
+| 14 | `14_rgbd_point_cloud.py` | RGBD ke colored point cloud |
+| 15 | `15_point_cloud_segmentation.py` | Plane segmentation + clustering |
+| 16 | `16_marching_cubes.py` | Isosurface extraction |
+| 17 | `17_volumetric_rendering.py` | Ray casting volume 3D |
+| 18 | `18_light_field_basics.py` | Light field grid dan EPI |
+| 19 | `19_3d_gaussian_splatting_konsep.py` | Konsep 3DGS pipeline |
+| 20 | `20_3d_reconstruction_pipeline.py` | Pipeline end-to-end |
 
-- Tunjukkan visualisasi 3D dari berbagai angle (rotate di Open3D/matplotlib).
-- Bandingkan metode secara visual side-by-side.
+### 4. Demo Project (3-5 menit)
+- Tunjukkan minimal 3 improvisasi project yang dikerjakan
+- Jelaskan pendekatan dan hasil yang diperoleh
+- Bandingkan metode dan analisis kelebihan/kekurangan
 
-### 4. Demo Project (10–15 menit)
-- Demo project soal cerita.
-- Tunjukkan 3D output dan rendered views.
-
-### 5. Analisis dan Penutup (5 menit)
-- Perbandingan metode tradisional vs neural.
-- Limitasi dan potensi ke depan.
-- Kesimpulan seluruh modul.
-
----
-
-## Ketentuan Teknis
-
-| Aspek | Ketentuan |
-|-------|-----------|
-| Durasi | 75–100 menit |
-| Resolusi | Minimal 1080p |
-| Recording | Screen recording + webcam |
-| Webcam | Tunjukkan objek fisik saat capture foto untuk rekonstruksi |
-| Audio | Narasi jelas |
-| Platform | YouTube (Unlisted) atau Google Drive |
-| Format | MP4 |
+### 5. Penutup (1-2 menit)
+- Rangkuman pembelajaran
+- Perbandingan metode rekonstruksi (klasik vs modern)
+- Tantangan dan potensi pengembangan (real-time, mobile, AR/VR)
 
 ---
 
 ## Rubrik Penilaian Video
 
-| Komponen | Bobot | Keterangan |
-|----------|-------|------------|
-| Pembukaan | 5% | Profesional |
-| Penjelasan Materi | 15% | Akurat, diagram pipeline |
-| Demo 20 Percobaan | 40% | Semua berjalan, 3D visualization |
-| Demo Project | 20% | Fitur lengkap, 3D output |
-| Analisis & Kesimpulan | 10% | Kritis, perbandingan metode |
-| Kualitas Video | 10% | Resolusi, audio |
-
-### Bonus & Penalti
-| Item | Nilai |
-|------|-------|
-| Visualisasi 3D interaktif (rotate di Open3D/web viewer) | +5 |
-| Demo NeRF/3DGS training + rendering | +5 |
-| Rekonstruksi objek sendiri (bukan dataset) | +5 |
-| Video < 45 menit | -10 |
-| Tidak ada webcam | -5 |
-| Audio tidak jelas | -5 |
-| Percobaan error tanpa penjelasan | -5 per percobaan |
-
----
-
-## Format Pengumpulan
-- **Deadline**: 1 minggu setelah modul selesai.
-- **Format**: Link YouTube (Unlisted) atau Google Drive.
-- **Naming**: `[NIM]_[Nama]_Video_Modul12`
+| Komponen | Bobot | Kriteria |
+|---|---|---|
+| Pembukaan & Struktur | 10% | Perkenalan jelas, struktur teratur |
+| Penjelasan Materi | 25% | Konsep benar, analogi mudah dipahami |
+| Demo Percobaan | 30% | Semua 20 percobaan dijalankan, output ditampilkan |
+| Demo Project | 20% | Minimal 3 improvisasi, analisis mendalam |
+| Kualitas Presentasi | 15% | Audio jelas, visual bagus, durasi tepat |

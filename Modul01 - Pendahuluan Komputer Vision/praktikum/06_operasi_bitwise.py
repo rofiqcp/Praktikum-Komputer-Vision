@@ -1,225 +1,124 @@
 """
 ==========================================================================
-PERCOBAAN 6: OPERASI BITWISE
-==========================================================================
-Program ini mempelajari operasi bitwise (operasi bit per bit) pada gambar.
-Operasi bitwise sangat berguna untuk membuat mask, overlay logo, dan
-menggabungkan gambar secara selektif.
+ PERCOBAAN 6 — OPERASI BITWISE
+ Modul 1: Pendahuluan Komputer Vision
 
-Fungsi utama:
-- cv2.bitwise_and(img1, img2)  : AND → Hanya piksel yang sama-sama ON
-- cv2.bitwise_or(img1, img2)   : OR  → Piksel yang salah satunya ON
-- cv2.bitwise_xor(img1, img2)  : XOR → Piksel yang berbeda saja
-- cv2.bitwise_not(img)          : NOT → Invert semua bit
-
-Konsep: Setiap piksel = 8 bit (0000 0000 - 1111 1111)
-AND : 1 & 1 = 1, lainnya = 0
-OR  : 0 | 0 = 0, lainnya = 1
-XOR : sama = 0, beda = 1
-NOT : 0 → 1, 1 → 0
+ Tujuan  : Memahami operasi bitwise (AND, OR, XOR, NOT) pada gambar
+           dan penggunaannya untuk masking dan kompositing.
+ Konsep  : cv2.bitwise_and/or/xor/not(), mask binary untuk isolasi area.
 ==========================================================================
 """
 
 import cv2
 import numpy as np
 import os
+import matplotlib
 import matplotlib.pyplot as plt
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-IMAGE_DIR = os.path.join(SCRIPT_DIR, "image")
+SCRIPT_DIR   = os.path.dirname(os.path.abspath(__file__))
+IMAGE_DIR  = os.path.join(SCRIPT_DIR, "image")
 OUTPUT_DIR = os.path.join(SCRIPT_DIR, "output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-print("=" * 60)
-print("PERCOBAAN 6: OPERASI BITWISE")
-print("=" * 60)
 
-# ============================================================
-# 1. Membuat dua gambar sederhana untuk demo bitwise
-# ============================================================
+def buat_bentuk_uji():
+    """
+    Membuat dua gambar biner hitam-putih untuk demo bitwise.
+    - Kotak putih di kiri
+    - Lingkaran putih di kanan (sedikit overlap)
+    """
+    img1 = np.zeros((300, 300), dtype=np.uint8)
+    img2 = np.zeros((300, 300), dtype=np.uint8)
+    cv2.rectangle(img1, (50, 50), (200, 250), 255, -1)
+    cv2.circle(img2, (200, 150), 120, 255, -1)
+    return img1, img2
 
-# Membuat gambar persegi putih di atas latar hitam
-img_rect = np.zeros((400, 400), dtype=np.uint8)
-# cv2.rectangle(img, titik_kiri_atas, titik_kanan_bawah, warna, ketebalan)
-# ketebalan -1 = filled (terisi penuh)
-cv2.rectangle(img_rect, (50, 50), (250, 250), 255, -1)
 
-# Membuat gambar lingkaran putih di atas latar hitam
-img_circle = np.zeros((400, 400), dtype=np.uint8)
-# cv2.circle(img, titik_pusat, radius, warna, ketebalan)
-cv2.circle(img_circle, (250, 250), 150, 255, -1)
+def operasi_bitwise_dasar(img1, img2):
+    """
+    Empat operasi bitwise pada gambar:
+    - AND : hanya area overlap (irisan)
+    - OR  : gabungan kedua area (union)
+    - XOR : area yang TIDAK overlap (symmetric difference)
+    - NOT : inversi (kebalikan hitam↔putih)
+    """
+    bw_and = cv2.bitwise_and(img1, img2)
+    bw_or  = cv2.bitwise_or(img1, img2)
+    bw_xor = cv2.bitwise_xor(img1, img2)
+    bw_not = cv2.bitwise_not(img1)
 
-print("[INFO] Dua gambar mask dibuat: persegi dan lingkaran")
+    print("  AND → area irisan saja")
+    print("  OR  → gabungan semua area")
+    print("  XOR → area non-overlap")
+    print("  NOT → inversi gambar")
+    return bw_and, bw_or, bw_xor, bw_not
 
-# ============================================================
-# 2. Operasi AND - Irisan (intersection)
-# ============================================================
 
-# AND: Piksel = putih HANYA jika di kedua gambar pikselnya putih
-# Berguna untuk: menampilkan area yang overlap/berpotongan
-hasil_and = cv2.bitwise_and(img_rect, img_circle)
-print("[INFO] AND: Hanya area yang overlap yang berwarna putih")
+def demo_masking_dengan_bitwise(img_color):
+    """
+    Menggunakan bitwise_and + mask untuk mengisolasi area tertentu.
+    Contoh: buat mask lingkaran, lalu terapkan ke gambar berwarna.
+    """
+    h, w = img_color.shape[:2]
+    mask = np.zeros((h, w), dtype=np.uint8)
+    cv2.circle(mask, (w // 2, h // 2), min(h, w) // 3, 255, -1)
 
-# ============================================================
-# 3. Operasi OR - Gabungan (union)
-# ============================================================
+    # bitwise_and dengan mask → hanya area dalam lingkaran yg terlihat
+    hasil = cv2.bitwise_and(img_color, img_color, mask=mask)
+    print(f"  Mask lingkaran diterapkan: radius={min(h,w)//3}")
+    return mask, hasil
 
-# OR: Piksel = putih jika di salah satu atau kedua gambar pikselnya putih
-# Berguna untuk: menggabungkan dua mask
-hasil_or = cv2.bitwise_or(img_rect, img_circle)
-print("[INFO] OR: Area gabungan kedua bentuk berwarna putih")
 
-# ============================================================
-# 4. Operasi XOR - Perbedaan simetris (symmetric difference)
-# ============================================================
+def tampilkan_hasil(img1, img2, bw_and, bw_or, bw_xor, bw_not,
+                    img_color, mask, masked):
+    """Visualisasi semua operasi bitwise."""
+    fig, axes = plt.subplots(2, 4, figsize=(16, 8))
 
-# XOR: Piksel = putih HANYA jika di salah satu gambar (bukan keduanya)
-# Berguna untuk: mendeteksi perbedaan antara dua gambar
-hasil_xor = cv2.bitwise_xor(img_rect, img_circle)
-print("[INFO] XOR: Hanya area yang berbeda yang berwarna putih")
+    # Baris 1: operasi dasar
+    axes[0, 0].imshow(img1, cmap="gray"); axes[0, 0].set_title("Kotak")
+    axes[0, 1].imshow(img2, cmap="gray"); axes[0, 1].set_title("Lingkaran")
+    axes[0, 2].imshow(bw_and, cmap="gray"); axes[0, 2].set_title("AND (Irisan)")
+    axes[0, 3].imshow(bw_or, cmap="gray"); axes[0, 3].set_title("OR (Gabungan)")
 
-# ============================================================
-# 5. Operasi NOT - Invert (komplemen)
-# ============================================================
+    # Baris 2: xor, not, masking
+    axes[1, 0].imshow(bw_xor, cmap="gray"); axes[1, 0].set_title("XOR")
+    axes[1, 1].imshow(bw_not, cmap="gray"); axes[1, 1].set_title("NOT Kotak")
+    axes[1, 2].imshow(mask, cmap="gray"); axes[1, 2].set_title("Mask Lingkaran")
+    axes[1, 3].imshow(cv2.cvtColor(masked, cv2.COLOR_BGR2RGB))
+    axes[1, 3].set_title("Hasil Masking")
 
-# NOT: Membalik semua bit → putih jadi hitam, hitam jadi putih
-# Berguna untuk: membuat mask invers
-hasil_not_rect = cv2.bitwise_not(img_rect)
-hasil_not_circle = cv2.bitwise_not(img_circle)
-print("[INFO] NOT: Warna dibalik")
+    for ax in axes.flatten():
+        ax.axis("off")
 
-# ============================================================
-# 6. Visualisasi operasi bitwise dasar
-# ============================================================
+    plt.suptitle("Percobaan 6 — Operasi Bitwise", fontweight="bold")
+    plt.tight_layout()
 
-fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+    out = os.path.join(OUTPUT_DIR, "06_operasi_bitwise.png")
+    plt.savefig(out, dpi=150, bbox_inches="tight")
+    plt.show()
+    print(f"\n[SIMPAN] {out}")
 
-axes[0, 0].imshow(img_rect, cmap="gray")
-axes[0, 0].set_title("Persegi (A)")
 
-axes[0, 1].imshow(img_circle, cmap="gray")
-axes[0, 1].set_title("Lingkaran (B)")
+def main():
+    print("=" * 60)
+    print(" PERCOBAAN 6: OPERASI BITWISE")
+    print("=" * 60)
 
-axes[0, 2].imshow(hasil_and, cmap="gray")
-axes[0, 2].set_title("A AND B\n(Irisan/Intersection)")
+    print("\n[1] Operasi bitwise pada bentuk biner:")
+    img1, img2 = buat_bentuk_uji()
+    bw_and, bw_or, bw_xor, bw_not = operasi_bitwise_dasar(img1, img2)
 
-axes[1, 0].imshow(hasil_or, cmap="gray")
-axes[1, 0].set_title("A OR B\n(Gabungan/Union)")
+    print("\n[2] Masking gambar berwarna:")
+    img_color = cv2.imread(os.path.join(IMAGE_DIR, "foto_alam.jpg"))
+    mask, masked = demo_masking_dengan_bitwise(img_color)
 
-axes[1, 1].imshow(hasil_xor, cmap="gray")
-axes[1, 1].set_title("A XOR B\n(Perbedaan Simetris)")
+    tampilkan_hasil(img1, img2, bw_and, bw_or, bw_xor, bw_not,
+                    img_color, mask, masked)
 
-axes[1, 2].imshow(hasil_not_rect, cmap="gray")
-axes[1, 2].set_title("NOT A\n(Invert Persegi)")
+    print("\nRINGKASAN:")
+    print("  cv2.bitwise_and/or/xor/not() → operasi bit per piksel")
+    print("  Parameter mask= untuk isolasi area tertentu")
 
-for ax in axes.flat:
-    ax.axis("off")
 
-plt.suptitle("Percobaan 6: Operasi Bitwise Dasar", fontsize=16, fontweight="bold")
-plt.tight_layout()
-
-output_path = os.path.join(OUTPUT_DIR, "06_bitwise_dasar_hasil.png")
-plt.savefig(output_path, dpi=150, bbox_inches="tight")
-print(f"\n[OUTPUT] Bitwise dasar: {output_path}")
-
-# ============================================================
-# 7. Aplikasi: Overlay Logo menggunakan bitwise
-# ============================================================
-print("\n--- Aplikasi: Overlay Logo menggunakan Bitwise ---")
-
-# Membaca gambar latar belakang
-img_bg = cv2.imread(os.path.join(IMAGE_DIR, "foto_alam.jpg"))
-if img_bg is None:
-    print("[ERROR] Gambar foto_alam.jpg tidak ditemukan!")
-    exit()
-
-# Membaca foto orang sebagai gambar yang akan di-overlay ke background
-img_logo = cv2.imread(os.path.join(IMAGE_DIR, "foto_orang.jpg"))
-
-# Mengubah ukuran logo agar lebih kecil dari background
-# Mengambil 1/4 lebar background sebagai lebar logo
-lebar_logo = img_bg.shape[1] // 4
-tinggi_logo = int(img_logo.shape[0] * lebar_logo / img_logo.shape[1])
-img_logo = cv2.resize(img_logo, (lebar_logo, tinggi_logo))
-
-# Mengkonversi logo ke grayscale untuk membuat mask
-logo_gray = cv2.cvtColor(img_logo, cv2.COLOR_BGR2GRAY)
-
-# Membuat mask binary dari logo (putih = ada logo, hitam = tidak)
-# cv2.threshold() mengkonversi ke binary: piksel > 10 → putih, sisanya hitam
-_, mask_logo = cv2.threshold(logo_gray, 10, 255, cv2.THRESH_BINARY)
-
-# Membuat mask invers (kebalikan dari mask_logo)
-mask_logo_inv = cv2.bitwise_not(mask_logo)
-
-# Menentukan posisi overlay (kanan atas)
-y_offset = 10
-x_offset = img_bg.shape[1] - lebar_logo - 10
-
-# Mengambil Region of Interest (ROI) dari background di posisi logo
-roi = img_bg[y_offset:y_offset + tinggi_logo, x_offset:x_offset + lebar_logo]
-
-# LANGKAH 1: Hapus area logo dari ROI menggunakan AND + mask invers
-# Area di mana logo akan ditaruh menjadi hitam
-bg_area = cv2.bitwise_and(roi, roi, mask=mask_logo_inv)
-
-# LANGKAH 2: Ambil hanya area logo menggunakan AND + mask
-logo_area = cv2.bitwise_and(img_logo, img_logo, mask=mask_logo)
-
-# LANGKAH 3: Gabungkan background (tanpa area logo) + logo
-kombinasi = cv2.add(bg_area, logo_area)
-
-# Memasukkan hasil gabungan kembali ke gambar background
-img_hasil = img_bg.copy()
-img_hasil[y_offset:y_offset + tinggi_logo, x_offset:x_offset + lebar_logo] = kombinasi
-
-print("  Logo berhasil di-overlay ke gambar background!")
-
-# Visualisasi proses overlay
-fig2, axes2 = plt.subplots(2, 3, figsize=(18, 10))
-
-axes2[0, 0].imshow(cv2.cvtColor(roi, cv2.COLOR_BGR2RGB))
-axes2[0, 0].set_title("1. ROI (Area target)")
-
-axes2[0, 1].imshow(mask_logo, cmap="gray")
-axes2[0, 1].set_title("2. Mask Logo")
-
-axes2[0, 2].imshow(mask_logo_inv, cmap="gray")
-axes2[0, 2].set_title("3. Mask Invers")
-
-axes2[1, 0].imshow(cv2.cvtColor(bg_area, cv2.COLOR_BGR2RGB))
-axes2[1, 0].set_title("4. BG tanpa area logo\n(AND + mask invers)")
-
-axes2[1, 1].imshow(cv2.cvtColor(logo_area, cv2.COLOR_BGR2RGB))
-axes2[1, 1].set_title("5. Logo saja\n(AND + mask)")
-
-axes2[1, 2].imshow(cv2.cvtColor(img_hasil, cv2.COLOR_BGR2RGB))
-axes2[1, 2].set_title("6. Hasil Akhir\n(Background + Logo)")
-
-for ax in axes2.flat:
-    ax.axis("off")
-
-plt.suptitle("Proses Overlay Logo dengan Bitwise Operations", fontsize=14, fontweight="bold")
-plt.tight_layout()
-
-output_path2 = os.path.join(OUTPUT_DIR, "06_overlay_logo_hasil.png")
-plt.savefig(output_path2, dpi=150, bbox_inches="tight")
-print(f"[OUTPUT] Overlay logo: {output_path2}")
-
-# ============================================================
-# RINGKASAN
-# ============================================================
-print("\n" + "=" * 60)
-print("RINGKASAN PERCOBAAN 6")
-print("=" * 60)
-print("Operasi Bitwise:")
-print("  1. AND : Mengambil irisan (piksel ON di kedua gambar)")
-print("  2. OR  : Mengambil gabungan (piksel ON di salah satu)")
-print("  3. XOR : Mengambil perbedaan (piksel ON di satu saja)")
-print("  4. NOT : Membalik semua piksel")
-print("\nAplikasi utama:")
-print("  - Membuat dan menerapkan mask")
-print("  - Overlay logo/watermark ke gambar")
-print("  - Menggabungkan gambar secara selektif")
-print("  - Operasi set (union, intersection, difference)")
-print("=" * 60)
+if __name__ == "__main__":
+    main()

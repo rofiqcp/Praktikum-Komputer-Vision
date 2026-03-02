@@ -1,153 +1,132 @@
 """
 ==========================================================================
-PERCOBAAN 05: TRANSFORMASI PERSPEKTIF
-==========================================================================
-Transformasi perspektif memetakan 4 titik sumber ke 4 titik tujuan
-menggunakan matriks 3×3. Tidak mempertahankan garis paralel.
+ PERCOBAAN 5 — TRANSFORMASI PERSPEKTIF (HOMOGRAPHY)
+ Modul 2: Pembentukan Citra (Image Formation)
 
-Fungsi:
-- cv2.getPerspectiveTransform(src, dst) → Matriks perspektif 3×3
-- cv2.warpPerspective(src, M, dsize) → Terapkan transformasi
+ Tujuan  : Menerapkan transformasi perspektif menggunakan matriks 3×3.
+ Konsep  : cv2.getPerspectiveTransform(pts_src, pts_dst) → matriks H 3×3
+           cv2.warpPerspective(src, H, (w, h))
+           8 DOF — garis lurus tetap lurus, tapi paralel bisa konvergen.
+           Aplikasi: koreksi dokumen miring, bird's eye view.
 ==========================================================================
 """
 
 import cv2
 import numpy as np
 import os
+import matplotlib
 import matplotlib.pyplot as plt
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-IMAGE_DIR = os.path.join(SCRIPT_DIR, "image")
+SCRIPT_DIR   = os.path.dirname(os.path.abspath(__file__))
+IMAGE_DIR  = os.path.join(SCRIPT_DIR, "image")
 OUTPUT_DIR = os.path.join(SCRIPT_DIR, "output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-img = cv2.imread(os.path.join(IMAGE_DIR, "dokumen.jpg"))
-if img is None:
-    img = cv2.imread(os.path.join(IMAGE_DIR, "gedung.jpg"))
-if img is None:
-    print("[ERROR] Jalankan download_image.py!"); exit()
 
-img = cv2.resize(img, (300, 300))
-h, w = img.shape[:2]
+def perspektif_4titik(img, pts_src, pts_dst, ukuran_output=None):
+    """
+    Transformasi perspektif menggunakan 4 pasang titik korespondensi.
+    H = cv2.getPerspectiveTransform(src, dst) → matriks 3×3
+    """
+    H = cv2.getPerspectiveTransform(pts_src, pts_dst)
+    if ukuran_output is None:
+        ukuran_output = (img.shape[1], img.shape[0])
+    hasil = cv2.warpPerspective(img, H, ukuran_output)
+    print(f"  Homography H:\n{np.round(H, 4)}")
+    return hasil, H
 
-print("=" * 60)
-print("PERCOBAAN 05: TRANSFORMASI PERSPEKTIF")
-print("=" * 60)
 
-# ============================================================
-# 1. Perspektif dasar (4 titik)
-# ============================================================
-print("\n--- 1. Perspektif Dasar ---")
+def koreksi_dokumen(img):
+    """
+    Simulasi koreksi perspektif dokumen:
+    Misalkan dokumen berada di 4 titik miring → di-warp ke persegi panjang.
+    """
+    h, w = img.shape[:2]
+    # Titik sumber (simulasi dokumen miring)
+    pts_src = np.float32([
+        [w * 0.15, h * 0.10],
+        [w * 0.80, h * 0.05],
+        [w * 0.95, h * 0.90],
+        [w * 0.05, h * 0.85],
+    ])
+    # Titik tujuan (persegi panjang lurus)
+    pts_dst = np.float32([
+        [0, 0], [w - 1, 0], [w - 1, h - 1], [0, h - 1]
+    ])
+    hasil, H = perspektif_4titik(img, pts_src, pts_dst, (w, h))
+    return hasil, pts_src
 
-# 4 titik sudut gambar asli
-src = np.float32([[0, 0], [w, 0], [w, h], [0, h]])
-# 4 titik tujuan (efek miring)
-dst = np.float32([[50, 30], [250, 0], [280, 290], [20, 260]])
 
-# cv2.getPerspectiveTransform: matriks 3×3 dari 4 pasang titik
-M = cv2.getPerspectiveTransform(src, dst)
-print(f"  Matriks Perspektif 3×3:\n{M}")
+def birds_eye_view(img):
+    """Transformasi gambar ke tampilan atas (bird's eye view)."""
+    h, w = img.shape[:2]
+    pts_src = np.float32([
+        [w * 0.2, h * 0.3],
+        [w * 0.8, h * 0.3],
+        [w, h],
+        [0, h],
+    ])
+    pts_dst = np.float32([
+        [0, 0], [w, 0], [w, h], [0, h]
+    ])
+    hasil, _ = perspektif_4titik(img, pts_src, pts_dst, (w, h))
+    return hasil
 
-# cv2.warpPerspective menerapkan transformasi perspektif
-img_persp = cv2.warpPerspective(img, M, (w, h))
 
-# ============================================================
-# 2. Koreksi perspektif (dokumen scanner)
-# ============================================================
-print("\n--- 2. Document Scanner ---")
+def tampilkan_hasil(img, koreksi, pts_src, bev):
+    """Visualisasi transformasi perspektif."""
+    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
 
-# Simulasi: 4 sudut dokumen miring di foto
-src_doc = np.float32([[30, 20], [220, 0], [250, 290], [0, 270]])
-# Tujuan: persegi panjang sempurna
-dst_doc = np.float32([[0, 0], [w, 0], [w, h], [0, h]])
+    axes[0, 0].imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    axes[0, 0].set_title("Original"); axes[0, 0].axis("off")
 
-M_scan = cv2.getPerspectiveTransform(src_doc, dst_doc)
-img_scan = cv2.warpPerspective(img, M_scan, (w, h))
-print("  Koreksi dokumen miring → lurus")
+    # Gambar titik sumber pada original
+    img_pts = img.copy()
+    pts_int = pts_src.astype(int)
+    for i in range(4):
+        cv2.circle(img_pts, tuple(pts_int[i]), 8, (0, 255, 0), -1)
+        cv2.line(img_pts, tuple(pts_int[i]), tuple(pts_int[(i + 1) % 4]),
+                 (0, 0, 255), 2)
+    axes[0, 1].imshow(cv2.cvtColor(img_pts, cv2.COLOR_BGR2RGB))
+    axes[0, 1].set_title("Titik Sumber"); axes[0, 1].axis("off")
 
-# ============================================================
-# 3. Efek bird's eye view (pandangan atas)
-# ============================================================
-print("\n--- 3. Bird's Eye View ---")
+    axes[1, 0].imshow(cv2.cvtColor(koreksi, cv2.COLOR_BGR2RGB))
+    axes[1, 0].set_title("Koreksi Perspektif"); axes[1, 0].axis("off")
 
-src_bird = np.float32([[50, 0], [250, 0], [300, 300], [0, 300]])
-dst_bird = np.float32([[0, 0], [300, 0], [300, 300], [0, 300]])
-M_bird = cv2.getPerspectiveTransform(src_bird, dst_bird)
-img_bird = cv2.warpPerspective(img, M_bird, (w, h))
-print("  Trapesium → persegi (bird's eye)")
+    axes[1, 1].imshow(cv2.cvtColor(bev, cv2.COLOR_BGR2RGB))
+    axes[1, 1].set_title("Bird's Eye View"); axes[1, 1].axis("off")
 
-# ============================================================
-# 4. Efek zoom perspektif
-# ============================================================
-print("\n--- 4. Zoom Perspektif ---")
+    plt.suptitle("Percobaan 5 — Transformasi Perspektif", fontweight="bold")
+    plt.tight_layout()
 
-# Zoom in perspektif (sisi jauh membesar)
-src_zoom = np.float32([[0, 0], [w, 0], [w, h], [0, h]])
-dst_zoom = np.float32([[40, 40], [w-40, 40], [w, h], [0, h]])
-M_zoom = cv2.getPerspectiveTransform(src_zoom, dst_zoom)
-img_zoom = cv2.warpPerspective(img, M_zoom, (w, h))
+    out = os.path.join(OUTPUT_DIR, "05_transformasi_perspektif.png")
+    plt.savefig(out, dpi=150, bbox_inches="tight")
+    plt.show()
+    print(f"\n[SIMPAN] {out}")
 
-# Efek tilt ke belakang
-dst_tilt = np.float32([[60, 0], [w-60, 0], [w, h], [0, h]])
-M_tilt = cv2.getPerspectiveTransform(src_zoom, dst_tilt)
-img_tilt = cv2.warpPerspective(img, M_tilt, (w, h))
-print("  Zoom perspektif dan tilt")
 
-# ============================================================
-# 5. Inverse perspective
-# ============================================================
-print("\n--- 5. Inverse Perspektif ---")
+def main():
+    print("=" * 60)
+    print(" PERCOBAAN 5: TRANSFORMASI PERSPEKTIF (HOMOGRAPHY)")
+    print("=" * 60)
 
-# Gunakan flag WARP_INVERSE_MAP untuk inverse
-M_inv = cv2.getPerspectiveTransform(dst, src)
-img_recovered = cv2.warpPerspective(img_persp, M_inv, (w, h))
-diff = np.mean(cv2.absdiff(img, img_recovered))
-print(f"  Perbedaan original vs recovered: {diff:.2f}")
+    img = cv2.imread(os.path.join(IMAGE_DIR, "dokumen.jpg"))
+    print(f"\n  Ukuran gambar: {img.shape}")
 
-# ============================================================
-# 6. Transformasi 4 sudut interaktif
-# ============================================================
-print("\n--- 6. Variasi Transformasi ---")
+    print("\n[1] Koreksi perspektif dokumen:")
+    koreksi, pts_src = koreksi_dokumen(img)
 
-variasi = [
-    ("Condong Kanan", [[0,0],[w,0],[w-60,h],[60,h]]),
-    ("Condong Kiri",  [[60,0],[w-60,0],[w,h],[0,h]]),
-    ("Trapesium Atas", [[50,0],[w-50,0],[w,h],[0,h]]),
-    ("Trapesium Bawah",[[0,0],[w,0],[w-50,h],[50,h]]),
-]
+    print("\n[2] Bird's Eye View:")
+    bev = birds_eye_view(img)
 
-hasil_var = {}
-for nama, pts in variasi:
-    dst_v = np.float32(pts)
-    M_v = cv2.getPerspectiveTransform(src, dst_v)
-    hasil_var[nama] = cv2.warpPerspective(img, M_v, (w, h))
-    print(f"  {nama}")
+    tampilkan_hasil(img, koreksi, pts_src, bev)
 
-# ============================================================
-# 7. Visualisasi
-# ============================================================
-fig, axes = plt.subplots(2, 4, figsize=(20, 10))
+    print("\nRINGKASAN:")
+    print("  Perspektif: 8 DOF, garis lurus tetap lurus")
+    print("  getPerspectiveTransform(4 titik src, 4 titik dst)")
+    print("  warpPerspective(img, H, (w,h))")
+    print("  Aplikasi: koreksi dokumen, bird's eye view")
 
-axes[0, 0].imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-axes[0, 0].set_title("Original")
-axes[0, 1].imshow(cv2.cvtColor(img_persp, cv2.COLOR_BGR2RGB))
-axes[0, 1].set_title("Perspektif")
-axes[0, 2].imshow(cv2.cvtColor(img_scan, cv2.COLOR_BGR2RGB))
-axes[0, 2].set_title("Document Scanner")
-axes[0, 3].imshow(cv2.cvtColor(img_bird, cv2.COLOR_BGR2RGB))
-axes[0, 3].set_title("Bird's Eye")
 
-axes[1, 0].imshow(cv2.cvtColor(img_tilt, cv2.COLOR_BGR2RGB))
-axes[1, 0].set_title("Tilt")
-for i, (nama, im) in enumerate(list(hasil_var.items())[:3]):
-    axes[1, i+1].imshow(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
-    axes[1, i+1].set_title(nama)
-
-for ax in axes.flat:
-    ax.axis("off")
-plt.suptitle("Percobaan 05: Transformasi Perspektif", fontsize=16, fontweight="bold")
-plt.tight_layout()
-
-path = os.path.join(OUTPUT_DIR, "05_transformasi_perspektif_hasil.png")
-plt.savefig(path, dpi=150, bbox_inches="tight")
-print(f"\n[OUTPUT] {path}")
+if __name__ == "__main__":
+    main()

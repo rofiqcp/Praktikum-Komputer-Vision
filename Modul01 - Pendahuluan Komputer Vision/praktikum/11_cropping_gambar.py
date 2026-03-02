@@ -1,218 +1,119 @@
 """
 ==========================================================================
-PERCOBAAN 11: CROPPING GAMBAR
-==========================================================================
-Program ini mempelajari teknik cropping (pemotongan) gambar untuk
-mengambil bagian tertentu. Cropping di OpenCV dilakukan dengan
-slicing array NumPy: img[y1:y2, x1:x2]
+ PERCOBAAN 11 — CROPPING GAMBAR
+ Modul 1: Pendahuluan Komputer Vision
 
-Teknik yang dipelajari:
-- Cropping manual (koordinat tetap)
-- Cropping proporsional (persentase)
-- Cropping tengah (center crop)
-- Cropping dengan padding jika area di luar batas
-- Crop dan resize (thumbnail generation)
+ Tujuan  : Memotong (crop) area tertentu dari gambar dan menyimpannya.
+ Konsep  : Cropping = slicing NumPy: img[y1:y2, x1:x2].
+           Center crop, aspect-ratio crop, multi-crop grid.
 ==========================================================================
 """
 
 import cv2
 import numpy as np
 import os
+import matplotlib
 import matplotlib.pyplot as plt
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-IMAGE_DIR = os.path.join(SCRIPT_DIR, "image")
+SCRIPT_DIR   = os.path.dirname(os.path.abspath(__file__))
+IMAGE_DIR  = os.path.join(SCRIPT_DIR, "image")
 OUTPUT_DIR = os.path.join(SCRIPT_DIR, "output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-print("=" * 60)
-print("PERCOBAAN 11: CROPPING GAMBAR")
-print("=" * 60)
 
-# Membaca gambar pemandangan
-img = cv2.imread(os.path.join(IMAGE_DIR, "foto_alam2.jpg"))
-if img is None:
-    print("[ERROR] Jalankan download_image.py terlebih dahulu!")
-    exit()
+def crop_manual(img, y1, y2, x1, x2):
+    """Crop area [y1:y2, x1:x2] dari gambar."""
+    crop = img[y1:y2, x1:x2].copy()
+    print(f"  Crop [{y1}:{y2}, {x1}:{x2}] → {crop.shape}")
+    return crop
 
-tinggi, lebar = img.shape[:2]
-print(f"[INFO] Gambar asli: {lebar}×{tinggi}")
 
-# ============================================================
-# 1. Cropping manual (koordinat tetap)
-# ============================================================
-print("\n--- 1. Cropping Manual ---")
-
-# Crop area langit (bagian atas gambar)
-crop_langit = img[0:150, 0:lebar]
-print(f"  Langit: {crop_langit.shape[1]}×{crop_langit.shape[0]}")
-
-# Crop area tanah (bagian bawah gambar)
-crop_tanah = img[300:tinggi, 0:lebar]
-print(f"  Tanah: {crop_tanah.shape[1]}×{crop_tanah.shape[0]}")
-
-# Crop area gunung (bagian tengah)
-crop_gunung = img[80:310, 50:450]
-print(f"  Gunung: {crop_gunung.shape[1]}×{crop_gunung.shape[0]}")
-
-# ============================================================
-# 2. Center crop (crop simetris dari tengah)
-# ============================================================
-print("\n--- 2. Center Crop ---")
-
-def center_crop(img, crop_w, crop_h):
-    """Memotong gambar dari bagian tengah."""
+def crop_tengah(img, crop_w, crop_h):
+    """
+    Center crop: potong area tengah gambar sesuai ukuran (crop_w, crop_h).
+    Berguna untuk menstandardkan ukuran input klasifikasi.
+    """
     h, w = img.shape[:2]
-    # Menghitung titik awal (sudut kiri atas) dari area crop
-    start_x = max(0, (w - crop_w) // 2)
-    start_y = max(0, (h - crop_h) // 2)
-    # Memastikan tidak melebihi batas gambar
-    end_x = min(w, start_x + crop_w)
-    end_y = min(h, start_y + crop_h)
-    return img[start_y:end_y, start_x:end_x].copy()
+    x1 = (w - crop_w) // 2
+    y1 = (h - crop_h) // 2
+    crop = img[y1:y1 + crop_h, x1:x1 + crop_w].copy()
+    print(f"  Center crop {crop_w}x{crop_h} → {crop.shape}")
+    return crop
 
-# Center crop 300x300
-crop_center = center_crop(img, 300, 300)
-print(f"  Center crop 300×300: {crop_center.shape[1]}×{crop_center.shape[0]}")
 
-# Center crop 200x200
-crop_center_small = center_crop(img, 200, 200)
-print(f"  Center crop 200×200: {crop_center_small.shape[1]}×{crop_center_small.shape[0]}")
-
-# ============================================================
-# 3. Cropping proporsional (berdasarkan persentase)
-# ============================================================
-print("\n--- 3. Cropping Proporsional ---")
-
-def proportional_crop(img, top_pct=0, bottom_pct=0, left_pct=0, right_pct=0):
-    """Memotong gambar berdasarkan persentase dari setiap sisi."""
+def crop_grid(img, rows=2, cols=3):
+    """
+    Membagi gambar menjadi grid rows x cols dan mengkrop setiap sel.
+    Berguna untuk analisis bagian-bagian gambar secara terpisah.
+    """
     h, w = img.shape[:2]
-    # Menghitung jumlah piksel yang dipotong dari setiap sisi
-    top = int(h * top_pct / 100)
-    bottom = h - int(h * bottom_pct / 100)
-    left = int(w * left_pct / 100)
-    right = w - int(w * right_pct / 100)
-    return img[top:bottom, left:right].copy()
+    cell_h, cell_w = h // rows, w // cols
+    crops = []
+    for r in range(rows):
+        for c in range(cols):
+            y1, x1 = r * cell_h, c * cell_w
+            crop = img[y1:y1 + cell_h, x1:x1 + cell_w].copy()
+            crops.append(crop)
+    print(f"  Grid {rows}x{cols} → {len(crops)} potongan, ukuran {cell_w}x{cell_h}")
+    return crops
 
-# Crop 10% dari setiap sisi
-crop_10pct = proportional_crop(img, 10, 10, 10, 10)
-print(f"  Crop 10% semua sisi: {crop_10pct.shape[1]}×{crop_10pct.shape[0]}")
 
-# Crop 20% dari atas (hilangkan langit)
-crop_tanpa_langit = proportional_crop(img, top_pct=30)
-print(f"  Crop 30% atas: {crop_tanpa_langit.shape[1]}×{crop_tanpa_langit.shape[0]}")
+def tampilkan_hasil(img, crop_manual_img, crop_center, crops_grid):
+    """Visualisasi semua hasil crop."""
+    fig = plt.figure(figsize=(16, 10))
 
-# ============================================================
-# 4. Crop dan resize (pembuatan thumbnail)
-# ============================================================
-print("\n--- 4. Thumbnail Generation ---")
+    # Original + manual crop
+    ax1 = fig.add_subplot(2, 4, 1)
+    ax1.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    ax1.set_title("Original"); ax1.axis("off")
 
-def buat_thumbnail(img, thumb_size=150):
-    """Membuat thumbnail persegi dari gambar apapun."""
+    ax2 = fig.add_subplot(2, 4, 2)
+    ax2.imshow(cv2.cvtColor(crop_manual_img, cv2.COLOR_BGR2RGB))
+    ax2.set_title("Crop Manual"); ax2.axis("off")
+
+    ax3 = fig.add_subplot(2, 4, 3)
+    ax3.imshow(cv2.cvtColor(crop_center, cv2.COLOR_BGR2RGB))
+    ax3.set_title("Center Crop"); ax3.axis("off")
+
+    # Grid crops
+    for i, crop in enumerate(crops_grid[:5]):
+        ax = fig.add_subplot(2, 4, 4 + i + 1)
+        ax.imshow(cv2.cvtColor(crop, cv2.COLOR_BGR2RGB))
+        ax.set_title(f"Grid [{i}]"); ax.axis("off")
+
+    plt.suptitle("Percobaan 11 — Cropping Gambar", fontweight="bold")
+    plt.tight_layout()
+
+    out = os.path.join(OUTPUT_DIR, "11_cropping_gambar.png")
+    plt.savefig(out, dpi=150, bbox_inches="tight")
+    plt.show()
+    print(f"\n[SIMPAN] {out}")
+
+
+def main():
+    print("=" * 60)
+    print(" PERCOBAAN 11: CROPPING GAMBAR")
+    print("=" * 60)
+
+    img = cv2.imread(os.path.join(IMAGE_DIR, "foto_alam2.jpg"))
     h, w = img.shape[:2]
-    # Menentukan dimensi terkecil
-    min_dim = min(h, w)
-    # Center crop ke bentuk persegi
-    crop_sq = center_crop(img, min_dim, min_dim)
-    # Resize ke ukuran thumbnail
-    return cv2.resize(crop_sq, (thumb_size, thumb_size), interpolation=cv2.INTER_AREA)
 
-# Membuat thumbnail 150x150
-thumb = buat_thumbnail(img, 150)
-print(f"  Thumbnail 150×150: {thumb.shape}")
+    print("\n[1] Crop manual (kiri atas, 1/3 gambar):")
+    crop_m = crop_manual(img, 0, h // 2, 0, w // 2)
 
-# Membuat grid thumbnail dari berbagai crop
-thumbs = [
-    buat_thumbnail(crop_langit, 100),
-    buat_thumbnail(crop_gunung, 100),
-    buat_thumbnail(crop_tanah, 100),
-]
+    print("\n[2] Center crop (250x250):")
+    crop_c = crop_tengah(img, 250, 250)
 
-# ============================================================
-# 5. Crop dengan aspect ratio tertentu
-# ============================================================
-print("\n--- 5. Crop dengan Aspect Ratio ---")
+    print("\n[3] Grid crop (2x3):")
+    crops_g = crop_grid(img, 2, 3)
 
-def crop_aspect_ratio(img, ratio_w=16, ratio_h=9):
-    """Crop gambar agar sesuai dengan aspect ratio tertentu."""
-    h, w = img.shape[:2]
-    target_ratio = ratio_w / ratio_h
-    current_ratio = w / h
+    tampilkan_hasil(img, crop_m, crop_c, crops_g)
 
-    if current_ratio > target_ratio:
-        # Gambar terlalu lebar → crop horizontal
-        new_w = int(h * target_ratio)
-        start_x = (w - new_w) // 2
-        return img[:, start_x:start_x + new_w].copy()
-    else:
-        # Gambar terlalu tinggi → crop vertikal
-        new_h = int(w / target_ratio)
-        start_y = (h - new_h) // 2
-        return img[start_y:start_y + new_h, :].copy()
+    print("\nRINGKASAN:")
+    print("  img[y1:y2, x1:x2] → crop area manapun")
+    print("  Center crop → standarisasi input CNN")
+    print("  Grid crop   → analisis per-region")
 
-# Crop ke aspect ratio 16:9
-crop_16_9 = crop_aspect_ratio(img, 16, 9)
-print(f"  16:9: {crop_16_9.shape[1]}×{crop_16_9.shape[0]}")
 
-# Crop ke aspect ratio 1:1 (persegi)
-crop_1_1 = crop_aspect_ratio(img, 1, 1)
-print(f"  1:1:  {crop_1_1.shape[1]}×{crop_1_1.shape[0]}")
-
-# Crop ke aspect ratio 4:3
-crop_4_3 = crop_aspect_ratio(img, 4, 3)
-print(f"  4:3:  {crop_4_3.shape[1]}×{crop_4_3.shape[0]}")
-
-# ============================================================
-# 6. Visualisasi
-# ============================================================
-
-fig, axes = plt.subplots(2, 4, figsize=(20, 10))
-
-axes[0, 0].imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-axes[0, 0].set_title(f"Asli ({lebar}×{tinggi})")
-axes[0, 0].axis("off")
-
-axes[0, 1].imshow(cv2.cvtColor(crop_langit, cv2.COLOR_BGR2RGB))
-axes[0, 1].set_title("Crop Langit (atas)")
-axes[0, 1].axis("off")
-
-axes[0, 2].imshow(cv2.cvtColor(crop_gunung, cv2.COLOR_BGR2RGB))
-axes[0, 2].set_title("Crop Gunung (manual)")
-axes[0, 2].axis("off")
-
-axes[0, 3].imshow(cv2.cvtColor(crop_center, cv2.COLOR_BGR2RGB))
-axes[0, 3].set_title("Center Crop 300×300")
-axes[0, 3].axis("off")
-
-axes[1, 0].imshow(cv2.cvtColor(thumb, cv2.COLOR_BGR2RGB))
-axes[1, 0].set_title("Thumbnail 150×150")
-axes[1, 0].axis("off")
-
-axes[1, 1].imshow(cv2.cvtColor(crop_16_9, cv2.COLOR_BGR2RGB))
-axes[1, 1].set_title(f"Ratio 16:9\n{crop_16_9.shape[1]}×{crop_16_9.shape[0]}")
-axes[1, 1].axis("off")
-
-axes[1, 2].imshow(cv2.cvtColor(crop_1_1, cv2.COLOR_BGR2RGB))
-axes[1, 2].set_title(f"Ratio 1:1\n{crop_1_1.shape[1]}×{crop_1_1.shape[0]}")
-axes[1, 2].axis("off")
-
-axes[1, 3].imshow(cv2.cvtColor(crop_4_3, cv2.COLOR_BGR2RGB))
-axes[1, 3].set_title(f"Ratio 4:3\n{crop_4_3.shape[1]}×{crop_4_3.shape[0]}")
-axes[1, 3].axis("off")
-
-plt.suptitle("Percobaan 11: Cropping Gambar", fontsize=16, fontweight="bold")
-plt.tight_layout()
-
-output_path = os.path.join(OUTPUT_DIR, "11_cropping_gambar_hasil.png")
-plt.savefig(output_path, dpi=150, bbox_inches="tight")
-print(f"\n[OUTPUT] Hasil disimpan di: {output_path}")
-
-print("\n" + "=" * 60)
-print("RINGKASAN PERCOBAAN 11")
-print("=" * 60)
-print("  1. img[y1:y2, x1:x2]    → Crop manual dengan slicing")
-print("  2. Center crop           → Potong simetris dari tengah")
-print("  3. Proportional crop     → Potong berdasarkan persentase")
-print("  4. Aspect ratio crop     → Potong ke rasio tertentu")
-print("  5. Thumbnail             → Center crop + resize")
-print("=" * 60)
+if __name__ == "__main__":
+    main()

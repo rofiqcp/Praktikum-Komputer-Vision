@@ -1,174 +1,204 @@
 """
-==========================================================================
-PERCOBAAN 03: CLAHE (Contrast Limited Adaptive Histogram Equalization)
-==========================================================================
-CLAHE membagi gambar menjadi tile kecil dan melakukan equalisasi
-lokal di setiap tile, dengan pembatasan kontras untuk menghindari
-amplifikasi noise. Lebih baik dari global equalization.
+=============================================================
+Modul 03 - Pemrosesan Citra: CLAHE
+=============================================================
+CLAHE (Contrast Limited Adaptive Histogram Equalization) adalah
+pengembangan dari histogram equalization yang bekerja secara lokal
+pada tile-tile kecil gambar dan membatasi amplifikasi kontras.
+CLAHE menghindari noise amplification yang terjadi pada equalizeHist.
 
-Fungsi:
-- cv2.createCLAHE(clipLimit, tileGridSize) → buat objek CLAHE
-- clahe.apply(src) → terapkan CLAHE
-==========================================================================
+Topik:
+  1. Perbandingan Global EQ vs CLAHE
+  2. Variasi clipLimit (1, 2, 4, 8, 20, 40)
+  3. Variasi tileGridSize
+  4. CLAHE pada gambar berwarna via ruang warna LAB
+
+Referensi: cv2.createCLAHE, cv2.equalizeHist
+=============================================================
 """
 
 import cv2
 import numpy as np
-import os
 import matplotlib.pyplot as plt
+import os
 
+# --- Konfigurasi direktori ---
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-IMAGE_DIR = os.path.join(SCRIPT_DIR, "image")
+IMAGE_DIR  = os.path.join(SCRIPT_DIR, "image")
 OUTPUT_DIR = os.path.join(SCRIPT_DIR, "output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-img = cv2.imread(os.path.join(IMAGE_DIR, "kota.jpg"))
-if img is None:
-    print("[ERROR] Jalankan download_image.py terlebih dahulu!"); exit()
+IMAGE_PATH = os.path.join(IMAGE_DIR, "kota.jpg")
 
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-print("=" * 60)
-print("PERCOBAAN 03: CLAHE")
-print("=" * 60)
+def muat_atau_buat_gambar():
+    """Muat gambar dari IMAGE_DIR; buat gambar sintetis jika tidak ditemukan."""
+    if os.path.exists(IMAGE_PATH):
+        img = cv2.imread(IMAGE_PATH)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        print(f"[INFO] Gambar dimuat dari: {IMAGE_PATH}")
+        return img, gray
 
-# ============================================================
-# 1. Global Equalization vs CLAHE
-# ============================================================
-print("\n--- 1. Global vs CLAHE ---")
+    # --- Gambar sintetis: gradien dengan kontras rendah ---
+    print("[INFO] Gambar tidak ditemukan. Membuat gambar sintetis.")
+    h, w = 400, 600
+    # Gradien intensitas sempit 50-160 agar efek CLAHE terlihat jelas
+    x = np.linspace(50, 160, w, dtype=np.float32)
+    gray = np.tile(x, (h, 1)).astype(np.uint8)
+    # Tambah noise Gaussian ringan untuk uji amplifikasi noise
+    noise = np.random.normal(0, 8, gray.shape).astype(np.int16)
+    gray  = np.clip(gray.astype(np.int16) + noise, 0, 255).astype(np.uint8)
+    # Beberapa blok objek
+    gray[60:160,  40:180]  = 80
+    gray[180:320, 200:380] = 140
+    gray[40:100,  400:560] = 120
+    img = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+    return img, gray
 
-# Equalisasi global
-eq_global = cv2.equalizeHist(gray)
 
-# CLAHE default (clipLimit=2.0, tileGridSize=(8,8))
-clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-eq_clahe = clahe.apply(gray)
+def demo_global_eq_vs_clahe(gray):
+    """Demo 1: Perbandingan Global Histogram Equalization vs CLAHE."""
+    # Metode 1: equalizeHist - equalisasi global seluruh gambar
+    gray_eq = cv2.equalizeHist(gray)
 
-print(f"  Original std: {gray.std():.1f}")
-print(f"  Global eq std: {eq_global.std():.1f}")
-print(f"  CLAHE std: {eq_clahe.std():.1f}")
+    # Metode 2: CLAHE - equalisasi adaptif per tile dengan batas kontras
+    clahe    = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    gray_clahe = clahe.apply(gray)
 
-# ============================================================
-# 2. Variasi clipLimit
-# ============================================================
-print("\n--- 2. Variasi clipLimit ---")
+    # Hitung histogram ketiga gambar untuk perbandingan distribusi
+    hist_asli  = cv2.calcHist([gray],       [0], None, [256], [0, 256])
+    hist_eq    = cv2.calcHist([gray_eq],    [0], None, [256], [0, 256])
+    hist_clahe = cv2.calcHist([gray_clahe], [0], None, [256], [0, 256])
 
-clip_values = [1.0, 2.0, 4.0, 8.0, 20.0, 40.0]
-clip_results = []
+    fig, axes = plt.subplots(2, 3, figsize=(15, 8))
+    fig.suptitle("Demo 1: Global EQ vs CLAHE", fontsize=14, fontweight="bold")
 
-for clip in clip_values:
-    # clipLimit membatasi amplifikasi kontras per tile
-    clahe_v = cv2.createCLAHE(clipLimit=clip, tileGridSize=(8, 8))
-    result = clahe_v.apply(gray)
-    clip_results.append(result)
-    print(f"  clipLimit={clip:5.1f}: mean={result.mean():.1f}, std={result.std():.1f}")
+    # Baris atas: gambar asli, EQ global, CLAHE
+    axes[0, 0].imshow(gray,        cmap="gray"); axes[0, 0].set_title("Asli");               axes[0, 0].axis("off")
+    axes[0, 1].imshow(gray_eq,     cmap="gray"); axes[0, 1].set_title("equalizeHist (Global)"); axes[0, 1].axis("off")
+    axes[0, 2].imshow(gray_clahe,  cmap="gray"); axes[0, 2].set_title("CLAHE (clipLimit=2, tile=8x8)"); axes[0, 2].axis("off")
 
-# ============================================================
-# 3. Variasi tileGridSize
-# ============================================================
-print("\n--- 3. Variasi tileGridSize ---")
+    # Baris bawah: histogram masing-masing
+    axes[1, 0].plot(hist_asli,  color="steelblue"); axes[1, 0].set_title("Histogram Asli");       axes[1, 0].set_xlim([0, 256])
+    axes[1, 1].plot(hist_eq,    color="red");       axes[1, 1].set_title("Histogram EQ Global");  axes[1, 1].set_xlim([0, 256])
+    axes[1, 2].plot(hist_clahe, color="green");     axes[1, 2].set_title("Histogram CLAHE");      axes[1, 2].set_xlim([0, 256])
 
-tile_sizes = [(2, 2), (4, 4), (8, 8), (16, 16), (32, 32)]
-tile_results = []
+    for ax in axes[1]:
+        ax.set_xlabel("Intensitas"); ax.set_ylabel("Frekuensi")
 
-for tsize in tile_sizes:
-    # Tile lebih kecil → lebih lokal, lebih banyak adaptasi
-    clahe_t = cv2.createCLAHE(clipLimit=2.0, tileGridSize=tsize)
-    result = clahe_t.apply(gray)
-    tile_results.append(result)
-    print(f"  tileGridSize={tsize}: mean={result.mean():.1f}")
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUTPUT_DIR, "03_01_global_eq_vs_clahe.png"), dpi=150, bbox_inches="tight")
+    plt.show()
+    print("[SELESAI] Demo 1: global EQ vs CLAHE.")
 
-# ============================================================
-# 4. CLAHE pada Gambar Berwarna (LAB)
-# ============================================================
-print("\n--- 4. CLAHE pada Gambar Berwarna ---")
 
-# Konversi ke LAB color space
-lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
-# Terapkan CLAHE pada channel L (lightness)
-clahe_color = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
-lab[:, :, 0] = clahe_color.apply(lab[:, :, 0])
-# Konversi kembali ke BGR
-clahe_bgr = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
-print("  CLAHE pada channel L (LAB color space)")
+def demo_variasi_clip_limit(gray):
+    """Demo 2: Pengaruh variasi clipLimit terhadap hasil CLAHE."""
+    # clipLimit mengontrol batas amplifikasi kontras:
+    # - Nilai kecil: perubahan kecil, lebih dekat ke gambar asli
+    # - Nilai besar: kontras tinggi, rawan noise amplification
+    clip_limits = [1, 2, 4, 8, 20, 40]
+    tile = (8, 8)
 
-# ============================================================
-# 5. CLAHE pada Gambar Gelap
-# ============================================================
-print("\n--- 5. CLAHE pada Gambar Gelap ---")
+    fig, axes = plt.subplots(2, 3, figsize=(15, 9))
+    fig.suptitle("Demo 2: Variasi clipLimit pada CLAHE (tileGridSize=8x8)",
+                 fontsize=14, fontweight="bold")
 
-dark = cv2.convertScaleAbs(gray, alpha=0.3, beta=-10)
-dark_global = cv2.equalizeHist(dark)
-dark_clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8)).apply(dark)
-print(f"  Gelap mean: {dark.mean():.1f}")
-print(f"  Global eq: {dark_global.mean():.1f}")
-print(f"  CLAHE: {dark_clahe.mean():.1f}")
+    for i, cl in enumerate(clip_limits):
+        baris, kol = divmod(i, 3)
+        # Buat objek CLAHE dengan clipLimit berbeda
+        clahe  = cv2.createCLAHE(clipLimit=cl, tileGridSize=tile)
+        result = clahe.apply(gray)
+        axes[baris, kol].imshow(result, cmap="gray")
+        axes[baris, kol].set_title(f"clipLimit = {cl}")
+        axes[baris, kol].axis("off")
 
-# ============================================================
-# 6. Visualisasi
-# ============================================================
-fig, axes = plt.subplots(3, 4, figsize=(20, 15))
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUTPUT_DIR, "03_02_variasi_clip_limit.png"), dpi=150, bbox_inches="tight")
+    plt.show()
+    print("[SELESAI] Demo 2: variasi clipLimit.")
 
-# Baris 1: Perbandingan utama
-axes[0, 0].imshow(gray, cmap='gray')
-axes[0, 0].set_title("Original")
-axes[0, 0].axis("off")
 
-axes[0, 1].imshow(eq_global, cmap='gray')
-axes[0, 1].set_title("Global EQ")
-axes[0, 1].axis("off")
+def demo_variasi_tile_grid(gray):
+    """Demo 3: Pengaruh variasi tileGridSize terhadap hasil CLAHE."""
+    # tileGridSize menentukan ukuran grid tile:
+    # - Tile kecil: adaptasi lebih lokal, detail lebih tajam
+    # - Tile besar: mendekati equalisasi global
+    tile_sizes = [(2, 2), (4, 4), (8, 8), (16, 16), (32, 32), (64, 64)]
+    clip = 2.0
 
-axes[0, 2].imshow(eq_clahe, cmap='gray')
-axes[0, 2].set_title("CLAHE (clip=2)")
-axes[0, 2].axis("off")
+    fig, axes = plt.subplots(2, 3, figsize=(15, 9))
+    fig.suptitle("Demo 3: Variasi tileGridSize pada CLAHE (clipLimit=2.0)",
+                 fontsize=14, fontweight="bold")
 
-axes[0, 3].hist(eq_clahe.ravel(), 256, [0, 256], color='coral')
-axes[0, 3].set_title("Histogram CLAHE")
-axes[0, 3].set_xlim(0, 256)
+    for i, ts in enumerate(tile_sizes):
+        baris, kol = divmod(i, 3)
+        clahe  = cv2.createCLAHE(clipLimit=clip, tileGridSize=ts)
+        result = clahe.apply(gray)
+        axes[baris, kol].imshow(result, cmap="gray")
+        axes[baris, kol].set_title(f"tileGridSize = {ts[0]}x{ts[1]}")
+        axes[baris, kol].axis("off")
 
-# Baris 2: Variasi clipLimit
-for i, (clip, res) in enumerate(zip([1.0, 4.0, 20.0, 40.0],
-                                     [clip_results[0], clip_results[2],
-                                      clip_results[4], clip_results[5]])):
-    axes[1, i].imshow(res, cmap='gray')
-    axes[1, i].set_title(f"clip={clip}")
-    axes[1, i].axis("off")
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUTPUT_DIR, "03_03_variasi_tile_grid.png"), dpi=150, bbox_inches="tight")
+    plt.show()
+    print("[SELESAI] Demo 3: variasi tileGridSize.")
 
-# Baris 3: Warna + gelap
-axes[2, 0].imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-axes[2, 0].set_title("Original Warna")
-axes[2, 0].axis("off")
 
-axes[2, 1].imshow(cv2.cvtColor(clahe_bgr, cv2.COLOR_BGR2RGB))
-axes[2, 1].set_title("CLAHE Warna (LAB)")
-axes[2, 1].axis("off")
+def demo_clahe_warna_lab(img_bgr):
+    """Demo 4: Penerapan CLAHE pada gambar berwarna via ruang warna LAB."""
+    # Strategi: terapkan CLAHE hanya pada channel L (luminansi)
+    # sehingga warna (channel a dan b) tidak terpengaruh
+    img_lab = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2LAB)
+    L, a, b = cv2.split(img_lab)
 
-axes[2, 2].imshow(dark, cmap='gray')
-axes[2, 2].set_title("Gelap")
-axes[2, 2].axis("off")
+    # Untuk perbandingan: global EQ pada L
+    L_eq = cv2.equalizeHist(L)
 
-axes[2, 3].imshow(dark_clahe, cmap='gray')
-axes[2, 3].set_title("CLAHE Gelap")
-axes[2, 3].axis("off")
+    # CLAHE pada L dengan parameter default yang baik
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    L_clahe = clahe.apply(L)
 
-plt.suptitle("Percobaan 03: CLAHE", fontsize=16, fontweight="bold")
-plt.tight_layout()
+    # Rekonstruksi gambar berwarna dari setiap metode
+    img_eq_bgr    = cv2.cvtColor(cv2.merge([L_eq,    a, b]), cv2.COLOR_LAB2BGR)
+    img_clahe_bgr = cv2.cvtColor(cv2.merge([L_clahe, a, b]), cv2.COLOR_LAB2BGR)
 
-path = os.path.join(OUTPUT_DIR, "03_clahe_hasil.png")
-plt.savefig(path, dpi=150, bbox_inches="tight")
-print(f"\n[OUTPUT] {path}")
+    # Konversi ke RGB untuk matplotlib
+    asli_rgb  = cv2.cvtColor(img_bgr,       cv2.COLOR_BGR2RGB)
+    eq_rgb    = cv2.cvtColor(img_eq_bgr,    cv2.COLOR_BGR2RGB)
+    clahe_rgb = cv2.cvtColor(img_clahe_bgr, cv2.COLOR_BGR2RGB)
 
-# ============================================================
-# RINGKASAN
-# ============================================================
-print("\n" + "=" * 60)
-print("RINGKASAN PERCOBAAN 03")
-print("=" * 60)
-print("""
-1. CLAHE = adaptive histogram equalization + clip limit
-2. clipLimit mengontrol batas amplifikasi kontras (anti-noise)
-3. tileGridSize mengontrol ukuran area lokal
-4. Untuk gambar berwarna: terapkan CLAHE pada channel L (LAB)
-5. CLAHE lebih baik dari global EQ untuk gambar dengan pencahayaan
-   tidak merata
-""")
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+    fig.suptitle("Demo 4: CLAHE pada Gambar Berwarna (via Ruang Warna LAB)",
+                 fontsize=14, fontweight="bold")
+
+    axes[0].imshow(asli_rgb);  axes[0].set_title("Asli");               axes[0].axis("off")
+    axes[1].imshow(eq_rgb);    axes[1].set_title("Global EQ (LAB-L)");  axes[1].axis("off")
+    axes[2].imshow(clahe_rgb); axes[2].set_title("CLAHE (LAB-L)\nclipLimit=2, tile=8x8"); axes[2].axis("off")
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUTPUT_DIR, "03_04_clahe_warna_lab.png"), dpi=150, bbox_inches="tight")
+    plt.show()
+    print("[SELESAI] Demo 4: CLAHE warna LAB.")
+
+
+def main():
+    """Fungsi utama: jalankan semua demo CLAHE."""
+    print("=" * 60)
+    print("  MODUL 03 - CLAHE (Contrast Limited Adaptive HE)")
+    print("=" * 60)
+
+    # Muat gambar atau buat sintetis jika tidak tersedia
+    img_bgr, gray = muat_atau_buat_gambar()
+
+    # Jalankan empat demo secara berurutan
+    demo_global_eq_vs_clahe(gray)
+    demo_variasi_clip_limit(gray)
+    demo_variasi_tile_grid(gray)
+    demo_clahe_warna_lab(img_bgr)
+
+    print(f"\n[SELESAI] Semua output tersimpan di: {OUTPUT_DIR}")
+
+
+if __name__ == "__main__":
+    main()

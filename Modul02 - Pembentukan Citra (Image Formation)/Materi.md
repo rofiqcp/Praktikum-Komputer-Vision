@@ -306,7 +306,35 @@ noisy = cv2.add(img, noise)
 
 ---
 
-## 2.14 Ringkasan
+## 2.14 Marker ArUco dan Estimasi Pose
+
+**Fiducial marker** (marker referensi) seperti ArUco memungkinkan kamera mengetahui posisi dan orientasinya secara real-time tanpa sensor tambahan.
+
+### Cara Kerja ArUco
+1. **Generasi**: Setiap marker adalah gambar kotak hitam-putih berisi pola biner unik (4×4, 5×5, dst.).
+2. **Deteksi**: Cari kontur persegi → verifikasi pola biner → dekode ID.
+3. **Estimasi Pose**: solvePnP mencari Rvec (vektor rotasi Rodriguez) dan Tvec (translasi) yang memetakan 4 sudut marker 3D ke piksel 2D.
+4. **Overlay**: projectPoints memproyeksikan sumbu XYZ 3D ke gambar — visualisasi orientasi marker.
+
+### Kode Singkat (OpenCV 4.7+)
+```python
+adict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+detector = cv2.aruco.ArucoDetector(adict, cv2.aruco.DetectorParameters())
+corners, ids, _ = detector.detectMarkers(gray)
+rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
+    corners, marker_length, K, D)
+cv2.drawFrameAxes(img, K, D, rvecs[0], tvecs[0], 0.05)
+```
+
+### Aplikasi
+- Augmented Reality (overlay objek 3D pada marker)
+- Navigasi robot (lokalisasi kamera berbiaya rendah)
+- Kalibrasi multi-kamera (ChArUco board)
+- Pengukuran pose tanpa sensor IMU tambahan
+
+---
+
+## 2.15 Ringkasan
 
 | Konsep | Penjelasan |
 |--------|------------|
@@ -329,6 +357,7 @@ noisy = cv2.add(img, noise)
 | Koordinat Polar | Konversi Cartesian ↔ polar/log-polar |
 | Remapping | Transformasi fleksibel via custom map |
 | Citra Sintetis | Gambar buatan untuk pengujian algoritma |
+| ArUco Marker | Fiducial marker untuk lokalisasi dan AR |
 
 ---
 

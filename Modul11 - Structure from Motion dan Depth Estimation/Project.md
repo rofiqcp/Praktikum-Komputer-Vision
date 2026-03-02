@@ -1,79 +1,118 @@
-# PROJECT MODUL 11: STRUCTURE FROM MOTION DAN DEPTH ESTIMATION
+# PROJECT PRAKTIKUM
+# MODUL 11: STRUCTURE FROM MOTION DAN DEPTH ESTIMATION
 
 ---
 
-## Deskripsi Umum
-Project mengintegrasikan konsep multi-view geometry: epipolar geometry, triangulasi, SfM, stereo matching, dan monocular depth estimation. Pilih minimal 1 soal cerita.
+## FORMAT PENGUMPULAN
+
+- **Nama file**: `NIM_Nama_Project11.zip`
+- **Isi**: source code (.py), gambar input, folder output, laporan (PDF)
+- **Deadline**: Sesuai jadwal yang ditentukan dosen
 
 ---
 
-## Daftar Improvisasi Percobaan (15 Pengembangan)
+## BAGIAN A: IMPROVISASI (Pilih minimal 3 dari 15)
 
-1. **Full SfM Pipeline** — Rekonstruksi 3D objek dari 10+ gambar (incremental SfM lengkap).
-2. **Dense Reconstruction** — Gunakan stereo matching + SfM → dense point cloud.
-3. **Stereo Video Depth** — Real-time depth dari dual webcam.
-4. **Depth-based Obstacle Detection** — Alert jika objek terlalu dekat (stereo atau monocular).
-5. **3D Object Scanner** — Capture objek dari turntable → reconstruct.
-6. **Visual Odometry with Scale** — VO dengan scale recovery menggunakan known object.
-7. **Disparity Refinement** — Guided filter, bilateral filter, atau confidence-based refinement.
-8. **Multi-baseline Stereo** — 3+ kamera untuk mengisi holes pada disparity.
-9. **Depth Colorized Video** — Overlay depth as heatmap pada video real-time.
-10. **Egomotion from Dashcam** — Estimasi trajectory kendaraan dari video dashcam.
-11. **Plane Detection from Depth** — Deteksi bidang datar (lantai, dinding) dari depth map.
-12. **Depth-aware Image Editing** — Selection berdasarkan depth (select foreground/background).
-13. **Stereo Anaglyph Generator** — Buat gambar 3D anaglyph (red-cyan) dari stereo pair.
-14. **Loop Closure Detection** — Deteksi saat kamera kembali ke lokasi yang sama (SLAM basic).
-15. **Depth Map Super Resolution** — Upscale sparse/low-res depth → dense high-res.
+Kembangkan percobaan yang telah dilakukan dengan improvisasi berikut:
 
----
+### 1. Multi-Baseline Stereo
+Buat sistem stereo dengan 3+ baseline berbeda, bandingkan akurasi depth pada jarak dekat, menengah, dan jauh. Visualisasikan depth error vs baseline.
 
-## Soal Cerita Project (Pilih Minimal 1)
+### 2. Disparity Fusion BM + SGBM
+Gabungkan disparity dari BM dan SGBM menggunakan weighted average (bobot berdasarkan confidence). Bandingkan dengan masing-masing metode individual.
 
-### Soal 1: 3D Object Digitizer
-Museum ingin mendigitalisasi artefak menjadi model 3D. Buatlah: (a) capture 15+ foto objek dari berbagai sudut, (b) feature matching multi-view, (c) SfM: recover poses + triangulasi, (d) dense point cloud, (e) visualisasi 3D interaktif (Open3D/Matplotlib), (f) export PLY/OBJ, (g) color point cloud.
+### 3. Depth-Guided Image Segmentation
+Gunakan depth map untuk segmentasi multi-objek: foreground, middleground, background. Terapkan efek blur pada background (simulasi portrait mode).
 
-### Soal 2: Sistem Navigasi Robot (Visual Odometry)
-Robot warehouse memerlukan navigasi visual. Buatlah: (a) rekam video dari "robot" (gerak maju, belok), (b) feature tracking frame-by-frame, (c) essential matrix → recover pose, (d) plot trajectory bird's-eye view, (e) deteksi obstacle dari depth (monocular), (f) alert jarak dekat, (g) visualisasi trajectory + orientation.
+### 4. Automated Stereo Parameter Tuning
+Buat optimizer yang mencari parameter StereoBM/SGBM optimal menggunakan grid search atau random search. Metrik evaluasi: smoothness + sparsity.
 
-### Soal 3: Depth Map dari Dual Kamera Smartphone
-Developer aplikasi ingin menggunakan dual kamera HP untuk depth. Buatlah: (a) simulasikan stereo (2 foto geser horizontal), (b) stereo calibration, (c) rectification, (d) SGBM disparity, (e) depth map, (f) synthetic bokeh dari depth, (g) depth-based foreground segmentation.
+### 5. Visual Odometry 2-Frame
+Implementasikan visual odometry sederhana: essential matrix → pose → trajectory. Buat lintasan kamera dari sequence gambar (minimal 5 frame).
 
-### Soal 4: 3D Scene Reconstruction dari CCTV
-Arsitek ingin merekonstruksi ruangan dari 2 CCTV. Buatlah: (a) calibrate 2 kamera, (b) stereo rectification, (c) disparity + depth, (d) triangulasi titik 3D, (e) visualisasi point cloud ruangan, (f) estimasi dimensi ruangan (panjang, lebar), (g) floor plan sederhana dari top-view projection.
+### 6. Depth Map Super-Resolution
+Tingkatkan resolusi depth map rendah menggunakan guided filter dari gambar RGB resolusi tinggi. Bandingkan bicubic vs guided upsampling.
 
-### Soal 5: Augmented Reality Depth Demo
-Developer AR ingin tool yang menggunakan depth untuk placement objek. Buatlah: (a) monocular depth estimation (MiDaS), (b) deteksi bidang datar (floor) dari depth, (c) "place" virtual objek pada floor, (d) occlusion handling (objek di depan menutupi virtual object), (e) real-time dari webcam, (f) ukuran objek sesuai depth, (g) multiple virtual objects.
+### 7. SfM dari 3+ View
+Perluas pipeline SfM untuk 3+ gambar: incremental reconstruction. Tambahkan view baru secara bertahap (PnP + triangulasi).
 
-### Soal 6: Sistem Pengukuran Jarak dari Stereo
-Surveyor memerlukan tool pengukuran jarak dari foto. Buatlah: (a) stereo calibration, (b) rectification + SGBM, (c) depth map metrik, (d) klik 2 titik → hitung jarak 3D, (e) klik objek → hitung depth, (f) accuracy validation (ukur objek diketahui), (g) export measurements.
+### 8. Obstacle Detection dari Depth
+Buat sistem deteksi halangan berdasarkan depth map: identifikasi area yang terlalu dekat (threshold). Visualisasikan warning zone.
 
-### Soal 7: Monocular Depth untuk Video Editing
-Editor video ingin tool depth-based effects. Buatlah: (a) monocular depth per frame, (b) depth-based fog effect (semakin jauh semakin kabur), (c) depth-based color grading (warna berbeda per distance), (d) synthetic tilt-shift, (e) parallax 2.5D effect, (f) real-time preview, (g) export video.
+### 9. Depth Histogram Analysis
+Analisis distribusi depth pada berbagai scene (indoor, outdoor, cluttered). Buat histogram depth dan bandingkan statistik (mean, std, modality).
 
-### Soal 8: Building Facade Reconstruction
-Developer perlu merekonstruksi facade bangunan dari foto jalan. Buatlah: (a) 5+ foto facade dari sudut berbeda, (b) SfM: recover cameras + 3D points, (c) dense matching untuk facade, (d) plane fitting pada facade, (e) texture mapping sederhana, (f) dimensi estimasi, (g) 3D visualization.
+### 10. Stereo Confidence Map
+Hitung confidence map dari disparity: piksel dengan confidence rendah ditandai invalid. Gunakan left-right consistency check.
 
-### Soal 9: Stereo Anaglyph Photo Tool
-Fotografer ingin membuat foto 3D anaglyph. Buatlah: (a) capture stereo pair (shift kamera), (b) auto-alignment, (c) generate red-cyan anaglyph, (d) adjustable parallax, (e) crop + optimize, (f) support batch mode, (g) export anaglyph JPEG.
+### 11. 3D Anaglyph dari Stereo
+Buat gambar anaglyph (red-cyan 3D) dari pasangan stereo. Variasikan shift untuk efek kedalaman yang berbeda.
 
-### Soal 10: Parking Distance Estimator
-Sistem parkir memerlukan estimasi jarak kendaraan. Buatlah: (a) stereo kamera simulasi, (b) calibration, (c) depth estimation (SGBM), (d) deteksi objek (YOLO) + depth per objek, (e) display jarak di layar, (f) alert jika < 1 meter, (g) bird's-eye view parking slot.
+### 12. Depth Completion
+Isi hole pada depth map menggunakan inpainting (`cv2.inpaint`) atau interpolasi. Bandingkan metode: nearest neighbor vs bilinear vs inpainting.
+
+### 13. Camera Pose Graph
+Visualisasikan pose beberapa kamera dalam ruang 3D (frustum visualization). Tunjukkan baseline dan orientasi masing-masing kamera.
+
+### 14. Real-time Depth Colorization
+Buat aplikasi yang membaca gambar depth, terapkan colormap, dan tampilkan histogram depth secara bersamaan. Toggle antar colormap dengan keyboard.
+
+### 15. Bundle Adjustment Sederhana
+Implementasikan bundle adjustment sederhana: optimasi posisi 3D titik dan pose kamera menggunakan scipy.optimize.least_squares.
 
 ---
 
-## Rubrik Penilaian Project
+## BAGIAN B: SOAL CERITA (Kerjakan semua)
 
-| Komponen | Bobot | Keterangan |
-|----------|-------|------------|
-| Fungsionalitas | 35% | Semua fitur berjalan |
-| Integrasi Percobaan | 20% | Menggunakan konsep ≥10 percobaan |
-| Kualitas Kode | 15% | Clean, modular |
-| Dokumentasi | 15% | README, screenshot, 3D visualisasi |
-| Kreativitas | 15% | Fitur tambahan, 3D visualization, accuracy analysis |
+### Soal 1: Sistem Navigasi Robot
+Sebuah robot warehouse menggunakan kamera stereo (baseline 10 cm, focal 500 px) untuk menghindari rak. Jika disparity rak terdekat = 80 piksel, berapa jarak rak tersebut? Implementasikan deteksi objek dekat (< 0.5 m) dari depth map sintetis.
+
+### Soal 2: Pengecekan Kualitas Produk
+Pabrik menggunakan stereo vision untuk mengukur ketinggian produk di conveyor belt. Buat program yang menghitung tinggi objek (dalam satuan relatif) dari perbedaan depth di atas dan di bawah objek. Gunakan disparity sintetis.
+
+### Soal 3: Autonomous Parking
+Sistem parkir otomatis menggunakan kamera stereo untuk mengukur jarak ke dinding. Simulasikan scene dengan 3 dinding pada jarak berbeda (2m, 4m, 6m). Hitung dan visualisasikan depth dari disparity map.
+
+### Soal 4: Rekonstruksi Bangunan
+Arsitek ingin membuat model 3D fasad bangunan dari 2 foto dengan posisi kamera berbeda. Implementasikan pipeline: feature matching → F matrix → pose → triangulasi. Visualisasikan point cloud 3D.
+
+### Soal 5: Depth-based Background Removal
+Aplikasi video conference perlu memisahkan presenter (foreground) dari background. Gunakan depth map untuk segmentasi: objek dalam 1.5m = foreground, sisanya = background. Terapkan blur pada background.
+
+### Soal 6: Drone Obstacle Avoidance
+Drone menggunakan kamera stereo untuk mendeteksi halangan. Buat program yang:
+1. Menghitung depth map dari stereo
+2. Membagi gambar menjadi 3 zona: kiri, tengah, kanan
+3. Tentukan zona mana yang paling aman (depth rata-rata terbesar)
+
+### Soal 7: Stereo System Comparison
+Tim engineering harus memilih sistem stereo untuk proyek. Bandingkan 4 konfigurasi (BM/SGBM × 2 resolusi) dari aspek: waktu komputasi, kelengkapan disparity (% piksel valid), dan smoothness. Buat tabel perbandingan.
+
+### Soal 8: AR Furniture Placement
+Aplikasi AR menempatkan furniture virtual di ruangan. Gunakan PnP untuk menentukan pose kamera relatif terhadap marker (titik 3D lantai). Visualisasikan posisi kamera dan marker dalam 3D.
+
+### Soal 9: Survei Topografi
+Surveyor menggunakan SfM untuk membuat model terrain dari foto drone. Implementasikan triangulasi dari dua pandangan, konversi ke point cloud, dan hitung beda tinggi (range Z) daerah survei.
+
+### Soal 10: Evaluasi Sistem Depth
+Perusahaan mengevaluasi 3 metode depth estimation: BM, SGBM, dan monocular (heuristik). Buat ground truth depth sintetis, hitung metrik per metode (MAE, RMSE, % piksel valid), dan buat laporan ranking.
 
 ---
 
-## Format Pengumpulan
-- **Deadline**: 1 minggu setelah modul selesai.
-- **Format**: ZIP — `NIM_Nama_Project11.zip`
-- **Isi**: Source code, dataset gambar, calibration data, README.md, 3D output screenshots.
+## BAGIAN C: RUBRIK PENILAIAN
+
+| Komponen | Bobot | Kriteria |
+|----------|-------|----------|
+| Improvisasi (3 dari 15) | 30% | Kreativitas, implementasi benar, visualisasi lengkap |
+| Soal Cerita (10) | 40% | Solusi benar, program berjalan, output sesuai |
+| Laporan | 15% | Analisis mendalam, penjelasan jelas, format rapi |
+| Kode | 15% | Struktur bersih, komentar lengkap, error handling |
+
+### Skala Penilaian
+
+| Nilai | Deskripsi |
+|-------|-----------|
+| A (85-100) | Semua soal benar, 3+ improvisasi kreatif, analisis mendalam |
+| B (70-84) | Sebagian besar benar, 3 improvisasi standar, analisis cukup |
+| C (55-69) | Setengah benar, 2 improvisasi, analisis minimal |
+| D (< 55) | Banyak error, improvisasi kurang, tidak ada analisis |

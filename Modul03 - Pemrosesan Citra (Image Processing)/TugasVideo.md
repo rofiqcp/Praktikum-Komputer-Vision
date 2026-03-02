@@ -1,190 +1,320 @@
-# TUGAS VIDEO — MODUL 3: PEMROSESAN CITRA (IMAGE PROCESSING)
+# TUGAS VIDEO - MODUL 3: PEMROSESAN CITRA (IMAGE PROCESSING)
 
 ---
 
 ## Deskripsi Tugas
 
-Buatlah video laporan menyeluruh yang mencakup **penjelasan materi**, **seluruh 20 percobaan praktikum**, dan **project** Modul 3. Dokumentasikan pemahaman tentang teknik-teknik pemrosesan citra.
+Buatlah sebuah video edukasi berdurasi 10 hingga 15 menit yang mendemonstrasikan teknik-teknik
+pemrosesan citra dari Modul 3. Video harus menggabungkan penjelasan konseptual singkat dengan
+demonstrasi kode Python yang berjalan secara langsung, sehingga penonton dapat memahami baik
+teori maupun implementasinya.
 
 ---
 
-## Ketentuan Teknis
+## Topik yang Harus Didemonstrasikan
 
-| Aspek | Ketentuan |
-|-------|-----------|
-| **Durasi** | 30–50 menit |
-| **Format** | MP4, resolusi minimal 720p |
-| **Screen Recording** | Wajib — kode, terminal, output |
-| **Webcam** | Wajib — wajah terlihat (picture-in-picture) |
-| **Audio** | Jelas, menggunakan mikrofon |
-| **Upload** | YouTube (Unlisted) atau Google Drive |
+Minimal **15 dari 20 topik** berikut harus ditampilkan dalam video. Setiap topik membutuhkan
+waktu 30 hingga 60 detik demonstrasi.
+
+### Daftar 20 Topik Praktikum
+
+**01 - Deteksi Kontur (`01_contour_detection.py`)**
+Tunjukkan: proses findContours pada gambar biner, perbedaan RETR_TREE vs RETR_EXTERNAL,
+dan cara menggambar boundingRect di sekitar setiap kontur.
+
+**02 - Histogram Equalization (`02_histogram_equalization.py`)**
+Tunjukkan: gambar asli dengan kontras rendah, tampilan histogram sebelum dan sesudah equalization,
+dan perbandingan visual antara equalizeHist dan histogram stretching.
+
+**03 - CLAHE (`03_clahe.py`)**
+Tunjukkan: perbandingan equalizeHist global vs. CLAHE pada gambar wajah atau gambar medis,
+efek clipLimit berbeda, dan mengapa CLAHE menghasilkan hasil lebih natural.
+
+**04 - Segmentasi Warna HSV (`04_color_segmentation_hsv.py`)**
+Tunjukkan: konversi gambar ke HSV, pembuatan mask menggunakan inRange untuk warna tertentu,
+dan aplikasi mask pada gambar asli sehingga hanya objek berwarna tertentu yang tampak.
+
+**05 - Thresholding Global (`05_thresholding_global.py`)**
+Tunjukkan: hasil lima tipe thresholding (BINARY, BINARY_INV, TRUNC, TOZERO, TOZERO_INV)
+pada satu gambar yang sama dengan nilai threshold 127.
+
+**06 - Thresholding Otsu dan Triangle (`06_thresholding_otsu_triangle.py`)**
+Tunjukkan: nilai threshold yang dipilih otomatis oleh Otsu, histogram gambar bimodal yang
+mengindikasikan kondisi ideal untuk Otsu, dan perbandingan Otsu vs. Triangle.
+
+**07 - Adaptive Thresholding (`07_adaptive_thresholding.py`)**
+Tunjukkan: gambar dokumen dengan pencahayaan tidak merata, kegagalan global thresholding,
+dan keberhasilan adaptive thresholding (MEAN dan GAUSSIAN) dalam menangani kasus ini.
+
+**08 - Konvolusi dan Filter2D (`08_konvolusi_dan_filter2d.py`)**
+Tunjukkan: tampilan visual kernel yang sedang diaplikasikan, hasil kernel identitas (tidak berubah),
+kernel blur, kernel sharpening, dan kernel emboss pada gambar yang sama.
+
+**09 - Gaussian Blur (`09_gaussian_blur.py`)**
+Tunjukkan: efek kenaikan ukuran kernel (3x3, 7x7, 15x15) terhadap tingkat kehalusan gambar,
+dan perbedaan Gaussian blur vs. averaging blur dalam mempertahankan transisi halus.
+
+**10 - Median dan Bilateral Filter (`10_median_dan_bilateral_filter.py`)**
+Tunjukkan: gambar dengan salt-and-pepper noise, perbandingan Gaussian blur vs. median filter
+dalam menghilangkan noise, dan keunggulan bilateral filter dalam mempertahankan tepi.
+
+**11 - Sharpening (`11_sharpening.py`)**
+Tunjukkan: unsharp masking dengan alpha berbeda, perbandingan gambar asli vs. gambar yang
+disharp, dan efek oversharpening (ringing artifacts) saat alpha terlalu besar.
+
+**12 - Deteksi Tepi Sobel (`12_deteksi_tepi_sobel.py`)**
+Tunjukkan: Sobel_X yang mendeteksi tepi vertikal, Sobel_Y yang mendeteksi tepi horizontal,
+magnitude gradien gabungan, dan peta arah gradien berwarna.
+
+**13 - Deteksi Tepi Canny (`13_deteksi_tepi_canny.py`)**
+Tunjukkan: proses Canny secara keseluruhan, pentingnya memilih threshold bawah dan atas,
+perbandingan hasil Canny (garis tipis) vs. Sobel (tebal), dan efek pre-blur Gaussian.
+
+**14 - Deteksi Tepi Laplacian (`14_deteksi_tepi_laplacian.py`)**
+Tunjukkan: sensitivitas Laplacian terhadap noise (tanpa pre-blur), perbaikan dengan LoG,
+dan konsep zero-crossing sebagai penanda lokasi tepi sebenarnya.
+
+**15 - Morfologi Erosi dan Dilasi (`15_morfologi_erosi_dilasi.py`)**
+Tunjukkan: efek erosi yang mengecilkan objek dan menghilangkan noise kecil, efek dilasi
+yang memperbesar objek dan mengisi lubang, perbedaan structuring element.
+
+**16 - Morfologi Lanjut (`16_morfologi_lanjut.py`)**
+Tunjukkan: opening yang membersihkan spot noise kecil, closing yang mengisi lubang dalam
+objek, dan morphological gradient sebagai alternatif edge detection.
+
+**17 - Top-Hat dan Black-Hat (`17_tophat_blackhat.py`)**
+Tunjukkan: Top-Hat yang menonjolkan objek terang pada latar tidak merata, Black-Hat yang
+menonjolkan objek gelap, dan aplikasi nyata seperti deteksi teks atau granula.
+
+**18 - Transformasi Fourier (`18_transformasi_fourier.py`)**
+Tunjukkan: magnitude spectrum gambar (pola simetris), efek fftshift yang memindahkan DC ke
+tengah, dan perbedaan spectrum gambar dengan tekstur berbeda (horizontal vs. vertikal vs. acak).
+
+**19 - Filter Frekuensi (`19_filter_frekuensi.py`)**
+Tunjukkan: low-pass filter di domain frekuensi yang memblur gambar, high-pass filter yang
+mempertahankan tepi, ringing artifacts pada ideal filter, dan perbandingan dengan Butterworth.
+
+**20 - Connected Components (`20_connected_components.py`)**
+Tunjukkan: gambar biner dengan banyak objek, hasil labeling dengan warna berbeda per komponen,
+statistik setiap blob (area, bounding box, centroid), dan filter berdasarkan ukuran.
 
 ---
 
-## Struktur Video yang Wajib Diikuti
+## Struktur Video (Total 15 Menit)
 
-### A. PEMBUKAAN (2–3 menit)
-1. Perkenalan diri (nama, NIM, kelas, mata kuliah).
-2. Sebutkan judul modul: **"Pemrosesan Citra (Image Processing)"**.
-3. Sebutkan tujuan pembelajaran.
-4. Overview singkat apa yang akan ditampilkan dalam video.
+### Bagian Intro - 1 Menit
+- Perkenalkan diri dan tujuan video
+- Sebutkan modul yang dibahas: Modul 3 Pemrosesan Citra
+- Tunjukkan daftar topik yang akan didemonstrasikan
+- Sebutkan library yang digunakan: OpenCV, NumPy, Matplotlib
 
-### B. PENJELASAN MATERI (5–8 menit)
-1. Jelaskan konsep point operators (brightness, contrast, gamma) **dengan bahasa sendiri**.
-2. Jelaskan prinsip konvolusi dan spatial filtering.
-3. Jelaskan berbagai metode thresholding dan kapan masing-masing digunakan.
-4. Jelaskan deteksi tepi (Sobel, Canny, Laplacian) dengan intuisi visual.
-5. Jelaskan operasi morfologi dan kegunaannya.
-6. Jelaskan domain frekuensi (Fourier) secara intuitif.
+### Bagian 1: Histogram, Thresholding, dan Segmentasi (3 Menit)
 
-### C. DEMONSTRASI SELURUH PERCOBAAN PRAKTIKUM (15–25 menit)
-Untuk **setiap percobaan (1 s.d. 20)**, tunjukkan:
-1. **Kode program** — jelaskan baris-baris kunci.
-2. **Eksekusi program** — jalankan di terminal.
-3. **Output/hasil** — tunjukkan gambar output atau grafik.
-4. **Penjelasan singkat** — apa yang dilakukan dan dipelajari.
+**Topik 02 + 03 (60 detik) - Histogram dan CLAHE**
+- Mulai dengan gambar kontras rendah
+- Tunjukkan histogram sebelum equalization
+- Demonstrasikan equalizeHist dan CLAHE berdampingan
+- Jelaskan mengapa CLAHE lebih unggul untuk gambar dengan pencahayaan tidak merata
 
-Urutan percobaan yang harus ditunjukkan:
-- Percobaan 1: Brightness dan Contrast
-- Percobaan 2: Histogram Equalization
-- Percobaan 3: CLAHE
-- Percobaan 4: Gamma Correction
-- Percobaan 5: Thresholding Global
-- Percobaan 6: Thresholding Otsu dan Triangle
-- Percobaan 7: Adaptive Thresholding
-- Percobaan 8: Konvolusi dan Filter2D
-- Percobaan 9: Gaussian Blur
-- Percobaan 10: Median dan Bilateral Filter
-- Percobaan 11: Sharpening
-- Percobaan 12: Deteksi Tepi Sobel
-- Percobaan 13: Deteksi Tepi Canny
-- Percobaan 14: Deteksi Tepi Laplacian
-- Percobaan 15: Morfologi — Erosi dan Dilasi
-- Percobaan 16: Morfologi Lanjut
-- Percobaan 17: Top Hat dan Black Hat
-- Percobaan 18: Transformasi Fourier
-- Percobaan 19: Filter Frekuensi
-- Percobaan 20: Alpha Blending dan Compositing
+**Topik 05 + 06 + 07 (90 detik) - Thresholding**
+- Thresholding global: tampilkan 5 tipe dalam satu slide
+- Otsu: tunjukkan histogram bimodal dan nilai threshold otomatis
+- Adaptive: tunjukkan kegagalan global vs. keberhasilan adaptive pada dokumen
 
-### D. DEMONSTRASI PROJECT (5–10 menit)
-1. Jelaskan soal cerita yang dipilih dan alasan pemilihan.
-2. Tunjukkan arsitektur/alur program.
-3. Tunjukkan kode utama dan jelaskan logikanya.
-4. **Jalankan program** dan tunjukkan hasilnya secara live.
-5. Tunjukkan fitur-fitur yang diimplementasikan.
+**Topik 04 (30 detik) - Segmentasi Warna HSV**
+- Tunjukkan gambar buah atau tanaman
+- Segmentasi satu warna (misalnya hijau) secara langsung
+- Tampilkan mask dan hasil masking
 
-### E. ANALISIS DAN PENUTUP (3–5 menit)
-1. Rangkum poin-poin penting dari seluruh modul.
-2. Sebutkan kesulitan yang dihadapi dan bagaimana mengatasinya.
-3. Sebutkan hal baru yang dipelajari di luar ekspektasi.
-4. Kesimpulan pembelajaran.
-5. Salam penutup.
+### Bagian 2: Filter Spasial, Sharpening, dan Deteksi Tepi (4 Menit)
+
+**Topik 08 + 09 (60 detik) - Konvolusi dan Gaussian Blur**
+- Tunjukkan kernel sebagai matriks angka
+- Demonstrasikan beberapa kernel berbeda: identity, avg, sharp, emboss
+- Gaussian blur dengan ukuran kernel berbeda
+
+**Topik 10 (60 detik) - Median dan Bilateral Filter**
+- Tambahkan salt-and-pepper noise secara langsung di depan kamera
+- Tunjukkan kegagalan Gaussian, keberhasilan median
+- Demonstrasikan bilateral: smooth area tapi tepi tetap tajam
+
+**Topik 11 (30 detik) - Sharpening**
+- Unsharp masking dengan alpha rendah vs. tinggi
+- Tunjukkan ringing artifacts pada alpha terlalu besar
+
+**Topik 12 + 13 + 14 (90 detik) - Deteksi Tepi**
+- Sobel X dan Y secara visual
+- Canny: tepi tipis, jumlah tepi berubah sesuai threshold
+- Laplacian: sensitif noise, perbaikan dengan LoG
+
+### Bagian 3: Morfologi, Fourier, dan Connected Components (4 Menit)
+
+**Topik 01 (45 detik) - Deteksi Kontur**
+- Temukan kontur pada gambar biner
+- Gambar bounding rect setiap kontur
+- Tunjukkan perbedaan RETR_TREE vs. RETR_EXTERNAL
+
+**Topik 15 + 16 + 17 (90 detik) - Morfologi**
+- Erosi: objek mengecil, noise hilang
+- Dilasi: objek membesar, lubang terisi
+- Opening dan closing: aplikasi pembersihan
+- Top-Hat atau Black-Hat: pilih salah satu yang paling visual menarik
+
+**Topik 18 + 19 (60 detik) - Fourier dan Filter Frekuensi**
+- Magnitude spectrum: tampilkan pola simetris
+- LPF di domain frekuensi: gambar menjadi blur
+- HPF: hanya tepi yang tersisa
+- Sebutkan hubungan dengan spatial filtering
+
+**Topik 20 (45 detik) - Connected Components**
+- Gambar biner dengan banyak objek
+- Labeling berwarna-warni
+- Tampilkan statistik setiap blob
+
+### Bagian 4: Contoh Aplikasi Nyata (2 Menit)
+
+Pilih salah satu skenario aplikasi nyata dan demonstrasikan pipeline sederhana:
+
+**Opsi A - Inspeksi Kualitas Buah:**
+Preprocessing (CLAHE + bilateral) -> Segmentasi warna (HSV) -> Morfologi cleanup ->
+Connected components -> Hitung dan klasifikasikan buah berdasarkan ukuran
+
+**Opsi B - Analisis Dokumen Bercetak:**
+Grayscale -> Adaptive thresholding -> Morfologi (closing) -> Connected components ->
+Identifikasi kata atau karakter berdasarkan bounding box
+
+**Opsi C - Deteksi Cacat Produk:**
+CLAHE -> Gaussian blur -> Canny edge detection -> Morfologi -> Analisis kontur
+untuk menemukan cacat berukuran tertentu
+
+Jelaskan: (1) mengapa setiap tahap diperlukan, (2) parameter kunci yang digunakan.
+
+### Bagian 5: Kesimpulan (1 Menit)
+- Rekap teknik-teknik yang paling penting
+- Sebutkan 2-3 insight menarik yang ditemukan selama praktikum
+- Saran untuk eksplorasi lebih lanjut (misalnya deep learning untuk segmentasi)
+- Ucapan terima kasih dan penutup
 
 ---
 
-## Rubrik Penilaian Tugas Video
+## Aspek Teknis yang Dinilai
 
-### Komponen Penilaian
+| Aspek | Bobot | Indikator |
+|-------|-------|-----------|
+| **Kejelasan Penjelasan** | 30% | Penjelasan konsep akurat dan mudah dipahami, penggunaan bahasa yang tepat, kemampuan menjelaskan "mengapa" bukan hanya "apa" |
+| **Demonstrasi Visual** | 30% | Kode terlihat jelas, output gambar visible dan informatif, terdapat perbandingan before/after, penggunaan subplot yang baik |
+| **Kelengkapan Topik** | 20% | Jumlah topik yang didemonstrasikan (minimal 15 dari 20), kedalaman pembahasan setiap topik |
+| **Kualitas Video dan Audio** | 20% | Resolusi minimal 720p, audio jernih dan volume konsisten, tidak ada lag saat screen recording, latar belakang bersih |
 
-| Komponen | Bobot | Poin Maks |
-|----------|-------|-----------|
-| Pembukaan | 5% | 5 |
-| Penjelasan Materi | 15% | 15 |
-| Demonstrasi 20 Percobaan | 40% | 40 |
-| Demonstrasi Project | 20% | 20 |
-| Analisis dan Penutup | 10% | 10 |
-| Kualitas Video, Audio & Presentasi | 10% | 10 |
-| **Total** | **100%** | **100** |
+---
 
-### Detail Rubrik
+## Panduan Teknis Pembuatan Video
 
-#### 1. Pembukaan (5 poin)
-| Skor | Kriteria |
-|------|----------|
-| 5 | Perkenalan lengkap, judul, tujuan, overview — percaya diri dan jelas |
-| 3–4 | Perkenalan ada, kurang lengkap |
-| 1–2 | Perkenalan minimal |
-| 0 | Tidak ada pembukaan |
+### Software yang Direkomendasikan
+- **Screen Recording:** OBS Studio (gratis), Bandicam, atau ShareX
+- **Editing:** DaVinci Resolve (gratis), Kdenlive, atau CapCut
+- **Presentasi:** Bisa menggunakan Jupyter Notebook, VS Code, atau kombinasi
 
-#### 2. Penjelasan Materi (15 poin)
-| Skor | Kriteria |
-|------|----------|
-| 13–15 | Semua konsep dijelaskan dengan bahasa sendiri, ada visual aids, contoh relevan |
-| 9–12 | Sebagian besar konsep dijelaskan dengan baik |
-| 5–8 | Penjelasan ada tapi banyak membaca teks / kurang mendalam |
-| 0–4 | Tidak menjelaskan materi atau salah konsep |
+### Tips Kualitas Video
+- Resolusi minimal 1280x720 (HD); disarankan 1920x1080 (Full HD)
+- Frame rate minimal 30 FPS
+- Pastikan font terminal dan editor cukup besar untuk dibaca (minimal 14pt)
+- Gunakan tema terang (light theme) agar teks terlihat lebih jelas di video
+- Rekam audio terpisah menggunakan headset atau microphone eksternal jika memungkinkan
 
-#### 3. Demonstrasi 20 Percobaan (40 poin — 2 poin per percobaan)
-Untuk setiap percobaan:
-| Skor | Kriteria |
-|------|----------|
-| 2 | Kode ditunjukkan dan dijelaskan, eksekusi berhasil, output ditampilkan, ada penjelasan insight |
-| 1 | Demo ditunjukkan tapi tanpa penjelasan yang memadai |
-| 0 | Tidak ditunjukkan |
-
-#### 4. Demonstrasi Project (20 poin)
-| Skor | Kriteria |
-|------|----------|
-| 17–20 | Project berjalan sempurna, penjelasan alur logis, fitur lengkap, demo live meyakinkan |
-| 13–16 | Project berjalan, penjelasan baik, beberapa fitur |
-| 9–12 | Project berjalan parsial, penjelasan cukup |
-| 5–8 | Project ditunjukkan tapi banyak error |
-| 0–4 | Tidak mendemonstrasikan project |
-
-#### 5. Analisis dan Penutup (10 poin)
-| Skor | Kriteria |
-|------|----------|
-| 9–10 | Rangkuman padat, refleksi mendalam, kesimpulan kuat |
-| 7–8 | Rangkuman dan kesimpulan baik |
-| 5–6 | Kesimpulan ada tapi dangkal |
-| 3–4 | Penutup terburu-buru |
-| 0–2 | Tidak ada penutup |
-
-#### 6. Kualitas Video, Audio & Presentasi (10 poin)
-| Skor | Kriteria |
-|------|----------|
-| 9–10 | Video 720p+, audio jernih, webcam terlihat, delivery percaya diri, editing rapi |
-| 7–8 | Kualitas baik, audio cukup, webcam ada |
-| 5–6 | Kualitas cukup, beberapa masalah teknis minor |
-| 3–4 | Kualitas buruk, sulit didengar/dilihat |
-| 0–2 | Tidak memenuhi standar minimum |
-
-### Bonus dan Penalti
-
-#### Bonus (maks +10, tidak melebihi 100)
-| Item | Bonus |
-|------|-------|
-| Visual aids (diagram konvolusi, diagram Fourier) | +3 |
-| Editing profesional (intro, transisi, outro) | +3 |
-| Demo real-time processing via webcam | +2 |
-| Percobaan tambahan di luar modul | +2 |
-
-#### Penalti
-| Pelanggaran | Penalti |
-|-------------|---------|
-| Durasi < 25 menit | −10 |
-| Durasi > 55 menit | −5 |
-| Tidak ada webcam / face cam | −10 |
-| Membaca teks sepanjang video | −10 |
-| Terlambat submit per hari | −5 |
-| Video plagiat / milik orang lain | Nilai 0 |
-
-### Konversi Nilai
-| Range | Grade |
-|-------|-------|
-| 90–100 | A |
-| 80–89 | AB |
-| 70–79 | B |
-| 60–69 | BC |
-| 50–59 | C |
-| 40–49 | D |
-| 0–39 | E |
+### Tips Alur Demonstrasi
+- Tunjukkan kode SEBELUM menjalankan hasil, bukan langsung hasilnya
+- Highlight baris kode yang penting saat menjelaskan
+- Beri jeda sejenak setelah setiap hasil muncul agar penonton bisa melihat
+- Tambahkan caption atau overlay teks untuk nama fungsi yang digunakan
 
 ---
 
 ## Format Pengumpulan
 
-- **Deadline**: 1 minggu setelah modul selesai.
-- **Format**: Link YouTube (Unlisted) atau Google Drive.
-- **Penamaan**: `NIM_Nama_Video_Modul03`
-- **Upload link** ke LMS / form yang disediakan.
+### Format File
+- Format video: **MP4** (codec H.264 direkomendasikan)
+- Resolusi minimal: 720p (1280x720 piksel)
+- Resolusi yang disarankan: 1080p (1920x1080 piksel)
+- Frame rate: minimal 30 FPS
+- Audio: stereo atau mono, bitrate minimal 128 kbps
+
+### Platform Upload
+- Upload ke **Google Drive** dan set agar "Anyone with the link can view"
+- ATAU upload ke **YouTube** dengan visibility Unlisted atau Public
+- Pastikan link dapat diakses tanpa login
+
+### Link Pengumpulan
+- Submit link video melalui platform LMS (Moodle/Google Classroom/e-learning kampus)
+- Format judul file/video: `[NIM]_[Nama]_TugasVideo_Modul03`
+- Contoh: `20230001_BudiSantoso_TugasVideo_Modul03`
+
+### Deadline
+- Deadline pengumpulan: **sesuai jadwal yang ditetapkan dosen**
+- Keterlambatan: pengurangan nilai 10 poin per hari keterlambatan
+
+---
+
+## Contoh Struktur Script / Outline
+
+```
+INTRO (1 menit)
+  - "Halo, nama saya [Nama], NIM [NIM]"
+  - "Video ini mendemonstrasikan 20 teknik pemrosesan citra dari Modul 3"
+  - "Library yang digunakan: OpenCV 4.x, NumPy, Matplotlib"
+  - [tampilkan daftar topik]
+
+BAGIAN 1 - HISTOGRAM DAN THRESHOLDING (3 menit)
+  - [buka file 02_histogram_equalization.py]
+  - [jalankan, jelaskan output]
+  - [buka file 03_clahe.py]
+  - [jalankan, bandingkan dengan equalizeHist]
+  - [lanjut ke 05, 06, 07 thresholding]
+  - ...
+
+BAGIAN 2 - FILTER DAN DETEKSI TEPI (4 menit)
+  - [percobaan 08 hingga 14]
+  - ...
+
+BAGIAN 3 - MORFOLOGI DAN ANALISIS LANJUT (4 menit)
+  - [percobaan 01, 15 hingga 20]
+  - ...
+
+APLIKASI NYATA (2 menit)
+  - [demo pipeline pilihan]
+
+KESIMPULAN (1 menit)
+  - [insight dan penutup]
+```
+
+---
+
+## Checklist Sebelum Mengumpulkan
+
+Pastikan semua poin berikut sudah terpenuhi:
+
+- [ ] Video berdurasi 10-15 menit
+- [ ] Minimal 15 dari 20 topik didemonstrasikan
+- [ ] Setiap topik mendapatkan penjelasan konseptual singkat, bukan hanya run kode saja
+- [ ] Kode terlihat jelas dan output gambar terlihat informatif
+- [ ] Audio terdengar jelas dan volume konsisten
+- [ ] Resolusi minimal 720p
+- [ ] Link dapat diakses tanpa login
+- [ ] Judul file sesuai format: `[NIM]_[Nama]_TugasVideo_Modul03`
+- [ ] Link sudah di-submit sebelum deadline
+
+---
+
+## Penilaian Bonus
+
+Poin bonus sebesar 5-10 poin dapat diberikan untuk:
+
+- Video yang sangat komunikatif dan mudah dipahami orang awam sekalipun
+- Demonstrasi semua 20 topik secara lengkap (bukan hanya 15 minimum)
+- Studi kasus aplikasi nyata yang orisinal dan menarik
+- Kualitas editing yang profesional (transisi, caption, music latar)
+- Video yang berhasil viral atau mendapat engagement positif jika di-upload di YouTube
+
+---
+
+*Tugas Video ini merupakan bagian dari penilaian Praktikum Komputer Vision - Modul 3: Pemrosesan Citra*

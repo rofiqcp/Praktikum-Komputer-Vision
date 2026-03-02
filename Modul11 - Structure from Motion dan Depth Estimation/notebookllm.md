@@ -1,73 +1,110 @@
-# NotebookLM Prompts — Modul 11: Structure from Motion dan Depth Estimation
+# PROMPT NOTEBOOKLLM
+# MODUL 11: STRUCTURE FROM MOTION DAN DEPTH ESTIMATION
 
 ---
 
-## PROMPT 1 — Slide 1–15 (Materi + Jobsheet)
+## PROMPT 1: SLIDE 1–15 (Materi Dasar + Jobsheet Awal)
 
-Buat 15 slide presentasi akademik Modul 11: Structure from Motion dan Depth Estimation. Referensi Szeliski (2022) Ch.11–12. Tiap slide ~500 kata, sertakan diagram, formula, dan kode OpenCV.
+Buatkan presentasi 15 slide untuk mata kuliah Praktikum Komputer Vision, Modul 11: Structure from Motion dan Depth Estimation.
 
-**Slide 1** — Judul "Modul 11: Structure from Motion dan Depth Estimation", subtitle "Dari Gambar 2D ke Pemahaman 3D", ilustrasi point cloud rekonstruksi + depth map, referensi Szeliski Ch.11–12.
+Slide 1: Judul "MODUL 11: Structure from Motion dan Depth Estimation" dengan daftar topik utama: Epipolar Geometry, Fundamental & Essential Matrix, Triangulasi, Stereo Vision, Disparity Map, Depth Estimation, SfM Pipeline.
 
-**Slide 2** — Motivasi: SfM merekonstruksi geometri 3D scene dan posisi kamera dari gambar 2D. Depth Estimation memperkirakan kedalaman per piksel (stereo atau monocular). Fundamental untuk: AR, robot navigation, SLAM, 3D scanning, autonomous driving. Diagram pipeline: gambar → matches → poses → 3D points.
+Slide 2: Pendahuluan — rekonstruksi 3D dari gambar 2D adalah salah satu problem paling penting di komputer vision. Aplikasi: autonomous driving, AR/VR, pemetaan 3D, robot navigation.
 
-**Slide 3** — Epipolar Geometry: dua kamera melihat titik 3D yang sama → epipolar constraint. Fundamental Matrix F (pixel coordinates): x'ᵀFx=0. F = matriks 3×3, rank 2, berisi info rotasi+translasi+intrinsik. 8-point algorithm. cv2.findFundamentalMat(pts1, pts2, cv2.FM_RANSAC, 3.0). Visualisasi epipolar lines.
+Slide 3: Epipolar Geometry — konsep: dua kamera melihat titik 3D P yang sama. Komponen: epipole (proyeksi pusat kamera lain), epipolar plane (bidang P dan dua pusat kamera), epipolar line (irisan epipolar plane dengan image plane).
 
-**Slide 4** — Essential Matrix E: jika intrinsik K diketahui: E=K'ᵀFK. x̂'ᵀEx̂=0 di normalized coordinates. Dekomposisi: E=[t]×R → rotasi R dan translasi t. cv2.findEssentialMat(pts1,pts2,K,cv2.RANSAC,0.999,1.0). _,R,t,mask=cv2.recoverPose(E,pts1,pts2,K). Diagram epipolar geometry.
+Slide 4: Epipolar Constraint — formula x'^T F x = 0. Artinya pencarian korespondensi berkurang dari 2D area menjadi 1D garis. Ini sangat mempercepat stereo matching.
 
-**Slide 5** — Triangulasi: dua kamera dengan posisi diketahui + korespondensi → posisi 3D. x=PX, x'=P'X. Noise → ray tidak berpotongan → least squares. P1=K@[I|0], P2=K@[R|t]. points4D=cv2.triangulatePoints(P1,P2,pts1.T,pts2.T). Homogeneous→Euclidean: X=points4D[:3]/points4D[3].
+Slide 5: Fundamental Matrix — matriks 3×3, rank 2, 7 DOF. Menghubungkan dua pandangan tanpa memerlukan kalibrasi kamera. 8-point algorithm: minimal 8 korespondensi, susun sistem Af=0, selesaikan dengan SVD.
 
-**Slide 6** — SfM Pipeline: (1) Feature Detection & Matching, (2) Estimate F/E → recover pose, (3) Triangulate → initial 3D points, (4) Add cameras incrementally → PnP, (5) Bundle Adjustment → optimasi semua kamera + titik 3D. PnP: cv2.solvePnPRansac(obj_pts,img_pts,K,dist). BA: min Σ‖x_ij−π(R_i,t_i,X_j)‖².
+Slide 6: Essential Matrix — E = K'^T F K, versi terkalibrasi dari F. 5 DOF (3 rotasi + 2 translasi). Dekomposisi E → R, t menggunakan cv2.recoverPose(). 4 solusi, pilih yang semua titik di depan kedua kamera.
 
-**Slide 7** — Visual Odometry: estimasi gerakan kamera frame-by-frame dari video → trajectory. Pipeline: feature detection (t) → track ke (t+1) → essential matrix → recover pose → accumulate transformation. Scale ambiguity pada monocular VO. Aplikasi: SLAM, autonomous vehicle trajectory.
+Slide 7: Triangulasi — menghitung posisi 3D dari korespondensi 2D pada dua kamera. cv2.triangulatePoints() menggunakan DLT method. Reprojection error mengukur kualitas: e = ||p - π(P,X)||².
 
-**Slide 8** — Stereo Vision: dua kamera terpisah baseline B. Stereo Calibration: estimasi K₁,K₂,R,T dari checkerboard. Rectification: warpPerspective agar baris koresponden. Block Matching (BM): cv2.StereoBM_create(numDisparities=32,blockSize=15). SGBM (Semi-Global): lebih akurat, cv2.StereoSGBM_create(). Disparity D → Depth Z=f·B/D.
+Slide 8: Percobaan 1-3 — (1) Epipolar Geometry Visualisasi: diagram epipolar plane, epipolar constraint. (2) Fundamental Matrix: hitung F dengan 8-point, gambar epipolar lines. (3) Essential Matrix: dekomposisi E → R, t, visualisasi pose.
 
-**Slide 9** — Monocular Depth Estimation: depth cues (linear perspective, texture gradient, shadow, occlusion). DNN model: MiDaS (PyTorch)—relative depth dari satu gambar. Limitasi: tidak absolute, skala ambigu. Visualisasi dengan colormap (plasma, inferno). Percobaan 10: apply MiDaS, perbandingan depth cues.
+Slide 9: Percobaan 4-6 — (4) Epipolar Lines: feature matching → F → epipolar lines berwarna. (5) Triangulasi Titik 3D: proyeksi → triangulasi → error analysis. (6) Stereo Calibration: checkerboard, intrinsik/ekstrinsik, baseline.
 
-**Slide 10** — Percobaan 1–4: Feature Matching Multi-View (matches antar 5 view, track linking). Fundamental Matrix (epipolar lines visualization antar 2 gambar). Essential Matrix + Pose Recovery (R, t extraction, baseline effects). Epipolar Lines (draw lines, verify constraint x'ᵀFx≈0 per match).
+Slide 10: Stereo Vision — konfigurasi dua kamera terkalibrasi. Stereo Calibration menentukan K1, K2, R, T. Stereo Rectification mentransformasi agar epipolar lines horizontal → pencarian 1D.
 
-**Slide 11** — Percobaan 5–8: Triangulasi 3D (2 kamera → 3D scatter plot, akurasi vs ground truth). Stereo Calibration (checkerboard fisik, estimasi K+dist+R+T, reprojection RMSE). Stereo Rectification (horizontal alignment verification, epipolar row check). Block Matching (disparity map, numDisparities dan blockSize tuning).
+Slide 11: Disparity Map — disparity d = x_L - x_R. Dekat = disparity besar, jauh = disparity kecil. StereoBM: SAD-based block matching, cepat tapi kasar. StereoSGBM: semi-global optimization, akurat tapi lambat.
 
-**Slide 12** — Percobaan 9–12: SGBM (BM vs SGBM comparison — coverage, smoothness, waktu). Monocular Depth (depth cues, MiDaS fallback, inverse depth colormap). Disparity to Depth (Z=f*B/d, reprojectImageTo3D, point cloud dari disparity). BM vs SGBM Comparison (multi-scene, timing tabel, coverage map difference).
+Slide 12: Parameter BM & SGBM — numDisparities: range pencarian (kelipatan 16). blockSize: ukuran window (ganjil). SGBM tambahan: P1, P2 (smoothness penalty), disp12MaxDiff, uniquenessRatio, speckleWindowSize.
 
-**Slide 13** — Percobaan 13–16: WLS Filter Disparity (post-processing, left-right consistency, smoothing). Point Cloud from Depth (3D scatter colored by intensity/distance). PnP Pose Estimation (solvePnP methods ITERATIVE vs RANSAC vs P3P comparison). Stereo Matching Realtime (FPS measurement, video stream depth).
+Slide 13: Percobaan 7-9 — (7) Stereo Rectification: warp dengan H1/H2, verifikasi garis horizontal. (8) Block Matching: variasi numDisp dan blockSize. (9) SGBM: parameter P1/P2, colorbar disparity.
 
-**Slide 14** — Percobaan 17–19: Depth Colorization (colormaps plasma/magma/turbo, overlay transparency, contour lines). Baseline Effect (MAE/RMSE vs baseline distance, near/far objects accuracy). Depth Segmentation (threshold depth range → binary mask → connected components → object isolation).
+Slide 14: Depth dari Disparity — formula Z = f·B/d. Hubungan invers: disparity kecil → depth besar dan sangat sensitif noise. Resolusi depth: ΔZ ≈ Z²/(f·B). Q matrix untuk reprojectImageTo3D().
 
-**Slide 15** — Percobaan 20: Multi-View Reconstruction (SfM mini pipeline — 5+ gambar, feature matching, F/E estimation, triangulasi, BA sederhana, visualisasi point cloud). Setup: opencv-python, numpy, matplotlib, open3d (optional); checkerboard fisik untuk stereo calibration. Rekam gambar objek dari sudut berbeda.
+Slide 15: Percobaan 10-12 — (10) Monocular Depth: gradient-based + vertical heuristic. (11) Disparity to Depth: konversi Z=fB/d, profil baris. (12) BM vs SGBM: perbandingan waktu, kualitas, FPS.
 
 ---
 
-## PROMPT 2 — Slide 16–30 (Materi + Project + TugasVideo)
+## PROMPT 2: SLIDE 16–30 (Materi Lanjut + Analisis)
 
-Lanjutkan slide Modul 11, Slide 16–30. Slide 16–25: analisis, rekap, koneksi, kuis. Slide 26–30: Project dan Tugas Video. Tiap slide ~500 kata.
+Lanjutkan presentasi 15 slide berikutnya (slide 16-30) untuk Modul 11: Structure from Motion dan Depth Estimation.
 
-**Slide 16** — Rekap percobaan 1–10: multi-view matching, Fundamental Matrix + epipolar, Essential Matrix + pose, epipolar lines, triangulasi, stereo calibration, rectification, Block Matching, SGBM, monocular depth. Grid thumbnail. Tabel metode, input/output, OpenCV API.
+Slide 16: Disparity Post-Processing — WLS filter: menghaluskan disparity sambil mempertahankan edge. Parameter Lambda (smoothness) dan SigmaColor (edge sensitivity). Speckle filtering untuk menghilangkan noise kecil. Bilateral filter sebagai alternatif.
 
-**Slide 17** — Rekap percobaan 11–20: disparity-to-depth, BM vs SGBM comparison, WLS filter, point cloud 3D scatter, PnP pose estimation, stereo real-time, depth colorization, baseline effect, depth segmentation, SfM mini pipeline. Tabel metrik: RMSE, MAE, FPS, coverage.
+Slide 17: Point Cloud dari Depth — konversi depth map ke 3D: X = (u-cx)·Z/fx, Y = (v-cy)·Z/fy. Density bergantung pada resolusi gambar. Visualisasi dengan matplotlib 3D scatter atau Open3D.
 
-**Slide 18** — Analisis mendalam: Mengapa F rank 2 (bukan rank 3)? Perbedaan F vs E: F = sembarang kamera, E = kalibrasi diketahui. Mengapa SGBM lebih baik dari BM di area homogen? Limitasi monocular depth: scale ambiguity dan bagaimana mengatasinya.
+Slide 18: PnP Pose Estimation — Perspective-n-Point: menentukan pose kamera dari korespondensi 2D-3D. Minimal 4 titik (P3P + 1). cv2.solvePnP() dan solvePnPRansac(). Aplikasi: AR, robot localization, camera tracking.
 
-**Slide 19** — Koneksi antar modul: SfM menggunakan feature matching (Modul 7) + bundle adjustment (Modul 8). Stereo depth → synthetic bokeh (Modul 10). Visual odometry menggunakan optical flow tracking (Modul 9). Depth map → 3D point cloud → surface reconstruction (Modul 12). Kalibrasi kamera (Modul 2) adalah prasyarat semua metode stereo.
+Slide 19: Percobaan 13-15 — (13) WLS Filter: raw vs filtered disparity, bilateral fallback. (14) Point Cloud: depth sintetis → 3D scatter, distribusi X/Y/Z. (15) PnP: solvePnP, bandingkan GT vs estimated rvec/tvec.
 
-**Slide 20** — Best practices: selalu calibrate kamera sebelum stereo matching. Checkerboard ≥10 gambar dari sudut bervariasi. Verifikasi rectification: periksa baris epipolar horizontal. WLS post-processing meningkatkan disparity quality signifikan. Bundle adjustment wajib untuk SfM skala besar.
+Slide 20: Stereo Matching Real-time — trade-off kecepatan vs kualitas. BM Fast (32, 9) → FPS tinggi tapi kasar. BM Quality (128, 21) → lebih baik tapi lambat. SGBM → terbaik tapi paling lambat. Resolusi gambar sangat mempengaruhi.
 
-**Slide 21** — Aplikasi nyata: Autonomous vehicle depth estimation (stereo kamera). SLAM untuk robot navigation. 3D face scanning (structured light + stereo). AR depth occlusion (virtual object tertutup objek nyata). Drone inspection 3D mapping.
+Slide 21: Depth Colorization — colormap yang umum: JET, PLASMA, INFERNO, TURBO, HOT, BONE. JET paling populer tapi memiliki artefak persepsi. PLASMA dan TURBO lebih seragam secara perseptual.
 
-**Slide 22** — Perbandingan stereo matching: BM vs SGBM vs SGBM+WLS — tabel coverage, MAE, waktu (ms/frame), kualitas di area homogen (sky, wall). Monocular vs Stereo depth: absolute metric, robustness, hardware requirements. SfM vs SLAM: batch vs incremental, scale drift.
+Slide 22: Efek Baseline — baseline besar: akurasi tinggi jarak jauh, overlap kecil jarak dekat. Baseline kecil: kebalikannya. ΔZ ∝ Z²/(f·B). Desain sistem stereo harus mempertimbangkan range operasi.
 
-**Slide 23** — Checklist kompetensi: Fundamental+Essential matrix estimation, epipolar lines, triangulasi, stereo calibration, rectification, BM+SGBM disparity, monocular depth, disparity→depth, point cloud visualization, PnP, SfM mini pipeline. Self-assessment tabel.
+Slide 23: Percobaan 16-18 — (16) Realtime: benchmark 3 konfigurasi, FPS comparison. (17) Colorization: 6 colormap side-by-side. (18) Baseline Effect: grafik depth vs disparity untuk 4 baseline.
 
-**Slide 24** — Kuis: (1) Rumus Fundamental Matrix constraint? (2) Minimum korespondensi untuk 8-point algorithm? (3) Rumus Z dari disparity D (stereo)? (4) Perbedaan solvePnP dan solvePnPRansac? (5) Mengapa rectification penting sebelum stereo matching?
+Slide 24: Depth Object Segmentation — segmentasi berdasarkan range kedalaman. Keuntungan: tidak terpengaruh iluminasi, efektif untuk warna serupa. Aplikasi: portrait mode (bokeh), robot grasping, obstacle avoidance.
 
-**Slide 25** — Diskusi: Kapan monocular depth cukup vs stereo? Bagaimana bundle adjustment mengurangi drift pada SfM besar? Point cloud dari stereo vs dari SfM: kelebihan masing-masing. End-to-end depth DNN (MiDaS, ZoeDepth) vs geometric stereo untuk autonomous driving.
+Slide 25: SfM Pipeline — langkah lengkap: Feature Detection → Feature Matching → F Matrix → E Matrix → Pose Recovery → Triangulasi → Bundle Adjustment. Bundle Adjustment: optimasi Levenberg-Marquardt untuk semua parameter.
 
-**Slide 26** — Project "3D Vision System". 10 soal cerita: 3D Object Digitizer (15+ foto SfM → PLY export), Navigasi Robot Visual Odometry (video → trajectory bird's-eye), Dual Kamera Depth (stereo simulasi+bokeh+segmentasi), Scene Reconstruction dari CCTV (2 kamera → point cloud ruangan), AR Depth Demo (MiDaS+floor detection+virtual object), Sistem Pengukuran Jarak Stereo (klik 2 titik → 3D distance), Monocular Depth Video Editing (fog/color grading+parallax), Building Facade Reconstruction (5+ foto SfM+plane fitting), Stereo Anaglyph Photo Tool (red-cyan+parallax adjustment), Parking Distance Estimator (SGBM+YOLO+alert <1m). Deliverable: .py, output/, laporan.
+Slide 26: COLMAP — tool SfM state-of-the-art. Pipeline: SIFT extraction → exhaustive matching → incremental SfM → Multi-View Stereo (MVS). Menghasilkan dense point cloud + mesh dari kumpulan foto.
 
-**Slide 27** — 15 improvisasi: Full SfM Pipeline (10+ gambar), Dense Reconstruction (stereo+SfM), Stereo Video Depth real-time, Depth-based Obstacle Detection, 3D Object Scanner (turntable), Visual Odometry with Scale, Disparity Refinement (guided filter), Multi-baseline Stereo (3+ kamera), Depth Colorized Video, Egomotion Dashcam, Plane Detection from Depth, Depth-aware Image Editing, Stereo Anaglyph Generator, Loop Closure Detection (SLAM basic), Depth Map Super Resolution.
+Slide 27: Percobaan 19-20 — (19) Depth Segmentation: multi-layer segmentasi, bar chart area. (20) SfM Pipeline: ORB → F → E → pose → triangulasi → 3D reconstruction, visualisasi point cloud.
 
-**Slide 28** — Rubrik Project: Fungsionalitas 35%, Integrasi Percobaan 20%, Kualitas Kode 15%, Dokumentasi 15%, Kreativitas 15%. Bonus +5 checkerboard kalibrasi asli + verifikasi error, +3 3D visualization interaktif Open3D. Format ZIP NIM_Nama_Project11.zip. Deadline 1 minggu.
+Slide 28: Perbandingan Metode Depth — tabel: Stereo BM (cepat, kasar), SGBM (akurat, lambat), Monocular Heuristic (sangat cepat, tidak akurat), MiDaS (akurat, perlu GPU). Pilihan bergantung pada aplikasi.
 
-**Slide 29** — Tugas Video: Tunjukkan checkerboard fisik dan proses kalibrasi. Tunjukkan gambar 3D dari berbagai angle (rotate di Open3D/matplotlib). Demo 20 percobaan LIVE (40–60 mnt). Materi (10–15 mnt): wajib diagram epipolar geometry + SfM pipeline + stereo pipeline. Demo Project (10–15 mnt) — tunjukkan 3D output.
+Slide 29: Analisis Kritis — (1) Textureless problem: area tanpa tekstur gagal matching. (2) Occlusion: area terhalang tidak memiliki korespondensi. (3) Scale ambiguity: monocular hanya menghasilkan relative depth. (4) Computational cost: trade-off akurasi vs kecepatan.
 
-**Slide 30** — Rubrik Video: Pembukaan (5), Materi (10), 20 Percobaan (40 — 2/percobaan), Project (30), Penutup (10), Kualitas (5). Total 100. Bonus +5 kalibrasi hardware + point cloud nyata dari objek fisik, +3 3D visualization rotasi video mengesankan. Penalti −2/percobaan tidak tampil. "Rekonstruksi Dunia 3D dari Foto 2D!"
+Slide 30: Ringkasan Materi — Epipolar geometry = fondasi stereo vision. F dan E matrix menghubungkan dua pandangan. Disparity → Depth via Z=fB/d. SfM = rekonstruksi 3D dari multi-view. Post-processing (WLS) meningkatkan kualitas.
+
+---
+
+## PROMPT 3: SLIDE 31–45 (Aplikasi Lanjut + Project + Tugas Video)
+
+Lanjutkan presentasi 15 slide terakhir (slide 31-45) untuk Modul 11: Structure from Motion dan Depth Estimation.
+
+Slide 31: Aplikasi Autonomous Driving — stereo camera untuk depth estimation real-time. Obstacle detection dari depth map. Lane keeping dan collision avoidance. Tesla, Waymo, dan Mobileye menggunakan multi-camera SfM.
+
+Slide 32: Aplikasi AR/VR — PnP untuk camera tracking dan penempatan objek virtual. SLAM (Simultaneous Localization and Mapping) menggunakan visual odometry. Depth estimation untuk realistic occlusion handling.
+
+Slide 33: Aplikasi 3D Mapping — SfM + MVS untuk pemetaan bangunan, kota, terrain. Google Earth 3D menggunakan SfM dari foto satelit dan udara. COLMAP sebagai tool open-source terpopuler.
+
+Slide 34: Monocular vs Stereo — Monocular: 1 kamera, ill-posed, butuh deep learning. Stereo: 2 kamera, well-posed, akurat. Trade-off: hardware cost vs accuracy. Deep stereo (RAFT-Stereo, AANet) mulai menggantikan metode klasik.
+
+Slide 35: Deep Learning untuk Depth — MiDaS: relative depth dari satu gambar. Monodepth2: self-supervised monocular depth. DPT (Dense Prediction Transformer): state-of-the-art. ZoeDepth: metrik depth absolut.
+
+Slide 36: Project Improvisasi 1-5 — (1) Multi-Baseline Stereo: 3+ baseline, compare accuracy. (2) Disparity Fusion BM+SGBM: weighted average. (3) Depth-Guided Segmentation: portrait mode effect. (4) Auto Parameter Tuning: grid search optimal. (5) Visual Odometry: trajectory dari sequence.
+
+Slide 37: Project Improvisasi 6-10 — (6) Depth Super-Resolution: guided filter. (7) SfM 3+ View: incremental reconstruction. (8) Obstacle Detection: depth threshold warning. (9) Depth Histogram Analysis: statistik scene. (10) Stereo Confidence Map: left-right check.
+
+Slide 38: Project Improvisasi 11-15 — (11) 3D Anaglyph: red-cyan stereoscopic. (12) Depth Completion: inpaint holes. (13) Camera Pose Graph: frustum visualization. (14) Realtime Colorization: toggle colormap keyboard. (15) Bundle Adjustment: scipy optimize.
+
+Slide 39: Soal Cerita 1-4 — (1) Robot Warehouse: Z=fB/d, deteksi rak jarak <0.5m. (2) Quality Control: tinggi objek dari depth difference. (3) Auto Parking: 3 dinding pada 2/4/6m. (4) Rekonstruksi Bangunan: pipeline SfM → point cloud 3D.
+
+Slide 40: Soal Cerita 5-7 — (5) Background Removal: depth threshold 1.5m, blur background. (6) Drone Avoidance: 3 zona depth, pilih teraman. (7) System Comparison: BM/SGBM × 2 resolusi, tabel perbandingan.
+
+Slide 41: Soal Cerita 8-10 — (8) AR Furniture: PnP dari marker lantai, visualisasi 3D. (9) Topografi: triangulasi → point cloud → range Z terrain. (10) Evaluasi Depth: GT sintetis, MAE/RMSE, ranking metode.
+
+Slide 42: Tugas Video — Durasi 15-25 menit. Struktur: Pembukaan (1-2 min), Materi (4-6 min), Demo 10+ percobaan (6-10 min), Demo Project (2-4 min), Penutup (1-2 min). Format: Video_Modul11_NIM_Nama.mp4, minimal 720p.
+
+Slide 43: Tips Demo Video — Jelaskan setiap parameter dan pengaruhnya. Tunjukkan side-by-side: BM vs SGBM, raw vs WLS filtered. Gunakan 3D scatter plot untuk point cloud. Jelaskan formula Z=fB/d dengan contoh numerik. Tunjukkan efek baseline pada grafik.
+
+Slide 44: Evaluasi & Rubrik — Improvisasi (30%): 3 dari 15, kreativitas dan implementasi. Soal Cerita (40%): 10 soal, output benar. Laporan (15%): analisis, format. Kode (15%): struktur, komentar. Video: materi 25%, demo 30%, project 20%, presentasi 15%, teknis 10%.
+
+Slide 45: Penutup — SfM dan depth estimation menghubungkan visi 2D dengan dunia 3D. Stereo vision memberikan depth akurat, SfM memungkinkan rekonstruksi dari multi-view. Masa depan: NeRF, 3D Gaussian Splatting, learning-based SfM. Lanjut ke Modul 12: Rekonstruksi 3D dan Image-Based Rendering.

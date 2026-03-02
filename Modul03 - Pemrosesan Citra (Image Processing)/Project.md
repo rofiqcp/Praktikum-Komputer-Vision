@@ -2,112 +2,171 @@
 
 ---
 
-## Deskripsi Umum
+## Deskripsi
 
-Project ini mengintegrasikan seluruh teknik pemrosesan citra dari 20 percobaan. Mahasiswa memilih minimal 1 soal cerita dan membangun solusi yang menggunakan minimal **10 dari 20 konsep** percobaan (brightness/contrast, histogram, CLAHE, gamma, thresholding, konvolusi, blur, sharpening, edge detection, morfologi, Fourier, filtering frekuensi, compositing, dll.).
-
----
-
-## Daftar Improvisasi Percobaan (20 Pengembangan)
-
-1. **Auto Image Enhancer** — Pipeline enhancement otomatis: analisis gambar → pilih parameter optimal.
-2. **Noise Removal Benchmark** — Bandingkan 5+ metode denoising pada berbagai jenis noise.
-3. **Document Binarizer** — Thresholding adaptif multi-tahap untuk dokumen dengan pencahayaan buruk.
-4. **Edge-based Object Counter** — Hitung objek menggunakan edge detection + morfologi + contour.
-5. **Frequency Domain Editor** — Remove pola periodik (moiré) menggunakan notch filter Fourier.
-6. **HDR Tone Mapper** — Gabungkan beberapa exposure menggunakan Laplacian blending + gamma mapping.
-7. **Skin Detection System** — Deteksi area kulit menggunakan HSV thresholding + morfologi.
-8. **Adaptive Enhancement per Region** — Analisis histogram per region, enhance masing-masing.
-9. **Pencil Sketch Effect** — Efek sketsa pensil: edge detection + inversion + blending.
-10. **Multi-scale Edge Detector** — Deteksi edge pada berbagai skala: Gaussian pyramid + Canny.
-11. **Image Segmentation Pipeline** — Thresholding + morfologi + watershed segmentasi.
-12. **Cartoon Effect Generator** — Bilateral filter + edge detection → gabungkan untuk efek kartun.
-13. **Text Extraction Preprocessor** — Pipeline preprocessing dokumen untuk meningkatkan akurasi OCR.
-14. **Fourier Watermarking** — Sisipkan watermark tak terlihat di domain frekuensi.
-15. **Real-time Filter App** — Webcam real-time dengan pilihan filter yang bisa di-switch.
-16. **CLAHE Parameter Optimizer** — Auto-tune clipLimit dan tileGridSize berdasarkan gambar.
-17. **Morphological Feature Extractor** — Ekstraksi fitur geometri (area, perimeter, convexity, solidity).
-18. **Unsharp Mask HDR** — Pipeline sharpening + CLAHE + gamma untuk hasil HDR.
-19. **Frequency Band Analyzer** — Analisis dan visualisasi kontribusi setiap band frekuensi.
-20. **Alpha Matte Generator** — Trimap-based alpha matting untuk compositing objek.
+Project ini mengintegrasikan teknik-teknik pemrosesan citra dari Modul 3 ke dalam sebuah pipeline
+analisis citra yang lengkap dan kohesif. Mahasiswa membangun sistem pemrosesan citra end-to-end
+yang menggabungkan preprocessing, segmentasi, deteksi fitur, analisis morfologi, dan analisis
+domain frekuensi.
 
 ---
 
-## Soal Cerita Project (Pilih Minimal 1)
+## Proyek Utama: Pipeline Analisis Citra Lengkap
 
-### Soal 1: Sistem Preprocessing Dokumen Arsip
-Museum Nasional memiliki koleksi 500+ scan dokumen bersejarah yang pudar dan bernoda. Buatlah pipeline preprocessing yang: (a) analisis histogram untuk menentukan tingkat kerusakan, (b) auto-adjust brightness dan contrast, (c) terapkan CLAHE untuk meningkatkan keterbacaan, (d) binarisasi adaptif untuk memperjelas teks, (e) morfologi untuk menghilangkan noise dan memperjelas huruf, (f) batch processing seluruh folder, (g) simpan dengan format lossless dan buat laporan kualitas before-after.
+### Latar Belakang
 
-### Soal 2: Quality Control Pengemasan Produk
-Pabrik minuman ingin mendeteksi cacat pada label botol. Buatlah sistem yang: (a) membaca foto botol, (b) crop ROI area label, (c) edge detection untuk mendeteksi batas label, (d) thresholding untuk mendeteksi area yang tidak tercetak, (e) morfologi untuk menghilangkan false positive, (f) hitung persentase area cacat, (g) klasifikasi PASS/FAIL berdasarkan threshold, (h) buat laporan QC dengan gambar beranotasi.
+Dalam aplikasi nyata seperti inspeksi kualitas produk, analisis citra medis, atau pertanian presisi,
+sebuah sistem pemrosesan citra tidak bekerja dengan satu teknik saja, melainkan mengombinasikan
+berbagai metode dalam urutan yang logis. Project ini mensimulasikan scenario tersebut.
 
-### Soal 3: Aplikasi Filter Foto untuk Media Sosial
-Startup lokal ingin membuat alternatif Instagram sederhana. Buatlah aplikasi yang menyediakan: (a) filter brightness/contrast manual, (b) filter sepia/vintage menggunakan LUT, (c) filter sketch menggunakan edge detection + blending, (d) filter cartoon menggunakan bilateral + edge, (e) filter HDR menggunakan CLAHE, (f) filter blur artistik (bokeh simulasi) dengan Gaussian, (g) preview semua filter, (h) export dengan watermark.
+### Deskripsi Pipeline
 
-### Soal 4: Sistem Penghitung Sel Darah Otomatis
-Lab biologi kampus memerlukan tool untuk menghitung sel darah merah dari foto mikroskop. Buatlah sistem yang: (a) enhance gambar mikroskop (contrast + CLAHE), (b) konversi ke grayscale dan thresholding, (c) operasi morfologi untuk memisahkan sel berdekatan, (d) deteksi kontur dan hitung jumlah sel, (e) gambar outline tiap sel, (f) hitung statistik (jumlah, rata-rata ukuran, distribusi), (g) buat laporan dengan visualisasi.
+Bangun sebuah program Python yang mengimplementasikan pipeline analisis citra berikut:
 
-### Soal 5: Sistem Deteksi Plat Nomor (Preprocessing)
-Sistem parkir memerlukan preprocessing gambar CCTV sebelum OCR. Buatlah pipeline yang: (a) crop ROI area plat, (b) konversi ke grayscale, (c) CLAHE untuk menormalisasi pencahayaan, (d) bilateral filter untuk denoising tanpa menghilangkan edge, (e) edge detection + morfologi untuk menemukan batas karakter, (f) thresholding adaptif untuk binarisasi, (g) resize ke ukuran standar, (h) simpan hasil per step.
+**Tahap 1 - Pemuatan dan Pra-Pemrosesan:**
+- Muat gambar input (bisa dari file atau kamera)
+- Terapkan CLAHE pada channel L dari ruang warna LAB untuk normalisasi kontras
+- Terapkan bilateral filter untuk mengurangi noise sambil mempertahankan tepi
 
-### Soal 6: Tool Restorasi Foto Lama
-Studio foto menerima banyak pesanan restorasi foto lama. Buatlah tool yang: (a) analisis kerusakan (noise, fading, spots), (b) denoising adaptif, (c) contrast enhancement dengan CLAHE, (d) removal spot/scratch menggunakan morfologi + inpainting mask, (e) sharpening adaptif, (f) colorization sederhana (apply sepia/tint), (g) before-after comparison.
+**Tahap 2 - Segmentasi Warna:**
+- Konversi gambar ke ruang warna HSV
+- Segmentasikan objek berdasarkan warna target menggunakan `cv2.inRange()`
+- Hasilkan mask biner untuk setiap warna
 
-### Soal 7: Sistem Monitoring Traffic dari CCTV
-Dinas Perhubungan ingin mendeteksi kepadatan lalu lintas dari CCTV. Buatlah sistem yang: (a) preprocessing frame video (denoising), (b) edge detection untuk mendeteksi kendaraan, (c) thresholding dan morfologi untuk segmentasi area jalan, (d) hitung piksel area kendaraan vs area kosong, (e) klasifikasi kepadatan (sepi/normal/padat/macet), (f) buat grafik kepadatan, (g) tampilkan heatmap kepadatan.
+**Tahap 3 - Deteksi Tepi:**
+- Terapkan Canny edge detection pada gambar yang sudah dipreproses
+- Optionally gabungkan dengan hasil Sobel untuk analisis arah tepi
 
-### Soal 8: Sistem Analisis Kualitas Buah
-Petani buah ingin grading kualitas buah berdasarkan tampilan visual. Buatlah sistem yang: (a) segmentasi buah dari background (HSV thresholding + morfologi), (b) analisis warna dominan, (c) deteksi bintik/cacat (edge detection pada ROI), (d) hitung persentase area cacat, (e) grading (Grade A/B/C), (f) batch processing, (g) buat laporan grading.
+**Tahap 4 - Penyempurnaan Morfologi:**
+- Terapkan opening untuk menghilangkan noise kecil pada mask
+- Terapkan closing untuk mengisi lubang dalam objek
+- Gunakan Top-Hat atau Black-Hat jika pencahayaan tidak merata
 
-### Soal 9: Pendeteksi Kebocoran Pipa (Thermal Image Processing)
-Perusahaan utilitas menggunakan kamera thermal untuk deteksi kebocoran. Buatlah tool yang: (a) load thermal image (pseudocolor), (b) konversi ke grayscale, (c) histogram analysis untuk identifikasi anomali suhu, (d) thresholding adaptif untuk area panas, (e) Fourier analysis untuk filter noise sensor, (f) morfologi untuk clean-up, (g) highlight dan annotasi area potensial kebocoran.
+**Tahap 5 - Analisis Connected Components:**
+- Label setiap objek yang teridentifikasi
+- Hitung statistik: jumlah objek, area, bounding box, centroid
+- Filter objek berdasarkan ukuran dan bentuk
 
-### Soal 10: Alat Peraga Pembelajaran Image Processing
-Dosen mata kuliah PCD memerlukan alat peraga interaktif. Buatlah aplikasi yang: (a) load gambar, (b) panel kontrol untuk setiap operasi (brightness, threshold, filter, edge, morfologi), (c) tampilkan hasil per operasi secara real-time, (d) tampilkan histogram yang update otomatis, (e) kombinasikan operasi secara berurutan (pipeline builder), (f) simpan hasil dan konfigurasi, (g) mode demo otomatis.
+**Tahap 6 - Analisis Domain Frekuensi (Opsional Lanjutan):**
+- Hitung DFT dari gambar grayscale
+- Tampilkan magnitude spectrum
+- Identifikasi komponen frekuensi dominan
+
+**Tahap 7 - Visualisasi Hasil:**
+- Tampilkan setiap tahap pipeline berdampingan
+- Buat laporan teks dengan statistik hasil analisis
+- Simpan semua gambar hasil ke folder `output/`
 
 ---
 
-## Rubrik Penilaian Project
+## Spesifikasi Teknis
 
-| Komponen | Bobot | Deskripsi |
-|----------|-------|-----------|
-| **Fungsionalitas** | 35% | Semua fitur berjalan dengan benar dan robust |
-| **Integrasi Percobaan** | 20% | Minimal 10 dari 20 konsep percobaan terintegrasi |
-| **Kualitas Kode** | 15% | Modular, terdokumentasi, penamaan deskriptif |
-| **Dokumentasi** | 15% | README, screenshot, penjelasan alur program |
-| **Kreativitas** | 15% | Fitur tambahan, UI, solusi inovatif |
+Program harus memenuhi persyaratan teknis berikut:
 
-### Detail Penilaian Integrasi
-| Jumlah Konsep | Skor Integrasi |
-|---------------|----------------|
-| 15–20 konsep | 90–100% |
-| 10–14 konsep | 70–89% |
-| 7–9 konsep | 50–69% |
-| 4–6 konsep | 30–49% |
-| < 4 konsep | 0–29% |
+1. **CLAHE atau Histogram Equalization:** Gunakan `cv2.createCLAHE()` dengan parameter yang dapat dikonfigurasi (clipLimit dan tileGridSize).
 
-### Skala Nilai
-| Range | Grade | Predikat |
-|-------|-------|----------|
-| 90–100 | A | Sangat Memuaskan |
-| 80–89 | AB | Memuaskan |
-| 70–79 | B | Baik |
-| 60–69 | BC | Cukup Baik |
-| 50–59 | C | Cukup |
-| 40–49 | D | Kurang |
-| 0–39 | E | Gagal |
+2. **Filter Edge-Preserving:** Implementasikan bilateral filter (`cv2.bilateralFilter`) dengan parameter d, sigmaColor, sigmaSpace yang dapat disesuaikan.
 
-### Penalti
-| Pelanggaran | Penalti |
-|-------------|---------|
-| Terlambat 1 hari | −10% |
-| Terlambat 2–3 hari | −20% |
-| Terlambat > 3 hari | −40% |
-| Plagiarisme | Nilai 0 + sanksi akademik |
+3. **Segmentasi HSV:** Gunakan `cv2.inRange()` dengan setidaknya dua warna berbeda. Warna merah harus menggunakan dua range terpisah.
+
+4. **Minimal Dua Tipe Thresholding:** Implementasikan thresholding global (Otsu) dan adaptive thresholding, lalu bandingkan hasilnya.
+
+5. **Canny Edge Detection:** Gunakan `cv2.Canny()` dengan hysteresis thresholding yang dapat dikonfigurasi.
+
+6. **Operasi Morfologi Lengkap:** Implementasikan setidaknya erosi, dilasi, opening, dan closing menggunakan `cv2.morphologyEx()`.
+
+7. **Connected Components:** Gunakan `cv2.connectedComponentsWithStats()` dan filter komponen berdasarkan area minimal dan maksimal.
+
+8. **Transformasi Fourier:** Hitung DFT menggunakan `np.fft.fft2()` dan visualisasikan magnitude spectrum.
+
+9. **Filter Frekuensi:** Implementasikan minimal satu filter di domain frekuensi (low-pass atau high-pass) dan bandingkan dengan hasil domain spasial.
+
+10. **Visualisasi Komprehensif:** Tampilkan seluruh tahap pipeline dalam satu figure Matplotlib dengan subplot yang berlabel.
+
+11. **Laporan Statistik:** Cetak atau simpan laporan berisi: jumlah objek terdeteksi, area rata-rata, objek terbesar, distribusi ukuran.
+
+12. **Kontrol Parameter:** Semua parameter penting (threshold, kernel size, clip limit, dll.) harus didefinisikan sebagai variabel di bagian atas program agar mudah disesuaikan.
+
+---
+
+## Improvisasi yang Disarankan
+
+Berikut adalah ide-ide pengembangan tambahan untuk nilai kreativitas:
+
+1. **Versi Real-Time dengan Webcam:** Implementasikan pipeline yang berjalan secara real-time menggunakan `cv2.VideoCapture(0)`. Optimalkan untuk minimal 10 FPS dengan mengurangi resolusi dan menggunakan teknik yang lebih cepat.
+
+2. **Batch Processing:** Buat program yang memproses seluruh gambar dalam sebuah folder secara otomatis, menghasilkan laporan CSV dengan statistik setiap gambar dan menampilkan gambar yang "gagal" memenuhi kriteria.
+
+3. **Pipeline Domain Frekuensi:** Buat pipeline yang memfilter gambar menggunakan band-pass filter di domain frekuensi untuk mengisolasi tekstur pada skala tertentu, lalu analisis hasilnya dengan morfologi.
+
+4. **Visualisasi Pohon Kontur:** Implementasikan visualisasi hirarki kontur (RETR_TREE) sebagai tree diagram, menampilkan relasi parent-child antar kontur.
+
+5. **Penghitung Objek Adaptif:** Sistem yang secara otomatis menentukan nilai threshold terbaik (Otsu/Canny) berdasarkan karakteristik histogram gambar input.
+
+6. **Analisis Granulometri:** Gunakan serangkaian opening dengan structuring element yang makin besar untuk menganalisis distribusi ukuran objek (morphological granulometry).
+
+7. **Segmentasi Multi-Warna Interaktif:** GUI sederhana menggunakan OpenCV trackbar untuk mengatur parameter HSV secara real-time dan langsung melihat hasil segmentasi.
+
+8. **Perbandingan Filter Otomatis:** Program yang secara sistematis membandingkan 5 kombinasi filter berbeda (Gaussian, median, bilateral, dll.) menggunakan metrik PSNR dan SSIM, lalu merekomendasikan filter terbaik untuk gambar tertentu.
+
+9. **Export ke PDF:** Gunakan matplotlib untuk menyimpan seluruh pipeline (semua tahap) ke dalam satu file PDF multi-halaman sebagai laporan otomatis.
+
+10. **Integrasi dengan Contour Detection:** Setelah pipeline selesai, tampilkan kontur setiap objek yang terdeteksi di connected components beserta informasi area, perimeter, dan roundness.
 
 ---
 
 ## Format Pengumpulan
-- **Deadline**: 1 minggu setelah modul selesai.
-- **Format**: ZIP — `NIM_Nama_Project03.zip`
-- **Isi**: Source code, README.md, screenshot (min. 5), data sample.
+
+### File yang Dikumpulkan:
+- **File Python (.py):** Satu file utama pipeline (misalnya `project_m03_pipeline.py`) beserta file pendukung jika ada.
+- **Laporan PDF:** Maksimal 5 halaman, berisi: deskripsi pipeline, screenshot hasil setiap tahap, analisis dan kesimpulan, referensi.
+- **Video Demo (MP4):** Durasi 2-5 menit, mendemonstrasikan program berjalan dan menjelaskan setiap tahap.
+
+### Struktur Folder Pengumpulan:
+```
+NIM_Nama_ProjectM03/
+  project_m03_pipeline.py
+  laporan_project_m03.pdf
+  demo_project_m03.mp4
+  output/
+    (gambar-gambar hasil tiap tahap)
+  README.txt
+    (instruksi menjalankan program)
+```
+
+---
+
+## Kriteria Penilaian
+
+| Aspek | Bobot | Kriteria |
+|-------|-------|----------|
+| **Implementasi Teknis** | 40% | Ketepatan implementasi minimal 10 teknik yang diwajibkan, kualitas kode (dokumentasi, modularitas, parameter yang dapat dikonfigurasi), tidak ada error saat dijalankan |
+| **Analisis Hasil** | 25% | Kualitas analisis pada setiap tahap pipeline, interpretasi hasil yang akurat, identifikasi kelebihan dan kekurangan setiap teknik |
+| **Kreativitas** | 15% | Penambahan fitur di luar spesifikasi minimum, ide orisinal dalam menggabungkan teknik-teknik, pemilihan kasus penggunaan yang menarik |
+| **Laporan** | 10% | Kelengkapan dan kejelasan laporan PDF, kualitas screenshot dan visualisasi, ketepatan bahasa teknis |
+| **Demo Video** | 10% | Kejelasan demonstrasi dan penjelasan verbal, mencakup semua tahap pipeline utama, kualitas rekaman |
+
+### Rubrik Detail Implementasi Teknis (40%)
+
+| Sub-Aspek | Nilai |
+|-----------|-------|
+| Semua 12 spesifikasi teknis terpenuhi dengan benar | 36-40 |
+| 10-11 spesifikasi terpenuhi | 30-35 |
+| 7-9 spesifikasi terpenuhi | 22-29 |
+| 4-6 spesifikasi terpenuhi | 14-21 |
+| Kurang dari 4 spesifikasi | 0-13 |
+
+---
+
+## Timeline Pengerjaan (Saran)
+
+| Minggu | Kegiatan |
+|--------|----------|
+| Minggu 1 | Merancang arsitektur pipeline, menyiapkan dataset, implementasi tahap 1-2 |
+| Minggu 2 | Implementasi tahap 3-5, uji coba dan debugging |
+| Minggu 3 | Implementasi tahap 6-7, penambahan fitur improvisasi |
+| Minggu 4 | Penulisan laporan, perekaman video demo, finalisasi dan pengumpulan |
+
+---
+
+*Project ini merupakan bagian dari penilaian Praktikum Komputer Vision - Modul 3: Pemrosesan Citra*

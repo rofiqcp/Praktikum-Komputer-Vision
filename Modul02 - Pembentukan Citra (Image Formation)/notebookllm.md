@@ -2,72 +2,108 @@
 
 ---
 
-## PROMPT 1 — Slide 1–15 (Materi + Jobsheet)
+## PROMPT 1 — Slide 1–15 (Materi + Jobsheet Bagian 1)
 
-Buat 15 slide presentasi akademik Modul 2: Pembentukan Citra. Referensi Szeliski (2022) Ch.2. Tiap slide ~500 kata, sertakan diagram, formula, dan kode OpenCV.
+Buat 15 slide presentasi akademik Modul 2: Pembentukan Citra (Image Formation). Referensi Szeliski (2022) Ch.2. Tiap slide informatif, sertakan diagram dan kode OpenCV Python.
 
-**Slide 1** — Judul "Modul 2: Pembentukan Citra", subtitle "Dari Cahaya ke Piksel", ilustrasi pinhole camera, nama MK, semester, referensi Szeliski Ch.2.
+**Slide 1** — Judul: "Modul 2 — Pembentukan Citra (Image Formation)". Subtitle "Dari Dunia 3D ke Piksel 2D". Referensi Szeliski Ch.2. Ilustrasi pipeline: objek 3D → lensa → sensor → matriks piksel.
 
-**Slide 2** — Tiga aspek: Geometri (proyeksi 3D→2D), Photometry (pengukuran cahaya), Digitalisasi (sampling+kuantisasi). Aplikasi: kalibrasi kamera, koreksi distorsi, AR, rekonstruksi 3D.
+**Slide 2** — Definisi image formation: proses proyeksi scene 3D ke citra 2D oleh kamera. Tiga komponen: geometri (bagaimana posisi diproyeksikan), fotometri (bagaimana cahaya direkam), sensor (bagaimana analog didigitalkan). Pentingnya memahami fondasi ini untuk seluruh pipeline CV.
 
-**Slide 3** — Translasi 2D: matriks [[1,0,tx],[0,1,ty]], warpAffine(). Percobaan 1: geser 100px kanan dan 50px bawah, eksplorasi negatif, canvas expansion vs clipping.
+**Slide 3** — Koordinat homogen: titik 2D x̃=(x,y,1)^T, titik 3D X̃=(X,Y,Z,1)^T. Keunggulan: translasi jadi perkalian matriks, titik tak hingga dapat direpresentasikan. Konversi balik: bagi komponen w. Perbandingan Cartesian vs homogen secara visual.
 
-**Slide 4** — Rotasi: matriks [[cosθ,−sinθ],[sinθ,cosθ]], getRotationMatrix2D(center,angle,scale). Percobaan 2: demo 30°/45°/90°/180°. Shearing: [[1,shx],[shy,1]]. Percobaan 4: shear H dan V.
+**Slide 4** — Hierarki transformasi 2D: Tabel DOF-matriks-invariant. Translasi 2 DOF (preserves all), Rotasi 1 DOF, Rigid 3 DOF (length+angle), Similarity 4 DOF (ratio), Affine 6 DOF (parallelism), Projective/Homography 8 DOF (hanya garis lurus). Ilustrasi efek setiap level pada persegi.
 
-**Slide 5** — Scaling: [[sx,0],[0,sy]], uniform vs anisotropic. Percobaan 3. Refleksi sumbu X/Y/origin. Komposisi: M_total=M3@M2@M1 (tidak komutatif). Percobaan 5–6.
+**Slide 5** — Percobaan 1-3: P1 translasi warpAffine M=[[1,0,tx],[0,1,ty]], 4 arah+diagonal. P2 rotasi getRotationMatrix2D(center,angle,scale), canvas extend agar tidak terpotong, overlay multi-sudut. P3 scaling resize() piksel absolut & faktor relatif, perbandingan 5 interpolasi (NEAREST/LINEAR/CUBIC/AREA/LANCZOS4) kualitas vs kecepatan.
 
-**Slide 6** — Affine: 6 DOF, preservasi kesejajaran, 3 pasang titik, getAffineTransform(). Perspektif: 8 DOF, 4 pasang titik, getPerspectiveTransform()+warpPerspective(). Percobaan 7–8: koreksi dokumen miring.
+**Slide 6** — Percobaan 4-5: P4 transformasi affine getAffineTransform(src3pts,dst3pts), demo shearing Sx/Sy, refleksi vertikal/horizontal/diagonal via matriks affine. P5 transformasi perspektif getPerspectiveTransform(src4pts,dst4pts)+warpPerspective, koreksi dokumen miring ke frontal, bird-eye view. Perbandingan visual affine vs perspektif.
 
-**Slide 7** — Pinhole: x=f·X/Z, y=f·Y/Z. Matriks intrinsik K=[[fx,0,cx],[0,fy,cy],[0,0,1]]. Parameter: focal length (fx,fy), principal point (cx,cy). Diagram geometri pinhole.
+**Slide 7** — Model kamera pinhole: λ·x_img = K·[R|t]·X_world. Matriks intrinsik K: fx/fy (focal length dalam piksel), cx/cy (principal point ≈ pusat frame), s (skew≈0 untuk kamera modern). Proyeksi: x'=fx·X/Z+cx, y'=fy·Y/Z+cy. Diagram lengkap: titik 3D → ray → bidang imej → piksel.
 
-**Slide 8** — Kalibrasi: estimasi K+distCoeffs via checkerboard. cv2.findChessboardCorners()→calibrateCamera(). Butuh ≥10 gambar. Percobaan 9: output camera matrix + reprojection RMSE.
+**Slide 8** — Percobaan 6: kalibrasi kamera checkerboard. Pipeline lengkap: cetak/tampilkan checkerboard → foto dari 15-20 sudut berbeda → findChessboardCorners() → cornerSubPix() presisi sub-piksel → calibrateCamera() → undistort(). Output: K (3×3), vektor distorsi 5 koef, Rvecs, Tvecs. Reprojection error <1px = kalibrasi baik.
 
-**Slide 9** — Distorsi: radial (barrel k1<0, pincushion k1>0), tangensial (p1,p2). cv2.undistort() dan remap(). Percobaan 10: visualisasi barrel pada grid, sebelum-sesudah undistort.
+**Slide 9** — Percobaan 7: proyeksi 3D ke 2D dan pose estimation. cv2.solvePnP(objPoints, imgPoints, K, distCoef): estimasi [R|t] dari ≥4 korespondensi. cv2.projectPoints(): render titik 3D ke piksel. cv2.drawFrameAxes(): overlay sumbu XYZ. Aplikasi: AR sumbu koordinat di atas checkerboard/marker. Rodrigues vector ke matriks rotasi.
 
-**Slide 10** — Interpolasi: NEAREST (cepat/blocky), LINEAR (default), CUBIC (4×4 kernel), AREA (downscale), LANCZOS4 (upscale). Percobaan 11: zoom 4× dengan 5 metode, perbandingan edge sharpness.
+**Slide 10** — Distorsi lensa: radial (k1,k2,k3) — barrel (wide-angle, k1<0) vs pincushion (telephoto, k1>0). Tangensial (p1,p2) — sensor tidak sejajar lensa. Rumus: x''=x'(1+k1r²+k2r⁴+k3r⁶). Percobaan 10: simulasi distorsi pada grid kotak menggunakan remap, visualisasi barrel vs pincushion berdampingan.
 
-**Slide 11** — Gaussian Pyramid: pyrDown()=blur+downscale 2×, pyrUp()=expand. Percobaan 12: 4-level pyramid, visualisasi semua level. Kegunaan: multi-scale detection, SIFT, image compression.
+**Slide 11** — Percobaan 11: koreksi distorsi mendalam. cv2.undistort() vs cv2.remap() (cache map lebih cepat untuk banyak gambar). cv2.initUndistortRectifyMap(): precompute map_x, map_y sekali. cv2.getOptimalNewCameraMatrix(K, dist, size, alpha): alpha=0 no black border, alpha=1 keep all pixels. Verifikasi dengan foto garis arsitektur.
 
-**Slide 12** — Laplacian Pyramid: L[i]=G[i]−expand(G[i+1]). Rekonstruksi sempurna: G[0] dari semua L[i]. Percobaan 13: bangun pyramid, rekonstruksi, verifikasi error≈0. Aplikasi: seamless blending.
+**Slide 12** — Percobaan 8-9: P8 shearing & refleksi. Shearing-x: M=[[1,Sx,0],[0,1,0]], shearing-y: M=[[1,0,0],[Sy,1,0]]. Refleksi diagonal = transpose+rotate. Demo 4 kombinasi. P9 komposisi transformasi: M_total=M3·M2·M1 (urutan: kanan ke kiri). Demonstrasi T·R ≠ R·T secara visual dengan grid.
 
-**Slide 13** — Koordinat polar: warpPolar() Cartesian↔Polar. Percobaan 14. Remapping: remap(src, map_x, map_y)—fisheye dewarp, swirl, cylindrical. Percobaan 15: ripple dan fisheye correction.
+**Slide 13** — Percobaan 17-18: P17 gamma correction I_out=I_in^γ. γ=0.5 (cerahkan shadow, HDR), γ=1.0 (linear), γ=2.0 (gelapkan). LUT = array 256 nilai, O(1) per piksel vs O(n) manual. np.array([((i/255)^γ*255) for i in range(256)]). P18 transformasi intensitas: log c·log(1+I), exponential, sigmoid S-curve, piecewise linear 2-titik.
 
-**Slide 14** — Log transform: s=c·log(1+r). Gamma: s=c·rᵞ, γ<1 brightening, γ>1 darkening. Monitor γ=2.2. LUT untuk efisiensi. Percobaan 16–17: kurva dan efek visual.
+**Slide 14** — Percobaan 12-13: P12 sampling & aliasing. Nyquist theorem fs≥2·fmax. Aliasing pada downscale tanpa low-pass filter (blur) = frekuensi tinggi di-alias menjadi frekuensi rendah palsu. Moiré pada tekstur periodik. Solusi: INTER_AREA (averaging) untuk downsample aman. P13 perbandingan kualitas 5 interpolasi pada zoom 4× (detail) dan shrink 1/4 (smooth).
 
-**Slide 15** — Sampling: Nyquist fs≥2·f_max. Aliasing→Moiré. Kuantisasi bit-depth. Citra sintetis: gradient, checkerboard, noise. Percobaan 18–20. Setup: env, download_image.py, folder image/output/.
+**Slide 15** — Percobaan 14-15: P14 image pyramid Gaussian (pyrDown: blur+halve, pyrUp: double+smooth) dan Laplacian (L_i = G_i − pyrUp(G_{i+1}), band frekuensi, lossless reconstruct). Aplikasi: coarse-to-fine, efficient template matching. P15 polar coordinates: cv2.warpPolar(src, size, center, maxR, WARP_POLAR_LINEAR). Log-polar: WARP_POLAR_LOG. Unroll label botol, simetri analisis.
 
 ---
 
-## PROMPT 2 — Slide 16–30 (Materi + Project + TugasVideo)
+## PROMPT 2 — Slide 16–30 (Materi + Jobsheet Bagian 2)
 
-Lanjutkan slide Modul 2, Slide 16–30. Slide 16–25: photometry, rekap, koneksi, kuis. Slide 26–30: Project dan Tugas Video. Tiap slide ~500 kata.
+Lanjutkan presentasi Modul 2: Pembentukan Citra, slide 16–30. Fokus analisis mendalam, perbandingan, tips praktis, koneksi antar modul, dan kuis interaktif.
 
-**Slide 16** — Lambertian: intensitas=ρ·(n·l). Phong: Ambient+Diffuse+Specular. I(x,y)=L(x,y)·R(x,y). Percobaan 19: simulasi pencahayaan arah berbeda. Aplikasi: shape-from-shading.
+**Slide 16** — Rekap percobaan 1-10: tabel nama_file | konsep_utama | fungsi_OpenCV. P1 warpAffine, P2 getRotationMatrix2D+canvas extend, P3 resize+5interpolasi, P4 getAffineTransform+shear, P5 getPerspectiveTransform+warpPerspective, P6 findChessboardCorners+calibrateCamera, P7 solvePnP+projectPoints, P8 shear+refleksi, P9 komposisi M=M3·M2·M1, P10 remap simulasi distorsi.
 
-**Slide 17** — Histogram EQ sintetis: CDF mapping. Global vs CLAHE. Percobaan 18: apply pada gradient+checkerboard, plot histogram sebelum-sesudah. Histogram flat = kontras maksimum.
+**Slide 17** — Rekap percobaan 11-20: P11 initUndistortRectifyMap+remap, P12 pyrDown+aliasing demo, P13 5-interpolasi perbandingan, P14 Gaussian+Laplacian pyramid, P15 warpPolar+logpolar, P16 remap efek kustom, P17 gamma correction+LUT, P18 log/exp/sigmoid intensitas, P19 citra sintetis NumPy, P20 ArUco detectMarkers+estimatePoseSingleMarkers. Fondasi image formation lengkap.
 
-**Slide 18** — Rekap percobaan 1–8: translasi, rotasi, scaling, shearing, refleksi, komposisi, affine, perspektif. Grid thumbnail. Tabel nama percobaan, file Python, fungsi utama.
+**Slide 18** — Analisis transformasi 2D: kenapa koordinat homogen vs matriks 2×2 terpisah? Unified representasi komposisi M=M_n·...·M_1. Grup matematika: tutup komposisi, ada identitas, ada invers. SVD dekomposisi affine: M=U·Σ·V^T → rotasi+skala+rotasi. Non-komutatif demo: rotasi(45)·translasi(10,0) ≠ translasi(10,0)·rotasi(45).
 
-**Slide 19** — Rekap percobaan 9–15: kalibrasi, koreksi distorsi, interpolasi (5-way), Gaussian pyramid, Laplacian pyramid, polar, remapping. Grid thumbnail output.
+**Slide 19** — Analisis model kamera: FoV = 2·arctan(sensor_width/(2·f)). Fisik vs piksel: f_px = f_mm·(sensor_px/sensor_mm). Depth ambiguity: satu piksel = satu ray tak terbatas — perlu dua kamera atau informasi tambahan untuk recover Z. Point at infinity: X=(X,Y,Z,0)^T → arah saja, bukan posisi.
 
-**Slide 20** — Rekap percobaan 16–20: log, gamma, histogram EQ, pencahayaan, citra sintetis (6 jenis). Photometry = kunci memahami exposure dan color balance kamera.
+**Slide 20** — Analisis kalibrasi: kenapa butuh banyak foto? N foto → sistem over-constrained → least-squares robust. Coverage frame: sudut gambar paling terdistorsi, wajib tercakup. cornerSubPix: refinement iteratif (centroid, saddle-point) ke presisi 0.1px. Trade-off: lebih banyak foto = lebih akurat tapi lebih lama proses.
 
-**Slide 21** — Koneksi: Pinhole→3D proyeksi→distorsi→kalibrasi→AR. Transformasi geometri→perspektif correction. Pyramid→multi-scale→SIFT (Modul 7)→stitching (Modul 8). Photometry→normalisasi→CNN (Modul 5).
+**Slide 21** — Analisis pyramid dan sampling: Gaussian pyramid ≡ cascade low-pass filter. Laplacian pyramid ≡ band-pass filter bank (mirip wavelet Haar). Rekonstruksi: Σ pyrUp(L_i) = original tanpa loss numerik. Use case: multiresolution template matching (coarse → fine), image blending Burt-Adelson, SIFT scale space analogy.
 
-**Slide 22** — Mengapa 4 titik untuk perspektif tapi 3 untuk affine? Akibat fx≠fy? Bagaimana Laplacian pyramid seamless blending? Mengapa gamma penting sebelum training CNN?
+**Slide 22** — Percobaan 16 — remap efek kustom: cv2.remap(src, map_x, map_y, INTER_LINEAR, borderMode). Formula efek: (1) Fisheye: r_new=r·k, (2) Twirl: θ_new=θ+α·exp(-r²/2σ²), (3) Gelombang: x_new=x+A·sin(2π·y/λ), (4) Tunnel: scale=1/(1+d·r), (5) Squeeze anamorphic: x_new=x·(1+0.3·abs(y/H-0.5)). Implementasi: buat meshgrid map_x/map_y NumPy, remap sekali.
 
-**Slide 23** — Tips: undistort sebelum transformasi geometri lanjut. Gunakan remap untuk pipeline efisien. Cek reprojection error<1 pixel untuk kalibrasi valid. Template pipeline: load→undistort→warp→analyze.
+**Slide 23** — Percobaan 19 — citra sintetis: checkerboard np.indices()%2 XOR. Gradient radial: d=np.hypot(X-cx, Y-cy)/R·255. Sinusoidal: I=128+127·np.sin(2π·f·x). Noise Gaussian: I+=np.random.randn·σ. Salt-pepper: mask = rand<p, set max/min. Perlin noise approximation. Citra sintetis: ground truth untuk unit test algoritma CV.
 
-**Slide 24** — Kuis: (1) DOF affine vs perspektif? (2) Principal point di matriks K? (3) Operasi pyrDown()? (4) Interpolasi terbaik upscale? (5) Fungsi distCoeffs pada undistort()?
+**Slide 24** — Percobaan 20 — ArUco marker: cv2.aruco.getPredefinedDictionary(DICT_6X6_250). detectMarkers(frame, dict, params) → corners, ids, rejected. estimatePoseSingleMarkers(corners, markerSize, K, dist) → rvecs, tvecs. drawFrameAxes(frame, K, dist, rvec, tvec, length). Jarak = np.linalg.norm(tvec). Heading = cv2.Rodrigues(rvec)[0]. Aplikasi: robot gripper, AGV.
 
-**Slide 25** — Diskusi: affine vs perspektif untuk koreksi dokumen. Kapan Gaussian vs Laplacian pyramid? Mengapa kalibrasi perlu banyak sudut (tidak semua frontal)? Keuntungan warpPolar untuk iris mata?
+**Slide 25** — Tips praktis transformasi: INTER_AREA untuk downscale (averaging, tidak aliasing), INTER_CUBIC/LANCZOS4 untuk upscale (smooth). borderMode CONSTANT(255) untuk masking putih. WARP_INVERSE_MAP: skip inversi manual. Tambahkan margin pada canvas untuk rotasi: new_w=int(h|sin θ|+w|cos θ|), new_h=int(h|cos θ|+w|sin θ|).
 
-**Slide 26** — Project: "Sistem Citra Berbasis Transformasi dan Kamera". Min. 10 dari 20 konsep. Tema: Document Scanner, Multi-scale Analyzer, Camera Calibration Tool, Photo Warping Studio, Virtual Mirror. Deliverable: .py, output/, laporan PDF.
+**Slide 26** — Koneksi antar modul: perspektif warp (M2) → panorama stitching homography (M6). K+distorsi (M2) → stereo epipolar (M11). Image pyramid (M2) → Lucas-Kanade optical flow coarse-to-fine (M7). ArUco pose (M2) → mixed reality overlay (M6+M8). Gamma/LUT (M2) → HDR tonemapping (M8). Sampling theorem (M2) → frequency domain analysis (M3).
 
-**Slide 27** — 20 opsi improvisasi (pilih min. 10): translasi interaktif, animasi rotasi, scaling adaptif, shear artistik, refleksi watermark, komposisi multi-step, affine dokumen, perspektif auto, kalibrasi asli, undistort webcam, 5-interpolasi grid, Gaussian pyramid kompresi, Laplacian blending, polar iris, fisheye dewarp, gamma batch, Lambertian 3D, CLAHE sintetis, noise synthesis, citra prosedural.
+**Slide 27** — Kuis 5 soal: (1) Berapa DOF transformasi affine 2D? (2) Nama fungsi OpenCV untuk proyeksi titik 3D ke piksel? (3) Koefisien distorsi mana yang sebabkan barrel? (4) Apa perbedaan cv2.undistort() vs cv2.remap() performa? (5) Titik (5,3) dalam koordinat homogen 2D adalah?
 
-**Slide 28** — Rubrik: Integrasi 0–40 (≥15=40, 12–14=35, 10–11=30). Fungsionalitas 0–30. Kreativitas 0–20. Dokumentasi 0–10. Total 100. Bonus +5 kalibrasi hardware, +5 AR overlay.
+**Slide 28** — Diskusi: kenapa kalibrasi perlu diulang setiap kamera berbeda unit, bukan pakai spec sheet? Dampak suhu pada focal length (expansion lensa). Wide-angle vs standard vs telephoto — mana distorsi terbesar? Mengapa fisheye tidak cukup model radial k1-k3 (perlu model equidistant atau equiangular terpisah)?
 
-**Slide 29** — Video: 15–20 menit, screen+face-cam. Struktur: pembukaan (2 mnt), teori 5 konsep (3–4 mnt), demo 20 percobaan live (2 poin/percobaan=40 poin), project (5 mnt), penutup (1 mnt). Submit link LMS.
+**Slide 29** — Aplikasi industri: CamScanner/Adobe Scan (perspektif warp), ADAS kalibrasi kamera+LIDAR (extrinsic matrix), medical robot kalibrasi eye-in-hand, drone orthorectified map, AR manufacturing (ArUco guidance), 360° car surround view (fisheye stitch), smartphone computational photography (lens correction).
 
-**Slide 30** — Rubrik video: Pembukaan (5), Teori (10), 20 percobaan (40—2/percobaan), Project (30), Penutup (10), Kualitas (5). Total 100. Bonus +5 kalibrasi hardware, +3 AR fisik. Penalti −2/percobaan tidak tampil. "Pahami Bagaimana Kamera Membentuk Realitas Digital!"
+**Slide 30** — Ringkasan modul 2: 20 percobaan solid = fondasi image formation. Jalur belajar: transformasi 2D (5 percobaan) → model kamera+kalibrasi (6 percobaan) → sampling+interpolasi (3 percobaan) → remapping+fotometri (4 percobaan) → sintetis+marker (2 percobaan). Siap untuk modul deteksi fitur, stitching, dan 3D reconstruction.
+
+---
+
+## PROMPT 3 — Slide 31–45 (Materi Lanjut + Project + Tugas Video)
+
+Lanjutkan presentasi Modul 2: Pembentukan Citra, slide 31–45. Slide 31-35: pendalaman lanjutan. Slide 36-41: Project. Slide 42-45: Tugas Video.
+
+**Slide 31** — Pendalaman geometri epipolar: Essential matrix E=t_x·R (5 DOF, kamera terkalibrasi). Fundamental matrix F (7 DOF, tanpa kalibrasi). Epipolar constraint: x'^T·F·x=0 — titik di kamera kiri berkorespondensi dengan satu garis (bukan semua piksel) di kamera kanan. cv2.findEssentialMat(), cv2.findFundamentalMat(), cv2.computeCorrespondEpilines(). Fondasi stereo dan SfM.
+
+**Slide 32** — Pendalaman Laplacian pyramid blending (Burt & Adelson 1983): bangun L_A dan L_B dari gambar A,B. Bangun pyramid mask M. Blend: B_i = L_A_i·M_i + L_B_i·(1-M_i). Rekonstruksi dari L_blend. Hasil: blend seamless tanpa visible seam. Detail halus di high-freq band, warna smooth di low-freq band. Kode lengkap 20 baris.
+
+**Slide 33** — Pendalaman kalibrasi advanced: Zhang's method teori ringkas — setiap foto planar memberikan dua persamaan untuk K → sistem linear → DLT → refinement Levenberg-Marquardt minimize reprojection error. ChArUco: kombinasi checkerboard+ArUco robust terhadap oklusi parsial. Stereo: cv2.stereoCalibrate → R_rl, T_rl → stereoRectify → disparity → depth = f·baseline/disparity.
+
+**Slide 34** — Pattern kode praktikum M2: docstring Indonesian header, SCRIPT_DIR/IMAGE_DIR/OUTPUT_DIR, def demo_*(image_path=None): dengan synthetic fallback, plt.tight_layout(); plt.savefig(os.path.join(OUTPUT_DIR,name)); plt.show(), if __name__=='__main__': panggil semua demo. Guard: if img is None: img = create_synthetic(). Konsisten di semua 20 file.
+
+**Slide 35** — Setup dan verifikasi environment: pip install opencv-contrib-python numpy matplotlib (contrib untuk ArUco+extra). python -c "import cv2; print(cv2.__version__); import cv2.aruco; print('ArUco OK')". Jalankan download_image.py. Folder output/ dibuat otomatis os.makedirs(OUTPUT_DIR, exist_ok=True). Cek gambar: haveImageReader() sebelum imread().
+
+**Slide 36** — Project: "Aplikasi Image Formation Terpadu". Integrasikan minimal 10 dari 20 percobaan dalam satu aplikasi bertema. 10 opsi fitur utama: (1) Interactive Perspective Crop (klik 4 titik). (2) Kalibrasi webcam nyata simpan YAML. (3) AR Frame 3D di ArUco. (4) Batch Document Scanner. (5) Lens Distortion Simulator trackbar. (6) Gamma Photo Batch. (7) Pyramid Blend Seamless. (8) Polar Unroll Label Botol. (9) Custom Remap Art Generator. (10) Virtual Ruler via solvePnP.
+
+**Slide 37** — Opsi fitur tambahan (pilih bebas kombinasi): (11) Moiré Demo interaktif. (12) Multi-Marker AR Scene. (13) Aerial Orthorectification Simulator dengan GPS reference. (14) Sport Field Homography (lapangan ke top-view). (15) Stereo Depth Sederhana. (16) Synthetic Checkerboard Generator untuk kalibrasi. (17) Animated Transformation Viewer. (18) Multi-Scale Pyramid Explorer. (19) Log-Polar Rotation Invariance Test. (20) FoV Calculator GUI per lensa.
+
+**Slide 38** — Soal cerita 1-5: (1) Scanner Dokumen Portable — perspektif koreksi 20 dokumen, output PNG A4 standar. (2) AR Museum — ArUco di setiap exhibit, overlay nama+deskripsi 3D realtime. (3) QC Optik Lini Produksi — kalibrasi kamera, distorsi residual <0.5px, laporan error. (4) Orthorectify Kebun — homografi aerial ke koordinat GPS referensi. (5) Virtual Ruler Ukur Objek — solvePnP + kamera terkalibrasi ukur objek nyata.
+
+**Slide 39** — Soal cerita 6-10: (6) Bird-Eye View Lapangan Basket — 4 titik corner ke plan view 28×15m, overlay posisi pemain. (7) Photo Auto-Enhancer Gelap — gamma auto-detect histogram, batch 100 foto. (8) Lens Comparison Lab — simulasi 5 karakter lensa berbeda (k1 berbeda) pada gambar arsitektur dan evaluasi distorsi. (9) Panorama Barrel Corrector — undistort foto panorama 180°. (10) Diagnostic Loupe — remap zoom area ROI citra histologi interaktif.
+
+**Slide 40** — Rubrik project: Fungsionalitas 35% (running tanpa crash, output sesuai deskripsi), Integrasi ≥10 percobaan 20% (tidak sekedar import, digunakan bermakna), Kualitas Kode 15% (docstring, fungsi modular, SCRIPT_DIR pattern, handle error), Dokumentasi 15% (README.md, screenshot setiap fitur, penjelasan parameter), Kreativitas 15% (UI, aplikasi nyata, keunikan). Total 100+bonus.
+
+**Slide 41** — Tips project M2: mulai dari kalibrasi kamera nyata menggunakan webcam laptop dan checkerboard dicetak A4. Simpan K+distorsi ke YAML: cv2.FileStorage('calib.yaml','w').write('K',K). Load kembali saat project jalan. Test undistort pada foto berbeda setelah kalibrasi. Buat GUI cv2.namedWindow+trackbar untuk interaksi. Penalti: telat −10%/hari, plagiat = 0.
+
+**Slide 42** — Tugas Video M2: rekam 30-50 menit, MP4 720p+, screen recording + webcam corner. Struktur wajib: (1) Pembukaan 2-3 menit, (2) Teori Image Formation 5-8 menit, (3) Demo 20 Percobaan 15-25 menit, (4) Project 5-10 menit, (5) Penutup 2-3 menit. Penjelasan verbal tiap demo — bukan hanya scroll kode.
+
+**Slide 43** — Detail konten video: Pembukaan: nama/NIM/modul/tujuan. Teori: jelaskan secara lisan koordinat homogen, 6 level transformasi, pinhole model, distorsi radial+tangensial, proses kalibrasi. Demo tiap percobaan: tampilkan kode fungsi utama → jalankan → tunjukkan input+output berdampingan → jelaskan apa yang terlihat dan mengapa.
+
+**Slide 44** — Rubrik video: Pembukaan 5% (nama jelas, tujuan tersampaikan), Teori 15% (akurasi konsep, bahasa sendiri), Demo 20 Percobaan 40% (2 poin/percobaan: kode+eksekusi+penjelasan), Project 20% (demo fungsi+jelaskan desain), Penutup 5%, Kualitas A/V 15% (suara jelas, layar terbaca). Bonus: kalibrasi fisik nyata +5, ArUco tracking live +3, diagram animasi +3, stereo depth demo +4.
+
+**Slide 45** — Penalti & submission: durasi <25 mnt −10, >55 mnt −5, tanpa webcam −10, membaca skrip verbatim −10, terlambat −5/hari, plagiat = nilai 0. Nama file: NIM_Nama_Video_Modul02.mp4. Submit YouTube Unlisted atau Google Drive dengan link aktif minimal 6 bulan. "Selamat — Anda kini paham bagaimana kamera mengubah dunia 3D menjadi gambar 2D!"

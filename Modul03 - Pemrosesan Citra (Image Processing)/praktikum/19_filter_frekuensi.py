@@ -204,6 +204,7 @@ plt.tight_layout()
 
 path1 = os.path.join(OUTPUT_DIR, "19_lpf_comparison.png")
 plt.savefig(path1, dpi=150, bbox_inches="tight")
+plt.show()
 print(f"\n[OUTPUT] {path1}")
 
 # ============================================================
@@ -237,6 +238,7 @@ plt.tight_layout()
 
 path2 = os.path.join(OUTPUT_DIR, "19_hpf_band_comparison.png")
 plt.savefig(path2, dpi=150, bbox_inches="tight")
+plt.show()
 print(f"[OUTPUT] {path2}")
 
 # ============================================================
